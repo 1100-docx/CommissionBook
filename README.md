@@ -56,6 +56,12 @@ export ANDROID_HOME=$HOME/Library/Android/sdk
 - `BiometricPrompt` —— 安卓 11 起才支持「生物识别 + 设备密码」组合，低版本按版本分路
 - SAF（`ACTION_CREATE_DOCUMENT` / `ACTION_OPEN_DOCUMENT`）读写备份，不写绝对路径
 
+## 隐私
+
+**不联网、不要账号、不收集任何信息。** 连「网络访问」权限都没申请 —— 不是承诺不上传，是系统层面它就没有联网的能力。
+
+完整说明见 [PRIVACY.md](PRIVACY.md)。
+
 ## 说明
 
 个人自用的小工具，代码随手写的，注释是中文。欢迎看，但没打算做成通用产品。
