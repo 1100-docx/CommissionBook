@@ -1,0 +1,215 @@
+package com.yifeng.commissionbook
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ContactPhone
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+/**
+ * 画师档案。
+ *
+ * 跟 iOS 版一样：**不新增数据表**，就是「按名字把约稿归堆」，另外配一本小册子记备注。
+ * 这样数据格式零改动 —— 两边的备份继续通用。
+ */
+private data class ArtistGroup(
+    val name: String,
+    val list: List<Commission>,
+    val note: String,
+) {
+    val totalMoney: Double get() = list.sumOf { it.total }
+    val paidMoney: Double get() = list.sumOf { it.deposit }
+    val activeCount: Int get() = list.count { !it.archived && it.status != CommissionStatus.DELIVERED }
+}
+
+@Composable
+fun ArtistsScreen(modifier: Modifier, state: AppState) {
+
+    val groups = state.items
+        .groupBy { it.artist }
+        .map { (name, list) ->
+            ArtistGroup(
+                name = name.ifBlank { "（没写画师）" },
+                list = list.sortedByDescending { it.dateMillis },
+                note = state.notes[it0(name)] ?: "",
+            )
+        }
+        .sortedByDescending { it.list.size }
+
+    var editing by remember { mutableStateOf<ArtistGroup?>(null) }
+    val listState = rememberLazyListState()
+
+    ScreenSurface(modifier) {
+        Column(Modifier.fillMaxSize()) {
+            CollapsibleLargeTitle(
+                title = "画师",
+                collapse = rememberCollapseFraction(listState),
+                caption = "${groups.size} 位 · 点一下记联系方式",
+            )
+
+            if (groups.isEmpty()) {
+                EmptyHint("还没有画师")
+            } else {
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
+                    verticalArrangement = Arrangement.spacedBy(11.dp),
+                ) {
+                    items(groups, key = { it.name }) { g ->
+                        // 画师数变动时卡片滑动 / 淡入，不硬切
+                        ArtistCard(g, Modifier.animateItem()) { editing = g }
+                    }
+                }
+            }
+        }
+    }
+
+    editing?.let { g ->
+        var text by remember(g.name) { mutableStateOf(state.notes[it0(g.name)] ?: "") }
+        AlertDialog(
+            onDismissRequest = { editing = null },
+            shape = RoundedCornerShape(24.dp),
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AvatarBubble(g.name, size = 34.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Text(g.name, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        "备注 / 联系方式（微信、闲鱼号这些）",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        placeholder = { Text("写点什么") },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    state.setNote(it0(g.name), text)
+                    editing = null
+                }) { Text("保存", fontWeight = FontWeight.SemiBold) }
+            },
+            dismissButton = { TextButton(onClick = { editing = null }) { Text("取消") } },
+        )
+    }
+}
+
+@Composable
+private fun ArtistCard(g: ArtistGroup, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    SoftCard(modifier.fillMaxWidth(), onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AvatarBubble(g.name, size = 48.dp)
+            Spacer(Modifier.width(13.dp))
+            Column(Modifier.weight(1f)) {
+                Text(g.name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Spacer(Modifier.height(3.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("${g.list.size} 单", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (g.activeCount > 0) {
+                        Box(Modifier.size(3.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSurfaceVariant))
+                        Text("进行中 ${g.activeCount}", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(money(g.totalMoney), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(Modifier.height(3.dp))
+                Text("已付 ${money(g.paidMoney)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.width(4.dp))
+            Icon(
+                Icons.Filled.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                modifier = Modifier.size(18.dp),
+            )
+        }
+
+        if (g.note.isNotBlank()) {
+            Spacer(Modifier.height(11.dp))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+                    .padding(horizontal = 11.dp, vertical = 9.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.ContactPhone,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                        modifier = Modifier.size(13.dp),
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(g.note, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(11.dp))
+        g.list.take(3).forEach { c ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(6.dp).clip(CircleShape).background(statusColor(c.status)))
+                Spacer(Modifier.width(9.dp))
+                Text(
+                    c.title.ifBlank { "（没写内容）" },
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(money(c.total), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+        if (g.list.size > 3) {
+            Spacer(Modifier.height(4.dp))
+            Text("…还有 ${g.list.size - 3} 单", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** 归堆用的 key —— 空名字统一成「（没写画师）」 */
+private fun it0(name: String): String = if (name.isBlank()) "（没写画师）" else name

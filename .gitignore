@@ -1,0 +1,24 @@
+# 编译产物（不要进仓库，几百 MB）
+build/
+app/build/
+*/build/
+.gradle/
+.kotlin/
+captures/
+.cxx/
+
+# 本机路径配置（含本机用户名，换台电脑要自己写）
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# 打出来的包（要发就发 GitHub Release，别塞进仓库）
+*.apk
+*.aab
+*.ipa
+
+# 本地版本存档（源码快照 + 安装包，纯本地用；仓库里只留干净的源码）
+tools/好的版本备份/

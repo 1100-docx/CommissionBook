@@ -1,0 +1,124 @@
+package com.yifeng.commissionbook
+
+import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import java.util.Calendar
+
+/**
+ * 截止日提醒。
+ *
+ * 跟 iOS 版对齐的口径：**到期前 3 天、1 天各一次，晚上 20:00**；
+ * 已交付的、已归档的**不提醒**。
+ *
+ * 安卓这边做法：用 `AlarmManager` 给每条约稿定两个闹钟，
+ * 到点由系统喊醒 `ReminderReceiver`，它负责弹通知。
+ * （没用 WorkManager —— 这个需求是「几点几分响一次」，
+ *  用闹钟比用「定时任务」直白，而且不引额外依赖。）
+ */
+object Reminders {
+
+    const val CHANNEL_ID = "deadline"
+    const val CHANNEL_NAME = "截止日提醒"
+    private val DAYS_BEFORE = intArrayOf(3, 1)
+    private const val HOUR = 20
+
+    /** 把所有闹钟重排一遍（每次数据一变、App 一启动都调它，最简单可靠） */
+    fun reschedule(context: Context, items: List<Commission>, enabled: Boolean) {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        // 先全撤掉，再按当前数据重定 —— 避免「改了截止日，老闹钟还在」这种鬼事
+        for (c in items) {
+            for (d in DAYS_BEFORE) {
+                am.cancel(pending(context, c, d))
+            }
+        }
+        if (!enabled) return
+
+        val now = System.currentTimeMillis()
+        for (c in items) {
+            if (c.archived || c.status == CommissionStatus.DELIVERED) continue
+            val deadline = c.deadlineMillis ?: continue
+            for (d in DAYS_BEFORE) {
+                val at = triggerAt(deadline, d)
+                if (at > now) {
+                    android.util.Log.i("CommissionBook", "定闹钟: ${c.title} 提前${d}天 at=${java.util.Date(at)}")
+                    // 安卓 6+ 用 setAndAllowWhileIdle：省电模式下也能响，
+                    // 代价是系统可能挪动几分钟 —— 提醒这种事不需要精确到分
+                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending(context, c, d))
+                } else {
+                    android.util.Log.i("CommissionBook", "跳过（时间已过）: ${c.title} 提前${d}天 at=${java.util.Date(at)}")
+                }
+            }
+        }
+    }
+
+    /** 截止日往前 d 天的 20:00 */
+    private fun triggerAt(deadlineMillis: Long, d: Int): Long {
+        val cal = Calendar.getInstance()
+        cal.timeInMillis = deadlineMillis
+        cal.add(Calendar.DAY_OF_YEAR, -d)
+        cal.set(Calendar.HOUR_OF_DAY, HOUR)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    private fun pending(context: Context, c: Commission, d: Int): PendingIntent {
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra("title", c.title)
+            putExtra("artist", c.artist)
+            putExtra("days", d)
+            putExtra("id", c.id)
+        }
+        var flags = PendingIntent.FLAG_UPDATE_CURRENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags = flags or PendingIntent.FLAG_IMMUTABLE
+        // requestCode 要把「哪条 + 哪一档」都编进去，不然会互相覆盖
+        return PendingIntent.getBroadcast(context, c.id.hashCode() * 10 + d, intent, flags)
+    }
+}
+
+class ReminderReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val title = intent.getStringExtra("title").orEmpty()
+        val artist = intent.getStringExtra("artist").orEmpty()
+        val days = intent.getIntExtra("days", 0)
+
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            nm.createNotificationChannel(
+                NotificationChannel(
+                    Reminders.CHANNEL_ID,
+                    Reminders.CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                )
+            )
+        }
+
+        val tap = PendingIntent.getActivity(
+            context,
+            0,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        val text = "${artist.ifBlank { "某位画师" }} · ${title.ifBlank { "一单约稿" }}" +
+            if (days <= 1) "　明天到期了" else "　还有 3 天"
+
+        val n = NotificationCompat.Builder(context, Reminders.CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("约稿快到期了")
+            .setContentText(text)
+            .setAutoCancel(true)
+            .setContentIntent(tap)
+            .build()
+
+        nm.notify(System.currentTimeMillis().toInt(), n)
+    }
+}

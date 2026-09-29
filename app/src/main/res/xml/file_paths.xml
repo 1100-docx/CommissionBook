@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 分享备份时，临时文件放在 cache/share 下面 -->
+    <cache-path name="share" path="share/" />
+</paths>
