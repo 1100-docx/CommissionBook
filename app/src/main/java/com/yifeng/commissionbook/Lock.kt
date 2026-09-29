@@ -97,6 +97,16 @@ class Prefs(context: Context) {
     var reminderEnabled: Boolean
         get() = sp.getBoolean("reminderEnabled", true)
         set(v) = sp.edit().putBoolean("reminderEnabled", v).apply()
+
+    /**
+     * 隐私政策同意 —— 存的是**同意时那一版政策**的版本号（见 [POLICY_VERSION]）。
+     *
+     * 空字符串 = 还没同意过 → 启动时先弹同意页，读完划到底才进得来。
+     * 以后政策改了就把 [POLICY_VERSION] 改掉，这里存的旧值对不上，会再弹一次。
+     */
+    var privacyAgreedVersion: String
+        get() = sp.getString("privacyAgreedVersion", "") ?: ""
+        set(v) = sp.edit().putString("privacyAgreedVersion", v).apply()
 }
 
 /** 开着保护时，切后台就糊 —— 安卓这边用系统开关一步搞定，还顺手挡截图 */

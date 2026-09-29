@@ -5,11 +5,15 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -76,6 +80,14 @@ class MainActivity : FragmentActivity() {
     /** 锁着的状态：true = 停在锁屏页 */
     private val locked = mutableStateOf(false)
 
+    /**
+     * 隐私政策同意过没（2026-09-29 加）。
+     *
+     * 第一次装完打开 App，先停在这一页：**必须划到最底下**，同意按钮才点得动。
+     * 存的是「同意时那一版政策的版本号」—— 以后政策改了，这里对不上，会再弹一次。
+     */
+    private val agreed = mutableStateOf(false)
+
     /** 选完文件回来的那一下不该再验一次锁 */
     private var expectingFileResult = false
 
@@ -112,34 +124,53 @@ class MainActivity : FragmentActivity() {
         prefs = Prefs(this)
         applyPrivacyShield(prefs.lockEnabled)
         locked.value = prefs.lockEnabled
+        // 这一版政策同意过没有？同意过才放行；没同意过 = 停同意页
+        agreed.value = prefs.privacyAgreedVersion == POLICY_VERSION
 
         setContent {
             AppTheme {
-                if (locked.value) {
-                    LockScreen(hasBio = BioLock.available(this)) { unlock() }
-                } else {
-                    RootScreen(
-                        state = state,
-                        prefs = prefs,
-                        onExport = { text ->
-                            pendingText = text
-                            expectingFileResult = true
-                            createDoc.launch(Backup.fileName(manual = true))
-                        },
-                        onImport = {
-                            expectingFileResult = true
-                            openDoc.launch(arrayOf("application/json", "text/plain", "*/*"))
-                        },
-                        onShare = { text, name ->
-                            val intent = Backup.share(this, name, text)
-                            if (intent == null) toast("分享失败") else startActivity(intent)
+                when {
+                    // ① 没同意过 —— 先读政策，划到底才点得动同意（应用市场要的合规姿势）
+                    !agreed.value -> PrivacyConsentScreen(
+                        onAgree = {
+                            prefs.privacyAgreedVersion = POLICY_VERSION
+                            agreed.value = true
+                            // 万一他还开着保护，同意完顺手把脸也验了
+                            if (locked.value) unlock()
                         },
                     )
+
+                    // ② 锁着 —— 先验本人
+                    locked.value -> {
+                        LockScreen(hasBio = BioLock.available(this)) { unlock() }
+                    }
+
+                    // ③ 正常进 App
+                    else -> {
+                        RootScreen(
+                            state = state,
+                            prefs = prefs,
+                            onExport = { text ->
+                                pendingText = text
+                                expectingFileResult = true
+                                createDoc.launch(Backup.fileName(manual = true))
+                            },
+                            onImport = {
+                                expectingFileResult = true
+                                openDoc.launch(arrayOf("application/json", "text/plain", "*/*"))
+                            },
+                            onShare = { text, name ->
+                                val intent = Backup.share(this, name, text)
+                                if (intent == null) toast("分享失败") else startActivity(intent)
+                            },
+                        )
+                    }
                 }
             }
         }
 
-        if (locked.value) unlock()
+        // 同意过、又开着保护 → 立刻弹一次验证（没同意过就先别弹，人还没读政策呢）
+        if (agreed.value && locked.value) unlock()
     }
 
     override fun onStop() {
@@ -191,37 +222,53 @@ private fun RootScreen(
     val pager = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            BottomBar(
-                tabs = tabs,
-                currentPage = pager.currentPage,
-                // 「已经到第几页 + 手指划到哪儿了」：
-                // 那枚药丸跟着页面实时滑，而不是等切完了才「啪」跳过去
-                offsetFraction = pager.currentPageOffsetFraction,
-                onSelect = { i -> scope.launch { pager.animateScrollToPage(i) } },
-            )
-        }
-    ) { pad ->
-        HorizontalPager(
-            state = pager,
-            modifier = Modifier.padding(pad).fillMaxSize(),
-        ) { page ->
-            val m = Modifier.fillMaxSize()
-            when (tabs[page]) {
-                Tab.Ledger -> LedgerScreen(m, state)
-                Tab.Artists -> ArtistsScreen(m, state)
-                Tab.Stats -> StatsScreen(m, state)
-                Tab.Settings -> SettingsScreen(
-                    modifier = m,
-                    state = state,
-                    prefs = prefs,
-                    onExport = onExport,
-                    onImport = onImport,
-                    onShare = onShare,
+    // 设置页 →「隐私政策」：整页盖上来（连底部导航栏一起盖住）。
+    // 放在 Box 里、排在 Scaffold 后面 = 画在最上层。
+    var showPrivacy by remember { mutableStateOf(false) }
+
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            bottomBar = {
+                BottomBar(
+                    tabs = tabs,
+                    currentPage = pager.currentPage,
+                    // 「已经到第几页 + 手指划到哪儿了」：
+                    // 那枚药丸跟着页面实时滑，而不是等切完了才「啪」跳过去
+                    offsetFraction = pager.currentPageOffsetFraction,
+                    onSelect = { i -> scope.launch { pager.animateScrollToPage(i) } },
                 )
             }
+        ) { pad ->
+            HorizontalPager(
+                state = pager,
+                modifier = Modifier.padding(pad).fillMaxSize(),
+            ) { page ->
+                val m = Modifier.fillMaxSize()
+                when (tabs[page]) {
+                    Tab.Ledger -> LedgerScreen(m, state)
+                    Tab.Artists -> ArtistsScreen(m, state)
+                    Tab.Stats -> StatsScreen(m, state)
+                    Tab.Settings -> SettingsScreen(
+                        modifier = m,
+                        state = state,
+                        prefs = prefs,
+                        onExport = onExport,
+                        onImport = onImport,
+                        onShare = onShare,
+                        onOpenPrivacy = { showPrivacy = true },
+                    )
+                }
+            }
+        }
+
+        // 淡入 + 极轻微上推 —— 不硬切（逸风最在意这点）
+        AnimatedVisibility(
+            visible = showPrivacy,
+            enter = fadeIn(tween(200)) + slideInVertically(tween(260)) { it / 14 },
+            exit = fadeOut(tween(150)),
+        ) {
+            PrivacyScreen(onBack = { showPrivacy = false })
         }
     }
 }

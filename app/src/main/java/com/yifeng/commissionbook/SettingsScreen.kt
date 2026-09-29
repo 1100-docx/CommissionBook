@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.MaterialTheme
@@ -41,11 +42,28 @@ fun SettingsScreen(
     onExport: (String) -> Unit,
     onImport: () -> Unit,
     onShare: (String, String) -> Unit,
+    onOpenPrivacy: () -> Unit,
 ) {
     val context = LocalContext.current
 
     var lockOn by remember { mutableStateOf(prefs.lockEnabled) }
     var reminderOn by remember { mutableStateOf(prefs.reminderEnabled) }
+
+    // 版本号从安装包里读，不写死 —— 免得包升了、设置页还写着旧号
+    // （iOS 版那边栽过一次：两个人对着两份包争论到底装没装上）
+    val versionName = remember {
+        runCatching {
+            val pm = context.packageManager
+            val info = if (android.os.Build.VERSION.SDK_INT >= 33) {
+                pm.getPackageInfo(context.packageName,
+                    android.content.pm.PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(context.packageName, 0)
+            }
+            info.versionName ?: "?"
+        }.getOrDefault("?")
+    }
 
     // 滚动位置 → 大标题跟着缩
     val scroll = rememberScrollState()
@@ -171,7 +189,14 @@ fun SettingsScreen(
                         GroupRow(
                             title = "版本",
                             icon = Icons.Filled.Info,
-                            trailing = { InfoValue("2.1（安卓版）") },
+                            trailing = { InfoValue("$versionName（安卓版）") },
+                        )
+                        // 首次启动已经强制读过一遍，这里留个入口随时能翻回来
+                        GroupRow(
+                            title = "隐私政策",
+                            subtitle = "不联网 · 不收集任何信息（离线可看）",
+                            icon = Icons.Filled.PrivacyTip,
+                            onClick = onOpenPrivacy,
                         )
                         GroupRow(title = "约稿条数", trailing = { InfoValue("${state.items.size} 条") })
                         GroupRow(title = "已归档", trailing = { InfoValue("${state.items.count { it.archived }} 条") })
