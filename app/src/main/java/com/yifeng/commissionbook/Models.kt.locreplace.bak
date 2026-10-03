@@ -1,7 +1,6 @@
 package com.yifeng.commissionbook
 
 import android.content.Context
-import androidx.annotation.StringRes
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -9,21 +8,11 @@ import java.util.UUID
 
 // MARK: - 进度
 // 跟 iOS 版一模一样：rawValue 就是存盘值，一个字节都不许改
-enum class CommissionStatus(val label: String, @StringRes val labelRes: Int) {
-    QUOTING("待报价", R.string.ledger_status_pending_quote),
-    DEPOSIT_PAID("已付定金", R.string.ledger_status_deposit_paid),
-    DRAWING("绘制中", R.string.ledger_status_in_progress),
-    DELIVERED("已交付", R.string.ledger_delivered);
-
-    /**
-     * 显示用（跟着语言走）。
-     *
-     * ⚠️ **`label` 才是存盘值**（`JSONObject.put("status", …)` 用的就是它），
-     *    一个字节都不许改 —— 改了老备份认不出来。所以显示另走这一条。
-     *    2026-10-03 加：跟 iOS 版同一个毛病，那批「存下来的中文」直接拿去显示，
-     *    切语言时纹丝不动。
-     */
-    val shown: String get() = AppCtx.s(labelRes)
+enum class CommissionStatus(val label: String) {
+    QUOTING("待报价"),
+    DEPOSIT_PAID("已付定金"),
+    DRAWING("绘制中"),
+    DELIVERED("已交付");
 
     /** 阶段走了几格：0 / 1 / 2 / 3 */
     val stageIndex: Int get() = ordinal
@@ -44,12 +33,9 @@ enum class CommissionStatus(val label: String, @StringRes val labelRes: Int) {
 // ⚠️ 关键：**两边用的是同一套字段**（总价 / deposit / 状态 / 截止日），
 // 只有**叫法**不一样。所以加模式切换不用重做数据模型，只需要两件事：
 //   ① 每条记录归属一个模式（[Commission.mode]）② 界面上的字从 [Terms] 取。
-enum class AppMode(val key: String, @StringRes val labelRes: Int) {
-    BUYER("buyer", R.string.common_buyer),
-    ARTIST("artist", R.string.common_artist);
-
-    /** 显示用（跟着语言走）。`key` 是存盘值，别动 */
-    val label: String get() = AppCtx.s(labelRes)
+enum class AppMode(val key: String, val label: String) {
+    BUYER("buyer", "买家"),
+    ARTIST("artist", "画师");
 
     companion object {
         fun from(key: String?): AppMode = entries.firstOrNull { it.key == key } ?: BUYER
@@ -62,38 +48,38 @@ enum class AppMode(val key: String, @StringRes val labelRes: Int) {
  */
 object Terms {
     /** 对方：买家模式下是「画师」，画师模式下是「客户」 */
-    fun other(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.common_artist) else AppCtx.s(R.string.common_client)
+    fun other(m: AppMode): String = if (m == AppMode.BUYER) "画师" else "客户"
     fun otherBlank(m: AppMode): String =
-        if (m == AppMode.BUYER) AppCtx.s(R.string.ledger_no_artist) else AppCtx.s(R.string.ledger_no_client)
+        if (m == AppMode.BUYER) "（没写画师）" else "（没写客户）"
     /** 通知里指代某个没写名字的人 */
-    fun otherSome(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.artist_someone) else AppCtx.s(R.string.ledger_some_client)
+    fun otherSome(m: AppMode): String = if (m == AppMode.BUYER) "某位画师" else "某位客户"
 
     /** 已收/已付那格 */
-    fun paid(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.ledger_paid) else AppCtx.s(R.string.ledger_deposit_received)
+    fun paid(m: AppMode): String = if (m == AppMode.BUYER) "已付" else "已收定金"
     /** 还差的那部分 */
-    fun unpaid(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.ledger_unpaid) else AppCtx.s(R.string.ledger_awaiting_balance)
+    fun unpaid(m: AppMode): String = if (m == AppMode.BUYER) "未付" else "待收尾款"
 
-    fun empty(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.ledger_no_commissions_yet) else AppCtx.s(R.string.ledger_no_jobs_yet)
-    fun searchHint(m: AppMode): String = AppCtx.s(R.string.common_search_placeholder, other(m))
+    fun empty(m: AppMode): String = if (m == AppMode.BUYER) "还没有约稿" else "还没有接稿"
+    fun searchHint(m: AppMode): String = "搜${other(m)} / 内容 / 备注"
     fun topSpender(m: AppMode): String =
-        if (m == AppMode.BUYER) AppCtx.s(R.string.stats_top_spend_artist) else AppCtx.s(R.string.stats_top_earning_client)
+        if (m == AppMode.BUYER) "花得最多的画师" else "赚得最多的客户"
 
     // ——— 第二刀（2026-09-30）：排期 + 稿酬统计 ———
 
     /** 排期卡片的标题 */
-    fun scheduleTitle(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.artist_delivery_schedule) else AppCtx.s(R.string.artist_order_schedule)
+    fun scheduleTitle(m: AppMode): String = if (m == AppMode.BUYER) "交付排期" else "接单排期"
     /** 手上还有几单 */
-    fun handWord(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.ledger_pending_delivery) else AppCtx.s(R.string.ledger_pending_submission)
+    fun handWord(m: AppMode): String = if (m == AppMode.BUYER) "待交付" else "待交稿"
     /** 本月 / 本年 那张卡的标题 */
     fun periodTitle(m: AppMode): String =
-        if (m == AppMode.BUYER) AppCtx.s(R.string.stats_month_year_spend) else AppCtx.s(R.string.stats_month_year_earnings)
+        if (m == AppMode.BUYER) "本月 / 本年 花销" else "本月 / 本年 稿酬"
 
     /**
      * 状态的**显示名**。
      * ⚠️ 存盘用的是 `CommissionStatus.label`（一个字节都不许改），这个只管显示。
      */
     fun status(s: CommissionStatus, m: AppMode): String =
-        if (m == AppMode.ARTIST && s == CommissionStatus.DEPOSIT_PAID) AppCtx.s(R.string.ledger_deposit_received) else s.label
+        if (m == AppMode.ARTIST && s == CommissionStatus.DEPOSIT_PAID) "已收定金" else s.label
 }
 
 // MARK: - 一条约稿
@@ -258,7 +244,7 @@ class Store(private val context: Context) {
             // ⚠️ 读不出来时**绝对不要**悄悄返回空表就完事 ——
             // 那样用户一操作就会把空表存回去，真数据就没了。
             // 先把原件改名留一份，再返回空。
-            android.util.Log.e("CommissionBook", AppCtx.s(R.string.common_archive_read_failed, e))
+            android.util.Log.e("CommissionBook", "读存档失败，已留副本: ${e}")
             runCatching {
                 dataFile.renameTo(File(context.filesDir, "commissions-读不出来-${System.currentTimeMillis()}.json"))
             }
@@ -329,23 +315,23 @@ class Store(private val context: Context) {
         val day = 86_400_000L
         return listOf(
             Commission(
-                artist = AppCtx.s(R.string.help_sample_blue),
-                title = AppCtx.s(R.string.help_sample_fullbody),
+                artist = "示例 · 小蓝",
+                title = "全身立绘（这是示例，可以删）",
                 total = 300.0,
                 deposit = 150.0,
                 status = CommissionStatus.DRAWING,
                 dateMillis = now,
                 deadlineMillis = now + 10L * day,
-                note = AppCtx.s(R.string.help_card_tips),
+                note = "点卡片能改 · 右上角三个点能归档 / 催稿 / 分享",
             ),
             Commission(
-                artist = AppCtx.s(R.string.help_sample_white),
-                title = AppCtx.s(R.string.help_sample_chibi),
+                artist = "示例 · 白毛",
+                title = "Q 版头像（这是示例，可以删）",
                 total = 80.0,
                 deposit = 80.0,
                 status = CommissionStatus.DELIVERED,
                 dateMillis = now - 12L * day,
-                note = AppCtx.s(R.string.help_delivered_progress),
+                note = "已交付的卡片进度条是一整条绿",
             ),
         )
     }

@@ -85,9 +85,9 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
                 .verticalScroll(scroll),
         ) {
             CollapsibleLargeTitle(
-                title = AppCtx.s(R.string.stats_title),
+                title = "统计",
                 collapse = collapse,
-                caption = AppCtx.s(R.string.settings_all_data_archived),
+                caption = "全部数据，含已归档",
             )
 
             Column(
@@ -96,7 +96,7 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
             ) {
                 // ① 总账（渐变主卡）
                 HeroCard {
-                    HeroLabel(AppCtx.s(R.string.ledger_all_commissions_archived))
+                    HeroLabel("全部约稿（含已归档）")
                     Spacer(Modifier.height(4.dp))
                     // ④ 会滚的数字（2026-09-30 第三批）
                     RollingMoney(total, fontSize = 34.sp, color = Color.White)
@@ -106,7 +106,7 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
                         HeroDivider()
                         StatCell(Terms.unpaid(state.appMode), money(unpaid), Modifier.weight(1f))
                         HeroDivider()
-                        StatCell(AppCtx.s(R.string.ledger_order_count_2), AppCtx.s(R.string.ledger_order_count, all.size), Modifier.weight(1f))
+                        StatCell("单数", "${all.size} 单", Modifier.weight(1f))
                     }
                 }
 
@@ -114,7 +114,7 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
                 SoftCard {
                     CardTitle(Terms.periodTitle(state.appMode))
                     Spacer(Modifier.height(11.dp))
-                    listOf(AppCtx.s(R.string.stats_this_month) to monthList, AppCtx.s(R.string.stats_this_year) to yearList).forEachIndexed { i, (label, list) ->
+                    listOf("本月" to monthList, "本年" to yearList).forEachIndexed { i, (label, list) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 label,
@@ -131,7 +131,7 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                AppCtx.s(R.string.ledger_order_count, list.size),
+                                "${list.size} 单",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -152,19 +152,19 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            AppCtx.s(R.string.stats_view_annual_report),
+                            "看年度报告",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
                         )
                         Spacer(Modifier.weight(1f))
-                        Text(AppCtx.s(R.string.stats_annual_report_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("一张图看完一年 ›", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
                 // ② 按进度（每条一根细条，一眼看出哪一档最多）
                 SoftCard {
-                    CardTitle(AppCtx.s(R.string.stats_by_status))
+                    CardTitle("按进度")
                     Spacer(Modifier.height(12.dp))
                     // 条长 = 这一档占**全部**的比例。
                     // （之前是「占最大那一档」—— 那样只有 2 单的档也会顶满，
@@ -180,12 +180,12 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
                             Box(Modifier.weight(1f).padding(horizontal = 8.dp)) {
                                 ThinTrack(n.toFloat() / denom.toFloat(), c)
                             }
-                            Text(AppCtx.s(R.string.ledger_order_count, n), fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                            Text("$n 单", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         }
                         Spacer(Modifier.height(11.dp))
                     }
                     Text(
-                        AppCtx.s(R.string.stats_status_summary, active, archived),
+                        "进行中 $active 单 · 已归档 $archived 单（已归档的也在这上面）",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -193,7 +193,7 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
 
                 // ③ 近 6 个月柱状图
                 SoftCard {
-                    CardTitle(AppCtx.s(R.string.stats_last_6_months_amount))
+                    CardTitle("近 6 个月下单金额")
                     Spacer(Modifier.height(14.dp))
                     val bars = last6Months(all)
                     val maxV = (bars.maxOfOrNull { it.second } ?: 0.0).coerceAtLeast(1.0)
@@ -312,7 +312,7 @@ private fun last6Months(items: List<Commission>): List<Pair<String, Double>> {
             val c = Calendar.getInstance().apply { timeInMillis = it.dateMillis }
             c.get(Calendar.YEAR) == y && c.get(Calendar.MONTH) == m
         }.sumOf { it.total }
-        out.add(AppCtx.s(R.string.stats_month_label, m + 1) to sum)
+        out.add("${m + 1}月" to sum)
         cal.add(Calendar.MONTH, 1)
     }
     return out

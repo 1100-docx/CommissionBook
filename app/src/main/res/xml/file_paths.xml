@@ -2,4 +2,11 @@
 <paths>
     <!-- 分享备份时，临时文件放在 cache/share 下面 -->
     <cache-path name="share" path="share/" />
+
+    <!-- 检查更新下载的 APK（2026-10-03 加）。
+         放在 App 自己的外部私有目录里 —— 不用申请任何存储权限，
+         卸载 App 会连它一起删掉。系统安装界面通过 FileProvider 拿这个文件。
+         ⚠️ 两条都留着：外部目录拿不到时（个别机器 / 存储没挂上）会退回 cache。 -->
+    <external-files-path name="update" path="update/" />
+    <cache-path name="update_cache" path="update/" />
 </paths>

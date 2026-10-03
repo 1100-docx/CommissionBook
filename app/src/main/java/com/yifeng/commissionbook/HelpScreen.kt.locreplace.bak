@@ -1,0 +1,341 @@
+package com.yifeng.commissionbook
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+// =====================================================================
+// 帮助 · 功能一览（2026-10-01 加）
+//
+// 逸风的原话：「建议出帮助选项，因为后续功能越多，用户越难以自己摸索」。
+//
+// 做法上就一条原则：「不要写说明书」。
+// 每条只回答两个问题 ——「这功能是干嘛的」和「从哪儿点进去」。
+// 路径那行统一用蓝色 + 「在哪：」开头，扫一眼就能找到。
+//
+// ⚠️ 内容跟着「模式」走：画师模式才有「报价计算器 / 加价项」那两块，
+//    话术那一条也会自己换成「催尾款」叫法。
+// =====================================================================
+
+data class HelpItem(
+    val title: String,
+    /** 这功能是干嘛的 */
+    val what: String,
+    /** 从哪儿点进去 */
+    val where: String,
+)
+
+data class HelpGroup(val name: String, val items: List<HelpItem>)
+
+/** 按当前模式生成目录。加新功能的时候只动这里，界面不用碰。 */
+fun helpGroups(mode: AppMode): List<HelpGroup> {
+    val other = Terms.other(mode)          // 买家模式=画师，画师模式=客户
+    val paid = Terms.paid(mode)            // 已付 / 已收定金
+    val unpaid = Terms.unpaid(mode)        // 未付 / 待收尾款
+
+    val groups = mutableListOf(
+        HelpGroup(
+            "记一笔",
+            listOf(
+                HelpItem(
+                    "加一条",
+                    "记一单：$other、内容、总价、$paid、进度、截止日、备注。",
+                    "账本页右上角的「＋」",
+                ),
+                HelpItem(
+                    "改一条",
+                    "点开就能改，保存即生效；老数据一个字段都没动。",
+                    "点那张卡片任意位置",
+                ),
+                HelpItem(
+                    "归档 / 删除",
+                    "翻篇的单子归档收起来，归档的「不算进合计」；删掉就真没了（先备份）。",
+                    "卡片右上角「⋮」→ 归档 / 删除",
+                ),
+                HelpItem(
+                    "找一条",
+                    "按名字、内容、备注搜；上面那排胶囊按进度筛，右边的箭头换排序。",
+                    "账本页顶上的搜索框 · 筛选胶囊 · 排序箭头",
+                ),
+                HelpItem(
+                    "一次处理多条",
+                    "选中多条一起归档、一起删掉，不用一条条去点。删之前会再问一句。",
+                    "分段控件那排的「清单」图标 → 点卡片打勾 → 底下浮出那排",
+                ),
+                HelpItem(
+                    "开头那两条示例",
+                    "第一次打开自带的两条假数据（画师名写着「示例 ·」）。想留着当参考就留着，不想要点一下就清干净。",
+                    "账本页顶上那条「这 2 条是示例 · 点这里清掉」",
+                ),
+            ),
+        ),
+        HelpGroup(
+            "进度",
+            listOf(
+                HelpItem(
+                    "推进一档",
+                    "待报价 → 已付定金 → 绘制中 → 已交付。推到「已交付」那一下会弹个小动画。",
+                    "进度条右边那颗箭头，点一下往前一档",
+                ),
+                HelpItem(
+                    "退回一档",
+                    "点错了能原路退回来，退到「待报价」箭头就自动灰掉。",
+                    "进度条左边那颗箭头",
+                ),
+            ),
+        ),
+        HelpGroup(
+            "话术（不联网）",
+            listOf(
+                HelpItem(
+                    nudgeTitle(mode),
+                    "三段语气：客气 / 正常 / 直接。挑一段复制，去微信发过去就行。",
+                    "卡片右上角「⋮」→「${nudgeTitle(mode)}」",
+                ),
+                HelpItem(
+                    "余额怎么算的",
+                    "话术里的金额是从这一单的「总价 − $paid」自动算的，不用自己填。",
+                    "写好金额和截止日，话术会自己带上",
+                ),
+            ),
+        ),
+    )
+
+    // 画师模式才有：报价计算器 + 加价项
+    if (mode == AppMode.ARTIST) {
+        groups += HelpGroup(
+            "画师专用",
+            listOf(
+                HelpItem(
+                    "报价计算器",
+                    "选类型 → 单价（能改）→ 张数 → 勾加价项 → 出总价，再复制一段直接报给客户。",
+                    "设置 → 小工具 → 报价计算器",
+                ),
+                HelpItem(
+                    "加价项自己定",
+                    "叫什么、加多少、按比例还是固定金额，全自己设；随时加、改、删，也能一键恢复默认那三项。",
+                    "报价计算器里「加价项」右边 → 自己定",
+                ),
+                HelpItem(
+                    "加价是怎么算的",
+                    "先按比例加成（比例加在「单价 × 张数」上），再加固定金额。例：单价 100、3 张、加急 30%、买断 ¥50 → ¥440。",
+                    "报价卡片下面那行小字会写明细",
+                ),
+            ),
+        )
+    }
+
+    groups += HelpGroup(
+        "分享",
+        listOf(
+            HelpItem(
+                "分享这一单",
+                "把这一单排成一张卡（$other、内容、多少钱、走到哪一步），图片在你手机上生成，直接发出去或存下来都行。",
+                "卡片右上角「⋮」→「分享这一单」",
+            ),
+            HelpItem(
+                "整本战绩图",
+                "一整本的汇总图：总共花了 / 挣了多少、合作过多少位、单子各走到哪一步。",
+                "统计页 → 年度报告那张图下面 → 分享",
+            ),
+        ),
+    )
+
+    groups += HelpGroup(
+        "统计",
+        listOf(
+            HelpItem(
+                "年度报告",
+                "一张能发出去的画报：这一年花了 / 挣了多少、最常合作的人、单笔最大、最忙的月份。",
+                "统计页第二张卡底部的「看年度报告」",
+            ),
+            HelpItem(
+                "别的统计",
+                "总账、按进度分布、本月 / 本年、$other 排行都在统计页往下翻。",
+                "底栏 → 统计",
+            ),
+        ),
+    )
+
+    groups += HelpGroup(
+        "设置",
+        listOf(
+            HelpItem(
+                "使用模式",
+                "买家 / 画师两套叫法，「两边的记录是分开的两摞」，切过去只看那一摞；改模式不动任何一条数据。",
+                "设置 → 使用模式",
+            ),
+            HelpItem(
+                "保护",
+                "打开后进 App 要先按指纹 / 面容 / 密码，切后台回来也重新锁。",
+                "设置 → 安全 → 保护",
+            ),
+            HelpItem(
+                "截止日提醒",
+                "有截止日的单子，到期前 3 天和 1 天各提醒一次（晚上 8 点）。已交付的、归档的不提醒。",
+                "设置 → 提醒",
+            ),
+            HelpItem(
+                "备份 / 恢复",
+                "导出一份 JSON，能存手机也能发微信；跟 iOS 版的备份「两边通用」。恢复时会把候选列出来让你挑。",
+                "设置 → 备份与恢复",
+            ),
+        ),
+    )
+
+    groups += HelpGroup(
+        "关于数据",
+        listOf(
+            HelpItem(
+                "东西存在哪",
+                "全在这台手机的 App 私有目录里，别的 App 读不到。卸载 App 会连数据一起删掉。",
+                "设置 → 数据存放 → 手机本地",
+            ),
+            HelpItem(
+                "真的不联网吗",
+                "真的 —— 这个 App 「没有申请网络访问权限」，系统层面就没有联网能力。话术、报价、年度报告全是本机算的。",
+                "设置 → 隐私政策",
+            ),
+        ),
+    )
+
+    return groups
+}
+
+@Composable
+fun HelpScreen(mode: AppMode, onBack: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    val haptic = LocalHapticFeedback.current
+
+    BackHandler { onBack() }
+
+    ScreenSurface(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+
+            // 顶栏：返回 + 标题
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, "返回") {
+                    lightTick(haptic)
+                    onBack()
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("怎么用", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = cs.onSurface)
+                    Text(
+                        "每条就两句话：干啥用、从哪儿进",
+                        fontSize = 12.sp,
+                        color = cs.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+            }
+
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                helpGroups(mode).forEach { g ->
+                    Column {
+                        SectionLabel(g.name)
+                        SoftCard(Modifier.fillMaxWidth()) {
+                            g.items.forEachIndexed { i, it ->
+                                if (i > 0) {
+                                    Box(
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 11.dp)
+                                            .height(1.dp)
+                                            .background(cs.onSurfaceVariant.copy(alpha = 0.12f)),
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        it.title,
+                                        fontSize = 14.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = cs.onSurface,
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        it.what,
+                                        fontSize = 12.5.sp,
+                                        lineHeight = 19.sp,
+                                        color = cs.onSurfaceVariant,
+                                    )
+                                    Spacer(Modifier.height(6.dp))
+                                    Row(verticalAlignment = Alignment.Top) {
+                                        Icon(
+                                            Icons.Filled.Place,
+                                            null,
+                                            tint = cs.primary,
+                                            modifier = Modifier
+                                                .padding(top = 2.dp)
+                                                .height(13.dp)
+                                                .width(13.dp),
+                                        )
+                                        Spacer(Modifier.width(5.dp))
+                                        Text(
+                                            it.where,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            lineHeight = 18.sp,
+                                            color = cs.primary,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text(
+                    "找不到的功能，去「设置 → 反馈与建议」骂一句就行，下个版本补上。",
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                    color = cs.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+                Spacer(Modifier.height(24.dp))
+            }
+        }
+    }
+}

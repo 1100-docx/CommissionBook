@@ -47,12 +47,9 @@ import androidx.compose.ui.unit.sp
 //   ① **首次安装启动**：必须读完、划到最底下，才点得动「已阅读并同意」→ 才进得去
 //   ② 设置页 →「隐私政策」：随时能翻回来看（离线文本，一个字都不联网）
 //
-// 内容必须和 App 的真实行为一条条对得上，写得越硬越有底气。
-// ⚠️ 2026-10-03 改口：这一版加了「检查更新」，App 有了 INTERNET 权限。
-//    以前那句「连 INTERNET 权限都没申请，「不联网」是系统层面根本做不到」
-//    **不能再写了** —— 那是假话。现在的写法是「只在一个地方联网，且不上传任何数据」，
-//    并把这唯一一件事、用的什么权限、在哪儿能关掉，全列在第一条里。
-//    改动记录：政策版本号 POLICY_VERSION 也跟着改了，老用户下次启动会重读一遍。
+// 内容必须和 App 的真实行为一条条对得上，写得越硬越有底气：
+// 这个 App **连 INTERNET 权限都没申请**（用 aapt 核过安装包），
+// 所以「不联网」不是一句承诺，是系统层面根本做不到。
 
 /**
  * 这一版政策的版本号。
@@ -60,7 +57,7 @@ import androidx.compose.ui.unit.sp
  * 存进 [Prefs.privacyAgreedVersion]：**以后政策改了就改这个字符串**，
  * App 下次启动会自动再弹一次同意页（改了什么也没瞒着人）。
  */
-const val POLICY_VERSION = "2026-10-03.2"
+const val POLICY_VERSION = "2026-10-03"
 
 /** 政策正文：一段标题 + 若干段正文 */
 private data class PolicySection(val heading: String, val body: List<String>)
@@ -71,8 +68,8 @@ private data class PolicyPermission(val name: String, val why: String, val refus
 // ⚠️ 2026-10-03：这两个从 `const val` 降级成普通 `val`。
 //    多语言改造后它们取的是 `AppCtx.s(R.string.…)` —— 那是函数调用，
 //    而 `const` 要求编译期常量，留着 const 直接编译不过。
-private val POLICY_UPDATED = "最后更新：2026 年 10 月 3 日（第二版 —— 加入「检查更新」，并同步改掉原来「完全不联网」的说法）"
-private val POLICY_SCOPE = "适用版本：安卓版 3.5.7（versionCode 31）及以后"
+private val POLICY_UPDATED = "最后更新：2026 年 10 月 3 日"
+private val POLICY_SCOPE = "适用版本：安卓版 3.5.6（versionCode 30）及以后"
 
 // 2026-10-03 加：这一版起带多语言了，顺手讲清楚「语言包哪来的」——
 // 界面能变英文，谁都会想「它是不是联网去下了什么」。实情是五个语种都在安装包里。
@@ -80,94 +77,76 @@ private val POLICY_LANGUAGES = "内置语言包（简体中文 / 繁體中文（
 
 /** 一句话总结（单独拿出来，放最上面高亮） */
 private val POLICY_SUMMARY =
-    AppCtx.s(R.string.privacy_intro)
+    "这个 App 不联网、不需要注册、不收集你的任何信息。你记的约稿数据，只存在你自己这台手机里。"
 
 private val policySections = listOf(
     PolicySection(
-        AppCtx.s(R.string.privacy_section1_title),
+        "一、我们不收集任何信息",
         listOf(
-            AppCtx.s(R.string.privacy_no_account),
-            AppCtx.s(R.string.privacy_no_device_id),
-            AppCtx.s(R.string.privacy_no_behavior),
-            AppCtx.s(R.string.privacy_no_ads),
-            AppCtx.s(R.string.privacy_no_server),
-            AppCtx.s(R.string.privacy_no_internet_permission),
-            AppCtx.s(R.string.privacy_permission_detail),
-            // 2026-10-03 加：这一版起有联网了（检查更新），单独列出来讲清楚 ——
-            // 唯一一件事、用的哪个权限、请求里带了什么、在哪儿能关掉。
-            AppCtx.s(R.string.privacy_net_title),
-            AppCtx.s(R.string.privacy_net_body),
-            AppCtx.s(R.string.privacy_net_permission),
-            AppCtx.s(R.string.privacy_net_no_upload),
-            AppCtx.s(R.string.privacy_net_control),
-            // 2026-10-03 补：逸风追问「会收集其他信息吗」——
-            //   前一条只说「不带你的数据」，对，但没说完。这两条把
-            //   ① 联网本身必然暴露的（IP / 文件名 / 时间 / 请求头里的 App 名）
-            //   ② 国内必须过第三方加速镜像 这件事
-            //   都摊开写清楚。政策宁可写得难看，也别写得让人以为有多干净。
-            AppCtx.s(R.string.privacy_net_visible),
-            AppCtx.s(R.string.privacy_net_mirror),
+            "· 没有账号系统，不需要手机号、邮箱、实名认证",
+            "· 不采集设备标识（IMEI、Android ID、MAC 地址等）",
+            "· 不采集使用行为、崩溃日志、位置信息",
+            "· 没有广告，没有第三方统计 / 分析 SDK",
+            "· 没有服务器 —— 我们这边根本不存在一份你的数据",
+            "最能说明问题的一点：本 App 没有申请「网络访问」（INTERNET）权限。",
+            "这不是「我们承诺不上传」，而是系统层面它就没有联网的能力 —— 装好之后你可以自己在「设置 → 应用 → 约稿账本 → 权限」里看，里面找不到任何网络相关的权限。",
         ),
     ),
     PolicySection(
-        AppCtx.s(R.string.privacy_data_storage_title),
+        "二、你录入的数据存在哪",
         listOf(
-            AppCtx.s(R.string.privacy_data_storage_body),
-            AppCtx.s(R.string.privacy_data_storage_access),
-            AppCtx.s(R.string.privacy_data_storage_uninstall),
-            AppCtx.s(R.string.privacy_data_storage_backup),
+            "· 约稿记录（画师、内容、总价、已付、进度、截止日、备注）和画师联系方式，都存在这台手机的 App 私有目录里",
+            "· 只有本 App 能读，其他 App 读不到（手机已 root 的情况除外）",
+            "· 卸载 App 会连同数据一起删除，删了就找不回来",
+            "· 想留着就自己导出备份：设置 → 备份与恢复 → 导出备份",
         ),
     ),
     PolicySection(
-        AppCtx.s(R.string.privacy_data_delete_title),
+        "三、数据怎么删",
         listOf(
-            AppCtx.s(R.string.privacy_data_delete_items),
-            AppCtx.s(R.string.privacy_data_delete_uninstall),
-            AppCtx.s(R.string.privacy_data_delete_no_copy),
+            "· 在 App 里逐条删除，或者归档",
+            "· 卸载 App = 删除全部数据",
+            "· 我们这边没有副本可以删，因为我们从来没拿到过你的数据",
         ),
     ),
     PolicySection(
-        AppCtx.s(R.string.privacy_cloud_backup_title),
+        "五、关于系统自带的云备份（这点得说清楚）",
         listOf(
-            AppCtx.s(R.string.privacy_cloud_backup_body),
-            AppCtx.s(R.string.privacy_cloud_backup_control),
+            "安卓系统自带「备份到云端」的功能（各手机厂商的云服务、或 Google 备份）。如果它开着，本 App 的数据有可能被系统一起备份到你的云账号里。",
+            "这件事由你的手机系统和你的账号设置决定，App 本身不参与、也看不到。不想让它被备份，就在系统设置里关掉「应用数据备份」。",
         ),
     ),
     PolicySection(
-        AppCtx.s(R.string.privacy_export_title),
+        "六、导出 / 分享备份的时候",
         listOf(
-            AppCtx.s(R.string.privacy_export_file),
-            AppCtx.s(R.string.privacy_export_share_warning),
+            "· 备份是一个 JSON 文件，由你主动导出，存到哪、发给谁，完全由你决定",
+            "· 一旦你把它发给别人（微信、QQ、网盘等），那份文件就不再受本 App 保护了 —— 里面含画师联系方式，请自己收好",
         ),
     ),
     PolicySection(
-        AppCtx.s(R.string.privacy_minors_title),
-        listOf(AppCtx.s(R.string.privacy_minors_body)),
+        "七、未成年人",
+        listOf("本 App 不收集任何个人信息，因此也不存在「收集未成年人信息」的问题。未成年人使用建议在监护人知情的情况下进行。"),
     ),
     PolicySection(
-        AppCtx.s(R.string.privacy_changes_title),
-        listOf(AppCtx.s(R.string.privacy_changes_body)),
+        "八、政策变更",
+        listOf("如果以后功能有变化（比如加入联网、同步等功能），本政策会同步更新，并在这里标注更新时间。目前没有联网功能的任何计划。"),
     ),
     PolicySection(
-        AppCtx.s(R.string.privacy_contact_title),
+        "九、联系方式",
         listOf(
-            AppCtx.s(R.string.privacy_contact_body),
-            AppCtx.s(R.string.privacy_contact_email),
+            "有问题、有建议，或者想让我删点什么（其实删不了，因为我这儿什么都没有）：",
+            "· 邮箱：error1100@icloud.com —— 在「设置 → 反馈与建议」里点一下就替你写好邮件",
             "· GitHub Issues：github.com/1100-docx/CommissionBook/issues",
-            AppCtx.s(R.string.privacy_contact_email_note),
+            "（本 App 不联网，所以反馈需要你自己发一下 —— 点按钮会打开你手机上的邮件 App，不是本 App 在联网。）",
         ),
     ),
 )
 
 private val policyPermissions = listOf(
-    // 2026-10-03 加的这两条排在前面 —— 它们是这一版新增的、也是唯一跟「联不联网」
-    // 有关的权限，先摆出来最省得人翻。
-    PolicyPermission(AppCtx.s(R.string.settings_network_title), AppCtx.s(R.string.settings_network_desc), AppCtx.s(R.string.settings_network_off)),
-    PolicyPermission(AppCtx.s(R.string.settings_install_title), AppCtx.s(R.string.settings_install_desc), AppCtx.s(R.string.settings_install_off)),
-    PolicyPermission(AppCtx.s(R.string.settings_biometric_title), AppCtx.s(R.string.settings_biometric_desc), AppCtx.s(R.string.settings_biometric_off)),
-    PolicyPermission(AppCtx.s(R.string.settings_biometric_legacy_title), AppCtx.s(R.string.settings_biometric_legacy_desc), AppCtx.s(R.string.settings_biometric_legacy_off)),
-    PolicyPermission(AppCtx.s(R.string.settings_notify_title), AppCtx.s(R.string.settings_notify_desc), AppCtx.s(R.string.settings_notify_off)),
-    PolicyPermission(AppCtx.s(R.string.settings_vibrate_title), AppCtx.s(R.string.settings_vibrate_desc), AppCtx.s(R.string.settings_vibrate_off)),
+    PolicyPermission("生物识别", "「指纹 / 面容锁」，打开 App 或从后台切回来时解锁", "只是用不了锁，其他照常用"),
+    PolicyPermission("指纹（旧接口）", "同一个锁在旧版安卓（6～9）上用的老接口，作用完全一样", "同上"),
+    PolicyPermission("通知", "截止日前 3 天 / 1 天各提醒一次", "只是收不到提醒，数据一条不少"),
+    PolicyPermission("震动", "点按钮时轻轻震一下（可在设置里关）", "只是没有震动反馈"),
 )
 
 // MARK: - 正文（两处共用）
@@ -185,7 +164,7 @@ private fun PolicyBody(scroll: ScrollState, modifier: Modifier = Modifier) {
 
         // ① 一句话 —— 高亮，一眼看完
         SoftCard(Modifier.fillMaxWidth()) {
-            Text(AppCtx.s(R.string.common_one_sentence), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = cs.primary)
+            Text("一句话", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = cs.primary)
             Spacer(Modifier.height(6.dp))
             Text(
                 POLICY_SUMMARY,
@@ -216,14 +195,14 @@ private fun PolicyBody(scroll: ScrollState, modifier: Modifier = Modifier) {
         // ④ 适用范围（正文最后一块 —— 划到这里就算看完了）
         SoftCard(Modifier.fillMaxWidth()) {
             Text(
-                AppCtx.s(R.string.common_that_is_all),
+                "以上是全部。",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = cs.onSurface,
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                POLICY_SCOPE + AppCtx.s(R.string.privacy_intro_2),
+                POLICY_SCOPE + "\n本 App 是个人做的小工具，免费分享，不盈利，不为商业目的收集任何数据。",
                 fontSize = 12.sp,
                 lineHeight = 19.sp,
                 color = cs.onSurfaceVariant,
@@ -245,13 +224,13 @@ private fun PermissionCard() {
 
     SoftCard(Modifier.fillMaxWidth()) {
         Text(
-            AppCtx.s(R.string.privacy_permissions_title),
+            "四、用到的权限，各自干什么",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             color = cs.onSurface,
         )
         Spacer(Modifier.height(4.dp))
-        Text(AppCtx.s(R.string.privacy_permissions_only_four), fontSize = 12.sp, color = cs.onSurfaceVariant)
+        Text("就这四个，没有别的。", fontSize = 12.sp, color = cs.onSurfaceVariant)
         Spacer(Modifier.height(12.dp))
         policyPermissions.forEachIndexed { i, p ->
             if (i > 0) Spacer(Modifier.height(10.dp))
@@ -269,7 +248,7 @@ private fun PermissionCard() {
                 Column(Modifier.weight(1f)) {
                     Text(p.why, fontSize = 13.sp, lineHeight = 20.sp, color = cs.onSurface)
                     Text(
-                        AppCtx.s(R.string.privacy_deny_consequences) + p.refuse,
+                        "不给会怎样：" + p.refuse,
                         fontSize = 11.5.sp,
                         lineHeight = 17.sp,
                         color = cs.onSurfaceVariant,
@@ -280,8 +259,8 @@ private fun PermissionCard() {
         }
         Spacer(Modifier.height(12.dp))
         Text(
-            AppCtx.s(R.string.privacy_fingerprint_note) +
-                AppCtx.s(R.string.privacy_notification_note),
+            "关于指纹：指纹数据由手机系统的安全区域保管，App 拿不到也存不下来，只会收到系统给的一个「通过 / 不通过」的结果。\n" +
+                "关于通知：提醒是在你手机上本地生成的，不经过任何服务器。",
             fontSize = 12.sp,
             lineHeight = 19.sp,
             color = cs.onSurfaceVariant,
@@ -323,13 +302,13 @@ fun PrivacyConsentScreen(onAgree: () -> Unit) {
                     .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 10.dp),
             ) {
                 Text(
-                    AppCtx.s(R.string.common_welcome),
+                    "欢迎使用「约稿账本」",
                     fontSize = 23.sp,
                     fontWeight = FontWeight.Bold,
                     color = cs.onSurface,
                 )
                 Text(
-                    AppCtx.s(R.string.privacy_before_start),
+                    "开始之前，请先看完这份隐私政策 —— 划到最底下才能点同意。",
                     fontSize = 13.sp,
                     lineHeight = 19.sp,
                     color = cs.onSurfaceVariant,
@@ -349,7 +328,7 @@ fun PrivacyConsentScreen(onAgree: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    if (reachedBottom) AppCtx.s(R.string.privacy_read_done_agree) else AppCtx.s(R.string.privacy_not_scrolled_yet),
+                    if (reachedBottom) "看完了，可以同意" else "还没划到底 —— 继续往下滑",
                     fontSize = 12.sp,
                     color = if (reachedBottom) cs.primary else cs.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp),
@@ -367,7 +346,7 @@ fun PrivacyConsentScreen(onAgree: () -> Unit) {
                         .height(50.dp),
                 ) {
                     Text(
-                        if (reachedBottom) AppCtx.s(R.string.privacy_read_and_agreed) else AppCtx.s(R.string.privacy_scroll_to_bottom),
+                        if (reachedBottom) "已阅读并同意" else "请先划到底部",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -378,7 +357,7 @@ fun PrivacyConsentScreen(onAgree: () -> Unit) {
                     modifier = Modifier.padding(top = 2.dp),
                 ) {
                     Text(
-                        AppCtx.s(R.string.privacy_disagree_exit),
+                        "不同意（退出）",
                         fontSize = 13.sp,
                         color = cs.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -414,13 +393,13 @@ fun PrivacyScreen(onBack: () -> Unit) {
                     .padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, AppCtx.s(R.string.common_back)) {
+                CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, "返回") {
                     lightTick(haptic)
                     onBack()
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(AppCtx.s(R.string.privacy_policy_title), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = cs.onSurface)
+                    Text("隐私政策", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = cs.onSurface)
                     Text(
                         POLICY_UPDATED,
                         fontSize = 12.sp,

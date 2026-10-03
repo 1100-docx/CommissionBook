@@ -27,10 +27,7 @@ object Reminders {
     const val CHANNEL_ID = "deadline"
     // ⚠️ 2026-10-03：从 const val 降级成普通 val —— 多语言改造后它取的是
     //    AppCtx.s(R.string.…)，函数调用不能当编译期常量。
-    // ⚠️ 必须做成 getter：写成 `val CHANNEL_NAME = AppCtx.s(...)` 的话，
-    //    这个 object 一旦被加载就求值一次 —— 那会儿 AppCtx 可能还没 init，
-    //    通知栏里那条频道名会变成空白。
-    val CHANNEL_NAME: String get() = AppCtx.s(R.string.settings_deadline_reminder)
+    val CHANNEL_NAME = "截止日提醒"
     private val DAYS_BEFORE = intArrayOf(3, 1)
     private const val HOUR = 20
 
@@ -52,12 +49,12 @@ object Reminders {
             for (d in DAYS_BEFORE) {
                 val at = triggerAt(deadline, d)
                 if (at > now) {
-                    android.util.Log.i("CommissionBook", AppCtx.s(R.string.notify_set_alarm, c.title, d, java.util.Date(at)))
+                    android.util.Log.i("CommissionBook", "定闹钟: ${c.title} 提前${d}天 at=${java.util.Date(at)}")
                     // 安卓 6+ 用 setAndAllowWhileIdle：省电模式下也能响，
                     // 代价是系统可能挪动几分钟 —— 提醒这种事不需要精确到分
                     am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending(context, c, d))
                 } else {
-                    android.util.Log.i("CommissionBook", AppCtx.s(R.string.notify_skip_past, c.title, d, java.util.Date(at)))
+                    android.util.Log.i("CommissionBook", "跳过（时间已过）: ${c.title} 提前${d}天 at=${java.util.Date(at)}")
                 }
             }
         }
@@ -117,11 +114,11 @@ class ReminderReceiver : BroadcastReceiver() {
         )
 
         val text = "${artist.ifBlank { who }} · ${title.ifBlank { "一单约稿" }}" +
-            if (days <= 1) AppCtx.s(R.string.notify_due_tomorrow) else AppCtx.s(R.string.notify_three_days_left)
+            if (days <= 1) "　明天到期了" else "　还有 3 天"
 
         val n = NotificationCompat.Builder(context, Reminders.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(AppCtx.s(R.string.notify_commission_due_soon))
+            .setContentTitle("约稿快到期了")
             .setContentText(text)
             .setAutoCancel(true)
             .setContentIntent(tap)

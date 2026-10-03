@@ -94,16 +94,7 @@ import android.content.Intent
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-private enum class SortMode(val labelRes: Int) {
-    ByDate(R.string.ledger_sort_by_order_date),
-    ByMoney(R.string.ledger_sort_by_amount),
-    ByDeadline(R.string.ledger_sort_by_deadline);
-
-    // ⚠️ 不能写成构造参数 `ByDate(AppCtx.s(...))`：
-    //    enum 常量在**类初始化时**就求值一次，那会儿 AppCtx 还没 init，取到的是空串；
-    //    而且求值一次之后再也不更新，切了语言也不变。必须做成计算属性。
-    val label: String get() = AppCtx.s(labelRes)
-}
+private enum class SortMode(val label: String) { ByDate("按下单日期"), ByMoney("按金额"), ByDeadline("按截止日") }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,13 +115,6 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
     var selecting by remember { mutableStateOf(false) }
     val picked = remember { mutableStateListOf<String>() }
     var confirmDelete by remember { mutableStateOf(false) }
-    // 2026-10-03：把「所有删除都先问一句」补全 ——
-    //   单条删除（卡片「⋮」里那颗）以前是**直接删**的，只有批量那条路会问。
-    //   逸风：「每个删除操作都要弹这个弹窗确认一遍」。
-    /** 有值 = 正在问「这条要不要删掉」 */
-    var pendingDelete by remember { mutableStateOf<Commission?>(null) }
-    /** true = 正在问「那两条示例要不要清掉」 */
-    var confirmClearSamples by remember { mutableStateOf(false) }
     // 首次打开那两条示例还在不在（列表顶上那条「清掉」用）
     val demos = remember(state.items) {
         val ids = state.demoIds
@@ -159,19 +143,19 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
 
             // ① 大标题 + 搜索（往上滚会缩下去，iOS 那种）
             CollapsibleLargeTitle(
-                title = AppCtx.s(R.string.ledger_title),
+                title = "约稿账本",
                 collapse = rememberCollapseFraction(listState),
-                caption = AppCtx.s(R.string.ledger_summary_count, state.modeItems.size, state.active.size),
+                caption = "共 ${state.modeItems.size} 单 · 进行中 ${state.active.size}",
             ) {
                 // 新增按钮（2026-09-30 从右下角搬上来）：
                 // 原来是右下角那颗悬浮球，逸风说「有点遮挡了」→ 挪到右上角。
                 // 顺带跟 iOS 版对齐（那边一直是右上角的 +）。
-                CircleIconButton(Icons.Filled.Search, AppCtx.s(R.string.common_search)) {
+                CircleIconButton(Icons.Filled.Search, "搜索") {
                     searching = !searching
                     if (!searching) query = ""
                 }
                 Spacer(Modifier.width(8.dp))
-                CircleIconButton(Icons.Filled.Add, AppCtx.s(R.string.common_add)) { creating = true }
+                CircleIconButton(Icons.Filled.Add, "新增") { creating = true }
             }
 
             // ⚠️ 2026-10-02 改：**整页并进同一个 LazyColumn**。
@@ -233,8 +217,9 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                         .clip(RoundedCornerShape(14.dp))
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
                         .clickable {
-                            // 2026-10-03：清示例也是删数据，先问一句再动手
-                            confirmClearSamples = true
+                            val n = demos.size
+                            state.clearDemo()
+                            toastNow(ctx, "示例已清掉（${n} 条）")
                         }
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -247,7 +232,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                     )
                     Spacer(Modifier.width(7.dp))
                     Text(
-                        AppCtx.s(R.string.ledger_samples_hint, demos.size),
+                        "这 ${demos.size} 条是示例 · 点这里清掉",
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary,
@@ -265,7 +250,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                 exit = fadeOut(tween(120)) + shrinkVertically(tween(200)),
             ) {
                 HeroCard(Modifier.padding(horizontal = 16.dp)) {
-                    Text(AppCtx.s(R.string.ledger_in_progress_total), fontSize = 12.sp, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f))
+                    Text("进行中合计", fontSize = 12.sp, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f))
                     Spacer(Modifier.height(4.dp))
                     // ④ 会滚的数字（2026-09-30 第三批）：进来从 0 滚上去，数据一变从旧值滚到新值
                     RollingMoney(
@@ -279,7 +264,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                         HeroDivider()
                         HeroCell(Terms.unpaid(state.appMode), money((state.activeTotal - state.activePaid).coerceAtLeast(0.0)), Modifier.weight(1f))
                         HeroDivider()
-                        HeroCell(AppCtx.s(R.string.ledger_order_count_2), AppCtx.s(R.string.ledger_order_count, state.active.size), Modifier.weight(1f))
+                        HeroCell("单数", "${state.active.size} 单", Modifier.weight(1f))
                     }
                 }
             }
@@ -304,7 +289,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            AppCtx.s(R.string.ledger_order_count_value, Terms.handWord(state.appMode), queue.size),
+                            "${Terms.handWord(state.appMode)} ${queue.size} 单",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -329,7 +314,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                c.title.ifBlank { AppCtx.s(R.string.common_no_content) },
+                                c.title.ifBlank { "（没写内容）" },
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
@@ -341,9 +326,9 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                             Text(
                                 when {
                                     d == null -> ""
-                                    d < 0 -> AppCtx.s(R.string.ledger_overdue_days, -d)
-                                    d == 0 -> AppCtx.s(R.string.notify_due_today)
-                                    else -> AppCtx.s(R.string.notify_days_left, d)
+                                    d < 0 -> "超期 ${-d} 天"
+                                    d == 0 -> "今天到期"
+                                    else -> "还剩 $d 天"
                                 },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
@@ -356,7 +341,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                     if (queue.size > head.size) {
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            AppCtx.s(R.string.ledger_unlisted_orders, queue.size - head.size),
+                            "还有 ${queue.size - head.size} 单没列出来",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -380,7 +365,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                AppCtx.s(R.string.ledger_week_crowded, crowded7),
+                                "这周 $crowded7 单挤在一起，注意排一下",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color(0xFFB26A00),
@@ -401,7 +386,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                 if (selecting) {
                     // ④ 多选中：这一排让位给「已选 N 条 / 全选 / 完成」
                     Text(
-                        AppCtx.s(R.string.common_selected_count, picked.size),
+                        "已选 ${picked.size} 条",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary,
@@ -416,7 +401,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                         }
                     }) {
                         Text(
-                            if (picked.size == shown.size && shown.isNotEmpty()) AppCtx.s(R.string.common_deselect_all) else AppCtx.s(R.string.common_select_all),
+                            if (picked.size == shown.size && shown.isNotEmpty()) "取消全选" else "全选",
                             fontSize = 13.sp,
                         )
                     }
@@ -424,17 +409,17 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                         selecting = false
                         picked.clear()
                     }) {
-                        Text(AppCtx.s(R.string.common_done), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text("完成", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                 } else {
                     SegmentedControl(
-                        options = listOf(AppCtx.s(R.string.common_in_progress), AppCtx.s(R.string.common_archived)),
+                        options = listOf("进行中", "已归档"),
                         index = if (showArchived) 1 else 0,
                         modifier = Modifier.weight(1f),
                     ) { i -> showArchived = i == 1 }
                     SortButton(sort) { sort = it }
                     // ④ 多选入口（2026-10-01 加）
-                    CircleIconButton(Icons.Filled.Checklist, AppCtx.s(R.string.common_multi_select)) { selecting = true }
+                    CircleIconButton(Icons.Filled.Checklist, "多选") { selecting = true }
                 }
             }
             }
@@ -448,7 +433,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                SlimChip(AppCtx.s(R.string.common_all), filter == null) { filter = null }
+                SlimChip("全部", filter == null) { filter = null }
                 CommissionStatus.entries.forEach { s ->
                     SlimChip(Terms.status(s, state.appMode), filter == s) { filter = if (filter == s) null else s }
                 }
@@ -460,8 +445,8 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                 item(key = "empty") {
                     EmptyHint(
                         when {
-                            query.isNotBlank() -> AppCtx.s(R.string.common_no_results)
-                            showArchived -> AppCtx.s(R.string.ledger_archive_empty)
+                            query.isNotBlank() -> "没搜到诶"
+                            showArchived -> "归档箱是空的"
                             else -> Terms.empty(state.appMode)
                         }
                     )
@@ -487,7 +472,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                                 modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
                                 onEdit = { editing = item },
                                 onArchive = { state.toggleArchive(item.id) },
-                                onDelete = { pendingDelete = item },
+                                onDelete = { state.delete(item.id) },
                                 // ② 分享这一单（2026-10-01 加）：生成一张卡，存相册或发出去
                                 onShare = { shareItem = item },
                                 // ③ 左滑推进一档；推到「已交付」→ ② 来一下小庆祝
@@ -521,7 +506,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
         //    会被当成「横向的第二项」摆到第一项右边去（跑出屏幕）。
         CelebrateOverlay(
             show = celebrate,
-            label = AppCtx.s(R.string.ledger_delivered),
+            label = "已交付",
             onDone = { celebrate = false },
         )
 
@@ -540,7 +525,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                 onArchive = {
                     val n = picked.size
                     state.archiveMany(picked.toList(), !showArchived)
-                    toastNow(ctx, if (showArchived) AppCtx.s(R.string.ledger_restored_count, n) else AppCtx.s(R.string.ledger_archived_count, n))
+                    toastNow(ctx, if (showArchived) "已放回 ${n} 条" else "已归档 ${n} 条")
                     selecting = false
                     picked.clear()
                 },
@@ -553,66 +538,22 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(AppCtx.s(R.string.ledger_delete_confirm, picked.size)) },
-            text = { Text(AppCtx.s(R.string.ledger_delete_warning)) },
+            title = { Text("删掉这 ${picked.size} 条？") },
+            text = { Text("删了就找不回来了。") },
             confirmButton = {
                 TextButton(onClick = {
+                    val n = picked.size
                     state.deleteMany(picked.toList())
-                    // 2026-10-03：事后那条「已删掉 N 条」的 Toast **撤了** ——
-                    // 刚弹的确认框本身就是回话，再飘一条是重复；
-                    // 而列表少了几条、多选栏收回去，眼睛看得见。
+                    toastNow(ctx, "已删掉 ${n} 条")
                     confirmDelete = false
                     selecting = false
                     picked.clear()
                 }) {
-                    Text(AppCtx.s(R.string.common_delete_2), color = MaterialTheme.colorScheme.error)
+                    Text("删除", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text(AppCtx.s(R.string.common_never_mind)) }
-            },
-        )
-    }
-
-    // ④.1 单条删除：**一样先问一句**（2026-10-03 加）
-    //     逸风「每个删除操作都要弹这个弹窗确认一遍」—— 以前卡片「⋮」里点删除是直接删的，
-    //     只有批量那条路会问。现在三条路（单条 / 批量 / 清示例）统一。
-    // ⚠️ 归档 / 放回**不弹**（逸风定：可逆的东西别多拦一步），那两处保留 Toast 当回话。
-    pendingDelete?.let { target ->
-        AlertDialog(
-            onDismissRequest = { pendingDelete = null },
-            title = { Text(AppCtx.s(R.string.ledger_delete_confirm, 1)) },
-            text = { Text(AppCtx.s(R.string.ledger_delete_warning)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    state.delete(target.id)
-                    pendingDelete = null
-                }) {
-                    Text(AppCtx.s(R.string.common_delete_2), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingDelete = null }) { Text(AppCtx.s(R.string.common_never_mind)) }
-            },
-        )
-    }
-
-    // ①.1 清掉那两条示例：**也是删数据**，一样先问一句（2026-10-03 加）
-    if (confirmClearSamples) {
-        AlertDialog(
-            onDismissRequest = { confirmClearSamples = false },
-            title = { Text(AppCtx.s(R.string.ledger_clear_samples_confirm, demos.size)) },
-            text = { Text(AppCtx.s(R.string.ledger_delete_warning)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    state.clearDemo()
-                    confirmClearSamples = false
-                }) {
-                    Text(AppCtx.s(R.string.common_delete_2), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmClearSamples = false }) { Text(AppCtx.s(R.string.common_never_mind)) }
+                TextButton(onClick = { confirmDelete = false }) { Text("算了") }
             },
         )
     }
@@ -626,9 +567,9 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
             onShare = { bmp ->
                 val intent = sharePng(ctx, bmp, "约稿账本-${item.artist.ifBlank { "这一单" }}.png")
                 if (intent == null) {
-                    toastNow(ctx, AppCtx.s(R.string.common_share_failed))
+                    toastNow(ctx, "分享失败，换个方式再试")
                 } else {
-                    ctx.startActivity(Intent.createChooser(intent, AppCtx.s(R.string.ledger_share_order)))
+                    ctx.startActivity(Intent.createChooser(intent, "分享这一单"))
                 }
                 shareItem = null
             },
@@ -770,7 +711,7 @@ private fun CommissionCard(
             Column(Modifier.weight(1f)) {
                 Text(item.artist.ifBlank { Terms.otherBlank(mode) }, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 Text(
-                    item.title.ifBlank { AppCtx.s(R.string.common_no_content) },
+                    item.title.ifBlank { "（没写内容）" },
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 1.dp),
@@ -781,7 +722,7 @@ private fun CommissionCard(
                 IconButton(onClick = { menu = true }, modifier = Modifier.size(32.dp)) {
                     Icon(
                         Icons.Filled.MoreHoriz,
-                        contentDescription = AppCtx.s(R.string.common_more),
+                        contentDescription = "更多",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
                     )
@@ -796,15 +737,15 @@ private fun CommissionCard(
                     // ⚠️ **不给图标** —— 这一列菜单里别的项都没有 leadingIcon，
                     //    只有它挂一个，看着不齐（逸风 2026-10-02：「太不和谐了」）。
                     DropdownMenuItem(
-                        text = { Text(AppCtx.s(R.string.ledger_share_order), fontSize = 14.sp) },
+                        text = { Text("分享这一单", fontSize = 14.sp) },
                         onClick = { menu = false; onShare() },
                     )
                     DropdownMenuItem(
-                        text = { Text(if (item.archived) AppCtx.s(R.string.ledger_unarchive) else AppCtx.s(R.string.common_archive), fontSize = 14.sp) },
+                        text = { Text(if (item.archived) "取消归档" else "归档", fontSize = 14.sp) },
                         onClick = { menu = false; onArchive() },
                     )
                     DropdownMenuItem(
-                        text = { Text(AppCtx.s(R.string.common_delete_2), color = MaterialTheme.colorScheme.error, fontSize = 14.sp) },
+                        text = { Text("删除", color = MaterialTheme.colorScheme.error, fontSize = 14.sp) },
                         onClick = { menu = false; onDelete() },
                     )
                 }
@@ -826,7 +767,7 @@ private fun CommissionCard(
                 forward = false,
                 enabled = item.status.ordinal > 0,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                desc = AppCtx.s(R.string.ledger_revert_one),
+                desc = "退回一档",
                 onClick = onRetreat,
             )
             Spacer(Modifier.width(8.dp))
@@ -836,7 +777,7 @@ private fun CommissionCard(
                 forward = true,
                 enabled = nextStatus != null,
                 tint = statusColor(item.status),
-                desc = if (nextStatus != null) AppCtx.s(R.string.ledger_advance_to, Terms.status(nextStatus, mode)) else AppCtx.s(R.string.ledger_last_stage),
+                desc = if (nextStatus != null) "推进到${Terms.status(nextStatus, mode)}" else "已经是最后一档",
                 onClick = onAdvance,
             )
         }
@@ -917,7 +858,7 @@ private fun PickCard(
                 if (checked) {
                     Icon(
                         Icons.Filled.Check,
-                        contentDescription = AppCtx.s(R.string.common_selected),
+                        contentDescription = "已选中",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(15.dp),
                     )
@@ -935,7 +876,7 @@ private fun PickCard(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    item.title.ifBlank { AppCtx.s(R.string.common_no_content) },
+                    item.title.ifBlank { "（没写内容）" },
                     fontSize = 12.5.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -968,7 +909,7 @@ private fun BatchBar(
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(AppCtx.s(R.string.common_selected_count, count), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text("已选 $count 条", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.weight(1f))
             TextButton(onClick = onArchive, enabled = count > 0) {
                 Icon(
@@ -977,7 +918,7 @@ private fun BatchBar(
                     modifier = Modifier.size(17.dp),
                 )
                 Spacer(Modifier.width(5.dp))
-                Text(if (archivedView) AppCtx.s(R.string.ledger_put_back) else AppCtx.s(R.string.common_archive), fontSize = 13.sp)
+                Text(if (archivedView) "放回去" else "归档", fontSize = 13.sp)
             }
             TextButton(onClick = onDelete, enabled = count > 0) {
                 Icon(
@@ -987,7 +928,7 @@ private fun BatchBar(
                     modifier = Modifier.size(17.dp),
                 )
                 Spacer(Modifier.width(5.dp))
-                Text(AppCtx.s(R.string.common_delete_2), fontSize = 13.sp, color = cs.error)
+                Text("删除", fontSize = 13.sp, color = cs.error)
             }
         }
     }
@@ -1035,19 +976,19 @@ fun SingleShareDialog(
                     scope.launch {
                         runCatching { gl.toImageBitmap().asAndroidBitmap() }
                             .onSuccess { onShare(it) }
-                            .onFailure { toastNow(context, AppCtx.s(R.string.stats_image_failed)) }
+                            .onFailure { toastNow(context, "生成图片失败，反馈给我看看") }
                     }
                 },
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = cs.primary),
                 modifier = Modifier.fillMaxWidth().height(48.dp),
             ) {
-                Text(AppCtx.s(R.string.common_share_2), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text("分享出去", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.height(4.dp))
-            TextButton(onClick = onDismiss) { Text(AppCtx.s(R.string.common_done), fontSize = 13.sp) }
+            TextButton(onClick = onDismiss) { Text("完成", fontSize = 13.sp) }
             Text(
-                AppCtx.s(R.string.common_image_local_note),
+                "图片在手机上生成，不上传",
                 fontSize = 11.sp,
                 color = cs.onSurfaceVariant,
             )
@@ -1067,7 +1008,7 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
             .padding(20.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(AppCtx.s(R.string.ledger_title), fontSize = 13.sp, color = w.copy(alpha = 0.85f))
+            Text("约稿账本", fontSize = 13.sp, color = w.copy(alpha = 0.85f))
             Spacer(Modifier.weight(1f))
             Text(dayText(item.dateMillis), fontSize = 12.sp, color = w.copy(alpha = 0.85f))
         }
@@ -1083,7 +1024,7 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            item.title.ifBlank { AppCtx.s(R.string.common_no_content) },
+            item.title.ifBlank { "（没写内容）" },
             fontSize = 13.sp,
             color = w.copy(alpha = 0.88f),
             maxLines = 2,
@@ -1095,7 +1036,7 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
             Text(money(item.total), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = w)
             Spacer(Modifier.width(6.dp))
             Text(
-                AppCtx.s(R.string.ledger_total_price),
+                "总价",
                 fontSize = 11.sp,
                 color = w.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 6.dp),
@@ -1130,7 +1071,7 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
 
         item.deadlineMillis?.let {
             Spacer(Modifier.height(8.dp))
-            Text(AppCtx.s(R.string.ledger_deadline, dayText(it)), fontSize = 11.5.sp, color = w.copy(alpha = 0.75f))
+            Text("截止 ${dayText(it)}", fontSize = 11.5.sp, color = w.copy(alpha = 0.75f))
         }
         if (item.note.isNotBlank()) {
             Spacer(Modifier.height(8.dp))
@@ -1145,9 +1086,9 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
 
         Spacer(Modifier.height(16.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(AppCtx.s(R.string.ledger_slogan), fontSize = 11.sp, color = w.copy(alpha = 0.68f))
+            Text("一单一记 · 清清楚楚", fontSize = 11.sp, color = w.copy(alpha = 0.68f))
             Spacer(Modifier.weight(1f))
-            Text(AppCtx.s(R.string.common_author), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = w.copy(alpha = 0.68f))
+            Text("作者：筱晞", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = w.copy(alpha = 0.68f))
         }
     }
 }
@@ -1198,20 +1139,20 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
         ) {
             Text(
                 if (original == null) {
-                    if (mode == AppMode.BUYER) AppCtx.s(R.string.ledger_new_commission) else AppCtx.s(R.string.ledger_new_gig)
+                    if (mode == AppMode.BUYER) "新增约稿" else "新增接稿"
                 } else {
-                    if (mode == AppMode.BUYER) AppCtx.s(R.string.ledger_edit_commission) else AppCtx.s(R.string.artist_edit_commission)
+                    if (mode == AppMode.BUYER) "编辑约稿" else "编辑接稿"
                 },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
 
             OutlinedTextField(artist, { artist = it }, label = { Text(Terms.other(mode)) }, singleLine = true, shape = fieldShape, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(title, { title = it }, label = { Text(AppCtx.s(R.string.ledger_content_hint)) }, singleLine = true, shape = fieldShape, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(title, { title = it }, label = { Text("内容（比如全身像）") }, singleLine = true, shape = fieldShape, modifier = Modifier.fillMaxWidth())
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
-                    total, { total = it }, label = { Text(AppCtx.s(R.string.ledger_total_price)) }, singleLine = true,
+                    total, { total = it }, label = { Text("总价") }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = fieldShape,
                     modifier = Modifier.weight(1f),
@@ -1224,7 +1165,7 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
                 )
             }
 
-            Text(AppCtx.s(R.string.ledger_status), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("进度", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             // 同账本页：一排。这里只有 4 个按钮，更宽裕
             Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -1236,7 +1177,7 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
             }
 
             OutlinedTextField(
-                dateText, { dateText = it }, label = { Text(AppCtx.s(R.string.ledger_order_date)) },
+                dateText, { dateText = it }, label = { Text("下单日期") },
                 placeholder = { Text("yyyy-MM-dd") },
                 singleLine = true, shape = fieldShape, modifier = Modifier.fillMaxWidth(),
             )
@@ -1248,25 +1189,25 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
                         deadlineStr = dayText(System.currentTimeMillis() + 7L * 86_400_000L)
                     }
                 })
-                Text(AppCtx.s(R.string.ledger_set_deadline), fontSize = 14.sp)
+                Text("设置截止日期", fontSize = 14.sp)
             }
             if (hasDeadline) {
                 OutlinedTextField(
-                    deadlineStr, { deadlineStr = it }, label = { Text(AppCtx.s(R.string.ledger_deadline_2)) },
+                    deadlineStr, { deadlineStr = it }, label = { Text("截止日期") },
                     placeholder = { Text("yyyy-MM-dd") },
                     singleLine = true, shape = fieldShape, modifier = Modifier.fillMaxWidth(),
                 )
             }
 
             OutlinedTextField(
-                note, { note = it }, label = { Text(AppCtx.s(R.string.ledger_note_hint)) },
+                note, { note = it }, label = { Text("备注（随手记一句）") },
                 shape = fieldShape,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(Modifier.height(2.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text(AppCtx.s(R.string.common_cancel), fontSize = 15.sp) }
+                TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("取消", fontSize = 15.sp) }
                 Button(
                     onClick = {
                         val c = (original ?: Commission()).copy(
@@ -1286,7 +1227,7 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     modifier = Modifier.weight(2f).height(48.dp),
-                ) { Text(AppCtx.s(R.string.common_save), fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
+                ) { Text("保存", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
             }
         }
     }

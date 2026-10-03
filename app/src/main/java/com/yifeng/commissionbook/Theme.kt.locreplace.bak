@@ -117,13 +117,10 @@ fun AppTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> U
 //    「浅色 / 暗色」= **无视**系统，App 自己说了算。
 //    所以最终那个布尔值必须在**外面**算好再喂给 [AppTheme] ——
 //    让 AppTheme 自己去读系统，等于把「用户选的」这层给绕过去了。
-enum class AppAppearance(val key: String, val labelRes: Int) {
-    SYSTEM("system", R.string.settings_follow_system),
-    LIGHT("light", R.string.settings_light),
-    DARK("dark", R.string.settings_dark_mode);
-
-    // ⚠️ 同上：显示名必须是计算属性，不能塞进构造参数（enum 初始化时 AppCtx 还没准备好）
-    val label: String get() = AppCtx.s(labelRes)
+enum class AppAppearance(val key: String, val label: String) {
+    SYSTEM("system", "跟随系统"),
+    LIGHT("light", "浅色"),
+    DARK("dark", "暗色");
 
     /** 这一档下，界面到底该不该是深色 */
     fun isDark(systemDark: Boolean): Boolean = when (this) {

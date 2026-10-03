@@ -68,8 +68,8 @@ object BioLock {
             })
 
         val builder = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(AppCtx.s(R.string.ledger_unlock_ledger))
-            .setSubtitle(AppCtx.s(R.string.ledger_unlock_biometric))
+            .setTitle("解锁约稿账本")
+            .setSubtitle("用指纹 / 面容 / 密码解锁")
             .setAllowedAuthenticators(allowed())
 
         // 安卓 10 及以下：单独告诉它「认不出也可以用锁屏密码」，不然没指纹的人会被锁在外面
@@ -127,36 +127,6 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putString("appearance", v).apply()
 
     /**
-     * 启动时自动检查更新（2026-10-03 加，**只有安卓版有**这个功能）。
-     *
-     * 默认**开** —— 这个 App 是发给朋友用的，没法上应用商店，
-     * 不主动提醒的话他们永远停在旧版本。不想要就在设置里关掉，
-     * 关掉之后 App 一次网络请求都不发（隐私政策里就是这么写的，得对得上）。
-     */
-    var updateAutoCheck: Boolean
-        get() = sp.getBoolean("updateAutoCheck", true)
-        set(v) = sp.edit().putBoolean("updateAutoCheck", v).apply()
-
-    /**
-     * 上次检查更新的时刻（毫秒）。
-     *
-     * 用来限流 —— 别每次冷启动都去敲一次网络（见 MainActivity 里那 12 小时）。
-     * ⚠️ 检查**失败**也要记：不记的话网络不通时每次开 App 都要白等一轮超时。
-     */
-    var lastUpdateCheckAt: Long
-        get() = sp.getLong("lastUpdateCheckAt", 0L)
-        set(v) = sp.edit().putLong("lastUpdateCheckAt", v).apply()
-
-    /**
-     * 「跳过这个版本」记下的 versionCode。0 = 没跳过任何版本。
-     *
-     * 生效范围就是这个号：出了更新的版本，号比它大，自然又会提示。
-     */
-    var skippedUpdateCode: Int
-        get() = sp.getInt("skippedUpdateCode", 0)
-        set(v) = sp.edit().putInt("skippedUpdateCode", v).apply()
-
-    /**
      * 首启那一问「你是买家还是画师」问过没有（2026-09-30 加）。
      *
      * false = 还没问过 → 启动时（政策同意完、权限要完）弹一次。
@@ -186,34 +156,6 @@ class Prefs(context: Context) {
     var helpSeen: Boolean
         get() = sp.getBoolean("helpSeen", false)
         set(v) = sp.edit().putBoolean("helpSeen", v).apply()
-
-    /**
-     * 语言（2026-10-03 加，多语言）。
-     *
-     * 空串 = 跟随系统；否则存 tag（"zh-CN" / "zh-HK" / "zh-TW" / "en-GB" / "en-US"）。
-     *
-     * ⚠️ **为什么自己存一份，不用 `AppCompatDelegate.setApplicationLocales`**：
-     *    那套东西的存储是挂在「AppCompatActivity 的语言委托」上的，而本工程的
-     *    MainActivity 继承的是 `FragmentActivity`（AppCompatActivity 的父类，
-     *    **没有那套委托**）。真机实测：调了 setApplicationLocales、也 recreate 了，
-     *    界面纹丝不动 —— 因为 `getApplicationLocales()` 拿回来还是空的。
-     *    所以老老实实存自己的 SharedPreferences，读取时机完全可控。
-     */
-    var appLanguage: String
-        get() = sp.getString("appLanguage", "") ?: ""
-        set(v) = sp.edit().putString("appLanguage", v).apply()
-
-    companion object {
-        /**
-         * 在 `Activity.attachBaseContext` 里读语言用。
-         *
-         * 那个时机太早，来不及 `new Prefs(...)` 走一遍包装，所以直接开偏好文件读 ——
-         * 名字和上面那个 `sp` **必须一模一样**（"settings"）。
-         */
-        fun languageOf(context: Context): String =
-            context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-                .getString("appLanguage", "") ?: ""
-    }
 
     /**
      * 画师自己定的加价项清单（2026-10-01 加）。

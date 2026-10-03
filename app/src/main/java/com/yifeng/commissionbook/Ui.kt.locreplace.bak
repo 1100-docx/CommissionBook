@@ -115,9 +115,9 @@ fun deadlineText(c: Commission): Pair<String, Boolean>? {
     val d = c.daysLeft() ?: return null
     val late = d < 0
     val s = when {
-        d < 0 -> AppCtx.s(R.string.ledger_overdue_days, -d)
-        d == 0 -> AppCtx.s(R.string.notify_due_today)
-        else -> AppCtx.s(R.string.notify_days_left, d)
+        d < 0 -> "超期 ${-d} 天"
+        d == 0 -> "今天到期"
+        else -> "还剩 $d 天"
     }
     return s to late
 }
@@ -208,10 +208,10 @@ fun LockScreen(hasBio: Boolean, onUnlock: () -> Unit) {
                 )
             }
             Spacer(Modifier.height(18.dp))
-            Text(AppCtx.s(R.string.ledger_locked), style = MaterialTheme.typography.titleLarge)
+            Text("约稿账本已锁定", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(6.dp))
             Text(
-                if (hasBio) AppCtx.s(R.string.ledger_unlock_biometric) else AppCtx.s(R.string.settings_no_screen_lock),
+                if (hasBio) "用指纹 / 面容 / 密码解锁" else "这台手机还没设锁屏密码",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -222,7 +222,7 @@ fun LockScreen(hasBio: Boolean, onUnlock: () -> Unit) {
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-            ) { Text(AppCtx.s(R.string.common_unlock), fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
+            ) { Text("解锁", fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
         }
     }
 }

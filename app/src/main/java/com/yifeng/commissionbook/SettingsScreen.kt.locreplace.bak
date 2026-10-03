@@ -1,0 +1,332 @@
+package com.yifeng.commissionbook
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.fragment.app.FragmentActivity
+
+@Composable
+fun SettingsScreen(
+    modifier: Modifier,
+    state: AppState,
+    prefs: Prefs,
+    onExport: (String) -> Unit,
+    onImport: () -> Unit,
+    onShare: (String, String) -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenFeedback: () -> Unit,
+    onOpenCalculator: () -> Unit,
+    onOpenHelp: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    var lockOn by remember { mutableStateOf(prefs.lockEnabled) }
+    var reminderOn by remember { mutableStateOf(prefs.reminderEnabled) }
+
+    // 版本号从安装包里读，不写死 —— 免得包升了、设置页还写着旧号
+    // （iOS 版那边栽过一次：两个人对着两份包争论到底装没装上）
+    val versionName = remember {
+        runCatching {
+            val pm = context.packageManager
+            val info = if (android.os.Build.VERSION.SDK_INT >= 33) {
+                pm.getPackageInfo(context.packageName,
+                    android.content.pm.PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(context.packageName, 0)
+            }
+            info.versionName ?: "?"
+        }.getOrDefault("?")
+    }
+
+    // 滚动位置 → 大标题跟着缩
+    val scroll = rememberScrollState()
+    val collapse = (scroll.value / 150f).coerceIn(0f, 1f)
+
+    // 安卓 13（API 33）起，弹通知要用户点头。
+    // 系统弹的那个「允许通知吗」框是原生的，我们不自己画。
+    val notifPermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            android.widget.Toast
+                .makeText(context, "没给通知权限，到点就不会提醒你 —— 想开去手机设置里打开", android.widget.Toast.LENGTH_LONG)
+                .show()
+        }
+    }
+    val askNotif = {
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    ScreenSurface(modifier) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(scroll),
+        ) {
+            CollapsibleLargeTitle(
+                title = "设置",
+                collapse = collapse,
+                caption = "数据都在这台手机里，不上传",
+            )
+
+            Column(
+                Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+
+                // ① 使用模式（2026-09-30 加）
+                // 同一套数据模型、两套叫法。切一下：界面用词、列表、底栏、统计全都跟着换。
+                // 两边账本各记各的 —— 当买家约的稿、当画师接的单，是两摞。
+                Column {
+                    SectionLabel("使用模式")
+                    InsetGroup {
+                        GroupRow(
+                            title = if (state.appMode == AppMode.BUYER) "买家" else "画师",
+                            subtitle = if (state.appMode == AppMode.BUYER)
+                                "我出钱约别人的稿：记「约了谁、给到哪一步」。对方叫「画师」，钱那栏叫「已付 / 未付」。"
+                            else
+                                "别人找我画：记「谁找我、定金收没收、尾款还没收」。对方叫「客户」，钱那栏叫「已收定金 / 待收尾款」。",
+                            icon = Icons.Filled.SwapHoriz,
+                            divider = false,
+                            trailing = {
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    AppMode.entries.forEach { m ->
+                                        SlimChip(m.label, state.appMode == m) { state.switchMode(m) }
+                                    }
+                                }
+                            },
+                        )
+                    }
+                    Text(
+                        "两边的记录是分开的两摞，切过去只看那一摞。改模式不会动任何一条数据。",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                    )
+                }
+
+                // ①.5 外观（2026-10-03 加）
+                //
+                // 深浅色三选一。**为什么不跳系统设置**：深浅色是 App 自己能定的事，
+                // 改完当场生效；语言才必须跳出去（系统规定，见下面「语言」一节）。
+                Column {
+                    SectionLabel("外观")
+                    InsetGroup {
+                        GroupRow(
+                            title = "深浅色",
+                            subtitle = "「跟随系统」= 手机切深色，App 跟着深色；选「浅色 / 暗色」就固定不变，不看手机那档。",
+                            icon = Icons.Filled.DarkMode,
+                            divider = false,
+                            trailing = {
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    AppAppearance.entries.forEach { a ->
+                                        SlimChip(a.label, state.appearance == a) {
+                                            state.switchAppearance(a)
+                                        }
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+
+                // ② 保护
+                Column {
+                    SectionLabel("安全")
+                    InsetGroup {
+                        GroupRow(
+                            title = "保护",
+                            subtitle = "打开后进 App 要先按指纹 / 面容 / 密码，切后台回来也会重新锁。",
+                            icon = Icons.Filled.Lock,
+                            divider = false,
+                            trailing = {
+                                Switch(checked = lockOn, onCheckedChange = { v ->
+                                    if (v && !BioLock.available(context)) {
+                                        android.widget.Toast
+                                            .makeText(context, "这台手机还没设锁屏密码，先去设置里设一个", android.widget.Toast.LENGTH_LONG)
+                                            .show()
+                                    } else {
+                                        lockOn = v
+                                        prefs.lockEnabled = v
+                                        (context as? FragmentActivity)?.applyPrivacyShield(v)
+                                    }
+                                })
+                            },
+                        )
+                    }
+                }
+
+                // ② 提醒
+                Column {
+                    SectionLabel("提醒")
+                    InsetGroup {
+                        GroupRow(
+                            title = "截止日前提醒我",
+                            subtitle = "有截止日的单子，到期前 3 天和 1 天各提醒一次（晚上 8 点）。已交付的、归档的不提醒。",
+                            icon = Icons.Filled.NotificationsActive,
+                            divider = false,
+                            trailing = {
+                                Switch(checked = reminderOn, onCheckedChange = { v ->
+                                    reminderOn = v
+                                    prefs.reminderEnabled = v
+                                    Reminders.reschedule(context, state.items, v)
+                                    if (v) askNotif()
+                                })
+                            },
+                        )
+                    }
+                    Text(
+                        "第一次打开会问你要不要允许通知。万一没收到，去手机的「设置 → 应用 → 约稿账本 → 通知」里看看是不是关掉了。",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                    )
+                }
+
+                // ③ 备份与恢复
+                Column {
+                    SectionLabel("备份与恢复")
+                    InsetGroup {
+                        GroupRow(
+                            title = "导出备份",
+                            subtitle = "存成 JSON 文件，能保存到手机 / 云盘",
+                            icon = Icons.Filled.FileDownload,
+                            onClick = { onExport(state.toJsonString()) },
+                        )
+                        GroupRow(
+                            title = "分享备份",
+                            subtitle = "直接发给微信 / 发给自己",
+                            icon = Icons.Filled.Share,
+                            onClick = { onShare(state.toJsonString(), Backup.fileName(manual = true)) },
+                        )
+                        GroupRow(
+                            title = "从文件恢复",
+                            subtitle = "跟 iOS 版的备份通用，两边都认",
+                            icon = Icons.Filled.Restore,
+                            divider = false,
+                            onClick = onImport,
+                        )
+                    }
+                }
+
+                // ③.5 小工具（2026-09-30 第三批）
+                // ⚠️ 只在**画师模式**出现：报价计算器是画师向的（算价、报给客户）。
+                //    2026-10-01 逸风：「买家模式不应出现这个」。
+                if (state.appMode == AppMode.ARTIST) {
+                    Column {
+                        SectionLabel("小工具")
+                        InsetGroup {
+                            GroupRow(
+                                title = "报价计算器",
+                                subtitle = "算个价，再复制一段报给客户",
+                                icon = Icons.Filled.Calculate,
+                                divider = false,
+                                onClick = onOpenCalculator,
+                            )
+                        }
+                    }
+                }
+
+                // ③.6 帮助（2026-10-01 加）
+                // 逸风：「建议出帮助选项，因为后续功能越多，用户越难以自己摸索」。
+                // 放这儿（小工具之后、关于之前）—— 顺序上刚好是「用的东西 → 不会就查 → 别的」。
+                Column {
+                    SectionLabel("帮助")
+                    InsetGroup {
+                        GroupRow(
+                            title = "怎么用 · 功能一览",
+                            subtitle = "每条两句话：干啥用、从哪儿点进去",
+                            icon = Icons.Filled.HelpOutline,
+                            divider = false,
+                            onClick = onOpenHelp,
+                        )
+                    }
+                }
+
+                // ④ 关于
+                Column {
+                    SectionLabel("关于")
+                    InsetGroup {
+                        GroupRow(
+                            title = "版本",
+                            icon = Icons.Filled.Info,
+                            trailing = { InfoValue("$versionName（安卓版）") },
+                        )
+                        // 首次启动已经强制读过一遍，这里留个入口随时能翻回来
+                        GroupRow(
+                            title = "隐私政策",
+                            subtitle = "不联网 · 不收集任何信息（离线可看）",
+                            icon = Icons.Filled.PrivacyTip,
+                            onClick = onOpenPrivacy,
+                        )
+                        // 反馈渠道（2026-09-29 加）：App 不联网，所以是「帮你写好，你自己发」
+                        GroupRow(
+                            title = "反馈与建议",
+                            subtitle = "哪儿别扭、想要啥功能，都能说",
+                            icon = Icons.Filled.Email,
+                            onClick = onOpenFeedback,
+                        )
+                        GroupRow(title = "条数", subtitle = "当前模式 / 全部", trailing = { InfoValue("${state.modeItems.size} 条 · 共 ${state.items.size} 条") })
+                        GroupRow(title = "已归档", trailing = { InfoValue("${state.modeItems.count { it.archived }} 条") })
+                        GroupRow(
+                            title = "数据存放",
+                            divider = false,
+                            trailing = { InfoValue("手机本地") },
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(28.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoValue(v: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            v,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
