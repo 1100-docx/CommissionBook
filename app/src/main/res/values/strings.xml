@@ -388,7 +388,7 @@
     <string name="settings_mode_separate">两边的记录是分开的两摞，切过去只看那一摞。改模式不会动任何一条数据。</string>
     <string name="settings_appearance">外观</string>
     <string name="settings_theme">深浅色</string>
-    <string name="settings_theme_desc">「跟随系统」= 手机切深色，App 跟着深色；选「浅色 / 暗色」就固定不变，不看手机那档。</string>
+    <string name="settings_theme_desc">「跟随系统」= 跟手机走；浅色 / 暗色 = 固定不变。</string>
     <string name="settings_security">安全</string>
     <string name="settings_lock_desc">打开后进 App 要先按指纹 / 面容 / 密码，切后台回来也会重新锁。</string>
     <string name="settings_no_passcode_2">这台手机还没设锁屏密码，先去设置里设一个</string>
@@ -485,6 +485,6 @@
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
     <string name="privacy_policy_updated">最后更新：2026 年 10 月 3 日（第二版 —— 加入「检查更新」，并同步改掉原来「完全不联网」的说法）</string>
-    <string name="privacy_policy_scope">适用版本：安卓版 3.5.8（versionCode 32）及以后</string>
+    <string name="privacy_policy_scope">适用版本：安卓版 %1$s（versionCode %2$d）及以后</string>
     <string name="notify_default_title">一单约稿</string>
 </resources>

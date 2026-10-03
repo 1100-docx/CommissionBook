@@ -75,12 +75,26 @@ private data class PolicyPermission(val name: String, val why: String, val refus
 //      逸风切到英文看隐私政策，看到一半蹦出「最后更新：2026 年 10 月 3 日…」
 //      和「适用版本：安卓版 3.5.7…」，整页就这两行是中文。
 //      **隐私政策是政策，必须五种语言都读得懂**，所以这两条现在也是资源了。
-private val POLICY_UPDATED = AppCtx.s(R.string.privacy_policy_updated)
-private val POLICY_SCOPE = AppCtx.s(R.string.privacy_policy_scope)
+private val POLICY_UPDATED get() = AppCtx.s(R.string.privacy_policy_updated)
+
+/**
+ * 「适用版本」那行。
+ *
+ * ⚠️ 2026-10-03 又踩一次：原来是 `AppCtx.s(R.string.privacy_policy_scope)`，
+ *    版本号**写死在四份语言包里**（3.5.8 / code 32）——
+ *    这次升到 3.5.9，政策上还印着 3.5.8，等于政策说了假话。
+ *    现在版本号从 [BuildConfig] 现取，升版本不用再去动四份语言包。
+ *    另一处 `get()` 也是故意的：`AppCtx.s` 是运行时取串，
+ *    用 `val`（带缓存语义的顶层属性）会在第一次访问时把当时那门语言钉死。
+ */
+private val POLICY_SCOPE get() = AppCtx.s(
+    R.string.privacy_policy_scope,
+    BuildConfig.VERSION_NAME,
+    BuildConfig.VERSION_CODE,
+)
 
 /** 一句话总结（单独拿出来，放最上面高亮） */
-private val POLICY_SUMMARY =
-    AppCtx.s(R.string.privacy_intro)
+private val POLICY_SUMMARY get() = AppCtx.s(R.string.privacy_intro)
 
 private val policySections = listOf(
     PolicySection(

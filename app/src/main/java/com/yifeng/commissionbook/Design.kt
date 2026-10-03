@@ -513,6 +513,17 @@ fun GroupRow(
      *    开着这个开关 = 选项自己占一行，标题那列拿到整行宽度，任何语言都不会再挤。
      */
     stackTrailing: Boolean = false,
+    /**
+     * 副标题（那句长说明）**是不是挪到下面独占一行**。
+     *
+     * 2026-10-03 逸风审美反馈：「三颗胶囊另起一行看着不和谐」（那版是 stackTrailing）。
+     * 真正该挪下去的是**副标题**，不是胶囊 ——
+     * 因为挤爆这一行的元凶是副标题那句长文案，它跟胶囊抢同一行的宽度：
+     *   标题（短：深浅色 / Light / Dark）+ 胶囊（右侧）**同一行** ≈ 250dp，放得下；
+     *   再把「「跟随系统」= 手机切深色，App 跟着深色…」塞进中间那列 → 立刻出界。
+     * 所以规矩定成：**短标题跟控件同一行（跟上面「模式」那行一个规矩），长说明另起一行通铺**。
+     */
+    stackSubtitle: Boolean = false,
     trailing: @Composable () -> Unit = {},
     onClick: (() -> Unit)? = null,
 ) {
@@ -539,7 +550,7 @@ fun GroupRow(
                     end = 16.dp,
                     top = 13.dp,
                     // 选项另起一行时，这段底下留窄一点，不然两段之间会空出一大块
-                    bottom = if (stackTrailing) 4.dp else 13.dp,
+                    bottom = if (stackTrailing || stackSubtitle) 4.dp else 13.dp,
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -557,7 +568,7 @@ fun GroupRow(
             }
             Column(Modifier.weight(1f)) {
                 Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = cs.onSurface)
-                if (subtitle != null) {
+                if (subtitle != null && !stackSubtitle) {
                     Text(
                         subtitle,
                         fontSize = 12.sp,
@@ -569,6 +580,22 @@ fun GroupRow(
             }
             // stackTrailing 时**不在这儿**塞 —— 它会把上面那列文字挤没（见参数注释）
             if (!stackTrailing) trailing()
+        }
+        // 副标题独占一行：通铺到整行宽（跟标题文字左对齐），
+        // 这样标题跟控件的宽度就宽裕了，长说明也能正常折行、不再一字一行
+        if (stackSubtitle && subtitle != null) {
+            Text(
+                subtitle,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+                color = cs.onSurfaceVariant,
+                modifier = Modifier.padding(
+                    start = if (icon != null) 58.dp else 16.dp,
+                    end = 16.dp,
+                    top = 2.dp,
+                    bottom = 13.dp,
+                ),
+            )
         }
         // 选项自己那一行：左边缘跟正文对齐（有图标就对齐到文字起点），靠右摆
         if (stackTrailing) {

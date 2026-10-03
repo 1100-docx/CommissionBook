@@ -12,8 +12,8 @@ android {
         applicationId = "com.yifeng.commissionbook"
         minSdk = 26
         targetSdk = 36
-        versionCode = 31
-        versionName = "3.5.7"
+        versionCode = 33
+        versionName = "3.5.9"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
@@ -50,6 +50,11 @@ android {
 
     buildFeatures {
         compose = true
+        // 2026-10-03 打开：隐私政策里那行「适用版本：安卓版 3.5.x（versionCode N）」
+        // 以前是**写死**在四份语种资源里的，一升版本就悄悄过期
+        // （刚就踩了：包里是 3.5.9、政策上还写着 3.5.8）。
+        // 改成从 BuildConfig 现取，以后升版本不必再手动改四份语言包。
+        buildConfig = true
     }
 
     packaging {

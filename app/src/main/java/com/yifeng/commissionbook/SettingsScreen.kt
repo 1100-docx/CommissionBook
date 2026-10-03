@@ -184,12 +184,17 @@ fun SettingsScreen(
                             title = AppCtx.s(R.string.settings_theme),
                             subtitle = AppCtx.s(R.string.settings_theme_desc),
                             icon = Icons.Filled.DarkMode,
-                            // ⚠️ 2026-10-03：**必须另起一行**。
-                            //    英文那三颗胶囊是「Follow System / Light / Dark」，
-                            //    塞在右边会把标题和副标题挤到几乎没有宽度 ——
-                            //    逸风截图里就是「一个字母一行」，整页被撑成一列竖排字。
-                            //    中文时它俩宽度差不多、侥幸没露；一换英文就现原形。
-                            stackTrailing = true,
+                            // ⚠️ 2026-10-03 改了三版，别再来回折腾：
+                            //   ① 「长说明塞中间那列 + 英文三颗长胶囊」→ 标题被压成「一个字母一行」；
+                            //   ② stackTrailing（胶囊另起一行）→ 逸风：「三颗另起一行看着不和谐」；
+                            //   ③ stackSubtitle（说明另起一行）→ 逸风：「还是想要（模式那行那样的）排列」。
+                            //   终版 = **跟上面「模式」那行完全同一个排列**：
+                            //   图标 + 标题说明 + 胶囊，全在同一行，胶囊靠右、垂直居中。
+                            //   能装下的前提是两件事一起做：
+                            //     a. 胶囊文案短（System / Light / Dark，别再写 Follow System）；
+                            //     b. 中间那句说明写短（settings_theme_desc 已压到 ~20 字，
+                            //        窄列里自然折三行，跟「模式」那行一样高）。
+                            //   哪天真装不下了，问题在文案长度，不是这个排列。
                             divider = false,
                             trailing = {
                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

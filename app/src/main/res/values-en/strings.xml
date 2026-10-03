@@ -397,7 +397,7 @@ System: Android %4$s (API %5$s)
     <string name="settings_mode_separate">The two sides are kept as separate stacks — switch over and you only see that stack. Changing modes won\'t touch any of your data.</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme">Light / Dark</string>
-    <string name="settings_theme_desc">"Follow System" means the app goes dark when your phone does; pick "Light / Dark" to keep it fixed regardless of your phone\'s setting.</string>
+    <string name="settings_theme_desc">System follows your phone\'s theme; Light or Dark stays fixed.</string>
     <string name="settings_security">Security</string>
     <string name="settings_lock_desc">When on, you\'ll need fingerprint / face / passcode to open the app, and it re-locks when you return from the background.</string>
     <string name="settings_no_passcode_2">This phone has no lock screen passcode yet — set one in Settings first</string>
@@ -493,6 +493,6 @@ System: Android %4$s (API %5$s)
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
     <string name="privacy_policy_updated">Last updated: 3 October 2026 (revision 2 — update checks were added, and the earlier wording about never going online was corrected)</string>
-    <string name="privacy_policy_scope">Applies to: Android 3.5.8 (versionCode 32) and later</string>
+    <string name="privacy_policy_scope">Applies to: Android %1$s (versionCode %2$d) and later</string>
     <string name="notify_default_title">Untitled commission</string>
 </resources>
