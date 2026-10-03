@@ -22,18 +22,40 @@ import java.util.Locale
  */
 object Backup {
 
-    fun encode(items: List<Commission>, notes: Map<String, String>): String {
+    /**
+     * 打一份备份文本。
+     *
+     * ⚠️ 2026-10-03 起**备份带图**（逸风拍板）：参考图会以 base64 写进 JSON 的
+     *    `"photos": [{"name":…,"b64":…}]` 里。好处是换手机、iOS↔安卓互导都不丢图；
+     *    代价是备份文件会大不少（一张缩略后的图约 150–400KB，base64 还要再涨三分之一）。
+     *
+     * @param photoBytes 能给出一张图的原始字节；给不出（或者图片文件已经没了）
+     *                   就只写文件名，不会让整份备份导不出来。
+     */
+    fun encode(
+        items: List<Commission>,
+        notes: Map<String, String>,
+        photoBytes: ((String) -> ByteArray?)? = null,
+    ): String {
         val root = JSONObject()
-        root.put("commissions", Json.encodeCommissions(items))
+        root.put("commissions", Json.encodeCommissions(items, photoBytes))
         root.put("artistNotes", Json.encodeNotes(notes))
         return root.toString(2)
     }
 
-    /** 读一份备份文本；读不出来返回 null（比抛异常好：坏文件不该让 App 崩） */
-    fun decode(text: String): Pair<List<Commission>, Map<String, String>>? = runCatching {
+    /**
+     * 读一份备份文本；读不出来返回 null（比抛异常好：坏文件不该让 App 崩）。
+     *
+     * @param onPhoto 备份里带着图时，每张图回调一次 —— 传进来的这个函数负责落盘。
+     *                不传就只恢复记录本身（图还是本机原来那些）。
+     */
+    fun decode(
+        text: String,
+        onPhoto: ((String, ByteArray) -> Unit)? = null,
+    ): Pair<List<Commission>, Map<String, String>>? = runCatching {
         val root = JSONObject(text)
         val arr = root.optJSONArray("commissions") ?: JSONArray()
-        val items = Json.decodeCommissions(arr)
+        val items = Json.decodeCommissions(arr, onPhoto)
         val notes = Json.decodeNotes(root.optJSONObject("artistNotes"))
         items to notes
     }.getOrNull()

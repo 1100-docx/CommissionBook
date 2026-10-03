@@ -369,6 +369,9 @@ System: Android %4$s (API %5$s)
     <string name="settings_vibrate_title">Vibration</string>
     <string name="settings_vibrate_desc">A light buzz when you tap buttons (can be turned off in Settings)</string>
     <string name="settings_vibrate_off">You just lose the vibration feedback</string>
+    <string name="settings_photos_title">Photos / storage</string>
+    <string name="settings_photos_desc">Never requested. Adding a reference image goes through the system photo picker — only the image you tap is handed to the app.</string>
+    <string name="settings_photos_off">It was never requested, so there is no way to refuse it.</string>
     <string name="common_one_sentence">One sentence</string>
     <string name="common_that_is_all">That\'s all.</string>
     <string name="privacy_intro_2">\nThis app is a small personal tool, shared for free, non-profit, and collects no data for commercial purposes.</string>
@@ -492,7 +495,20 @@ System: Android %4$s (API %5$s)
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">Last updated: 3 October 2026 (revision 2 — update checks were added, and the earlier wording about never going online was corrected)</string>
+    <string name="privacy_policy_updated">Last updated: 3 October 2026 (revision 3 — update checks and reference images were added, and the earlier wording about never going online was corrected)</string>
     <string name="privacy_policy_scope">Applies to: Android %1$s (versionCode %2$d) and later</string>
     <string name="notify_default_title">Untitled commission</string>
+
+    <!-- 2026-10-03: reference images -->
+    <string name="photos_section">Reference images</string>
+    <string name="photos_add">Add</string>
+    <string name="photos_count">%1$d of %2$d</string>
+    <string name="photos_max_reached">%1$d is the limit — plenty</string>
+    <string name="photos_hint">Picking uses the system photo picker, so no photo permission is needed and the app only ever sees the images you choose. They stay on this phone, and travel inside the backup file.</string>
+    <string name="photos_working">Adding…</string>
+    <string name="photos_remove">Remove this one</string>
+    <string name="photos_missing">Not on this phone</string>
+    <string name="photos_count_badge">Reference images: %1$d</string>
+    <string name="privacy_photos_title">Reference images (added 3 October 2026)</string>
+    <string name="privacy_photos_body">Any reference image you attach to a commission stays on this phone, in the app\'s private folder — other apps cannot read it. Picking uses the system photo picker: the app asks for no photo or storage permission, and cannot see the images you did not choose. When you export a backup, images are packed into it as text (base64) — that is the only part of a backup that grew.</string>
 </resources>

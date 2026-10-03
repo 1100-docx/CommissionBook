@@ -1,6 +1,7 @@
 package com.yifeng.commissionbook
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -115,7 +116,26 @@ class AppState(private val context: Context) {
         store.saveNotes(notes)
         // 数据一变就把提醒闹钟重排一遍 —— 最简单的做法，也最不容易漏
         Reminders.reschedule(context, items, prefs.reminderEnabled)
+        // 顺手清掉没人引用的参考图（删单、改单、恢复备份之后都走这儿）。
+        // ⚠️ 只在这儿清、**不在启动时清**：万一 commissions.json 读坏了，
+        //    [Store.loadCommissions] 会把文件改名留档、返回空表 ——
+        //    那种时候要是也清一遍孤儿图，等于把用户的图全删了，数据事故雪上加霜。
+        store.prunePhotos(referencedPhotos())
     }
+
+    /** 现在还挂在某条约稿上的图（**含另一模式**，别只算当前模式那份） */
+    private fun referencedPhotos(): Set<String> = items.flatMap { it.photos }.toSet()
+
+    // MARK: - 参考图（2026-10-03 加）
+
+    fun photoFile(name: String): java.io.File = store.photoFile(name)
+
+    fun photoExists(name: String): Boolean = store.photoExists(name)
+
+    /** 从系统图片选择器收下的那张图：压好落盘，返回文件名（失败 null） */
+    fun addPhoto(uri: Uri): String? = store.savePhotoFrom(uri)
+
+    fun writePhotoBytes(name: String, bytes: ByteArray): Boolean = store.writePhoto(name, bytes)
 
     // MARK: - 增删改
 
@@ -126,7 +146,10 @@ class AppState(private val context: Context) {
     }
 
     fun delete(id: String) {
+        val gone = items.filter { it.id == id }
         items = items.filterNot { it.id == id }
+        // 单子删了，它配的参考图也一起走（不留垃圾文件。persist 里还会再兜一次底）
+        store.deletePhotos(gone.flatMap { it.photos })
         persist()
     }
 
@@ -181,8 +204,8 @@ class AppState(private val context: Context) {
         persist()
     }
 
-    /** 全部数据打成一个 JSON 字符串（备份用，跟 iOS 版同一个格式） */
-    fun toJsonString(): String = Backup.encode(items, notes)
+    /** 全部数据打成一个 JSON 字符串（备份用，跟 iOS 版同一个格式）。⚠️ 带图，见 [Backup.encode] */
+    fun toJsonString(): String = Backup.encode(items, notes, photoBytes = { store.readPhoto(it) })
 
     // MARK: - 屏幕上要用的几个数
 

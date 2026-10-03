@@ -360,6 +360,9 @@
     <string name="settings_vibrate_title">震動</string>
     <string name="settings_vibrate_desc">點按鈕時輕輕震一下（可在設置裏關）</string>
     <string name="settings_vibrate_off">只是沒有震動反饋</string>
+    <string name="settings_photos_title">相簿 / 儲存</string>
+    <string name="settings_photos_desc">唔申請。加參考圖走嘅係系統自帶嘅圖片選擇器 —— 淨係你親手揀中嗰張先會交俾 App。</string>
+    <string name="settings_photos_off">本身冇申請，所以冇「拒絕」呢一步。</string>
     <string name="common_one_sentence">一句話</string>
     <string name="common_that_is_all">以上是全部。</string>
     <string name="privacy_intro_2">\n本 App 是個人做的小工具，免費分享，不盈利，不為商業目的收集任何數據。</string>
@@ -487,7 +490,20 @@
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">最後更新：2026 年 10 月 3 日（第二版 —— 加入「檢查更新」，並同步改掉原來「完全不聯網」的說法）</string>
+    <string name="privacy_policy_updated">最後更新：2026 年 10 月 3 日（第三版 —— 加咗「檢查更新」同「參考圖」，並改返原來「完全唔聯網」嘅講法）</string>
     <string name="privacy_policy_scope">適用版本：安卓版 %1$s（versionCode %2$d）及以後</string>
     <string name="notify_default_title">一單約稿</string>
+
+    <!-- 2026-10-03 加：參考圖 -->
+    <string name="photos_section">參考圖</string>
+    <string name="photos_add">加圖</string>
+    <string name="photos_count">%1$d / %2$d 張</string>
+    <string name="photos_max_reached">最多 %1$d 張，夠用喇</string>
+    <string name="photos_hint">揀圖用嘅係系統自帶嘅圖片選擇器，唔使相簿權限；圖淨係喺呢部手機度，匯出備份嗰陣會一齊打包入去。</string>
+    <string name="photos_working">收緊圖…</string>
+    <string name="photos_remove">攞走呢張</string>
+    <string name="photos_missing">呢部機冇呢張圖</string>
+    <string name="photos_count_badge">有 %1$d 張參考圖</string>
+    <string name="privacy_photos_title">參考圖（2026-10-03 新加嘅）</string>
+    <string name="privacy_photos_body">你俾某張單配嘅參考圖，淨係喺呢部手機度（App 私有目錄，其他 App 讀唔到）。揀圖走嘅係系統自帶嘅圖片選擇器：App 唔申請相簿 / 儲存權限，亦都睇唔到你冇揀嗰啲圖。匯出備份嗰陣，圖會用文字形式（base64）打包入備份文件 —— 呢個亦係份備份唯一比從前大嘅地方。</string>
 </resources>

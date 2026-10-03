@@ -360,6 +360,9 @@
     <string name="settings_vibrate_title">震动</string>
     <string name="settings_vibrate_desc">点按钮时轻轻震一下（可在设置里关）</string>
     <string name="settings_vibrate_off">只是没有震动反馈</string>
+    <string name="settings_photos_title">相册 / 存储</string>
+    <string name="settings_photos_desc">不申请。加参考图走的是系统自带的图片选择器 —— 只有你亲手挑中的那张会交给 App。</string>
+    <string name="settings_photos_off">本来就没申请，所以没有「拒绝」这一步。</string>
     <string name="common_one_sentence">一句话</string>
     <string name="common_that_is_all">以上是全部。</string>
     <string name="privacy_intro_2">\n本 App 是个人做的小工具，免费分享，不盈利，不为商业目的收集任何数据。</string>
@@ -484,7 +487,20 @@
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">最后更新：2026 年 10 月 3 日（第二版 —— 加入「检查更新」，并同步改掉原来「完全不联网」的说法）</string>
+    <string name="privacy_policy_updated">最后更新：2026 年 10 月 3 日（第三版 —— 加了「检查更新」和「参考图」，并改掉原来「完全不联网」的说法）</string>
     <string name="privacy_policy_scope">适用版本：安卓版 %1$s（versionCode %2$d）及以后</string>
     <string name="notify_default_title">一单约稿</string>
+
+    <!-- 2026-10-03 加：参考图（逸风要的「买家约稿的时候可以添加图片」） -->
+    <string name="photos_section">参考图</string>
+    <string name="photos_add">加图</string>
+    <string name="photos_count">%1$d / %2$d 张</string>
+    <string name="photos_max_reached">最多 %1$d 张，够用啦</string>
+    <string name="photos_hint">选图用的是系统自带的图片选择器，不用相册权限；图只存在这台手机里，导出备份时会一起打包进去。</string>
+    <string name="photos_working">正在收图…</string>
+    <string name="photos_remove">移掉这张</string>
+    <string name="photos_missing">本机没有这张图</string>
+    <string name="photos_count_badge">有 %1$d 张参考图</string>
+    <string name="privacy_photos_title">参考图（2026-10-03 新加的）</string>
+    <string name="privacy_photos_body">给某条约稿配的参考图，只存在这台手机里（App 私有目录，别的 App 读不到）。选图走的是系统自带的图片选择器：App 不申请相册 / 存储权限，也看不到你没选的那些图。导出备份时，图会以文字形式（base64）打包进备份文件 —— 这也是备份文件唯一比以前大的地方。</string>
 </resources>

@@ -117,7 +117,12 @@ class MainActivity : FragmentActivity() {
     ) { uri: Uri? ->
         expectingFileResult = false
         if (uri == null) return@registerForActivityResult
-        val payload = Backup.readFrom(this, uri)?.let { Backup.decode(it) }
+        // 2026-10-03：恢复时把备份里的参考图也写回本机（备份带图，见 Backup.encode）。
+        // ⚠️ 图要**先落盘再 replaceAll** —— 反过来的话，replaceAll 里那次「清孤儿图」
+        //    会把刚恢复进来的图当成没人要的，当场删掉。
+        val payload = Backup.readFrom(this, uri)?.let { text ->
+            Backup.decode(text) { name, bytes -> state.writePhotoBytes(name, bytes) }
+        }
         if (payload == null) {
             toast(AppCtx.s(R.string.common_backup_unreadable))
         } else {

@@ -1,8 +1,8 @@
 {
-  "versionCode": 33,
-  "versionName": "3.5.9",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.9.apk",
-  "size": 1980600,
-  "sha256": "a8b3894ec994a8e654dea7832eb71b00e31aeba0d85b75dc9f3eceed00c941f7",
-  "notes": "修复「深浅色」那行排版；隐私政策补齐多语言"
+  "versionCode": 34,
+  "versionName": "3.5.10",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.10.apk",
+  "size": 2002436,
+  "sha256": "a8e891886501b122f46ddfc35e596a757bbcff10faefb7380edbfcf972f662ab",
+  "notes": "新增：约稿可加参考图（最多 6 张，点开看大图，备份会带上图片）"
 }

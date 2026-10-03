@@ -1,6 +1,7 @@
 package com.yifeng.commissionbook
 
 import android.content.Context
+import android.net.Uri
 import androidx.annotation.StringRes
 import org.json.JSONArray
 import org.json.JSONObject
@@ -113,6 +114,17 @@ data class Commission(
      * ⚠️ 老数据没有这个键 → 默认 buyer，**存量数据一条都不动**。
      */
     var mode: String = AppMode.BUYER.key,
+
+    /**
+     * 参考图（2026-10-03 加，逸风要的）。
+     *
+     * 这里只存**文件名**（形如 `p3f9c2a1b7d4e5.jpg`），图本体躺在 App 私有目录
+     * `files/photos/` 里（见 [Photos]）。为什么不直接把图塞进 json：
+     * 每存一次盘都要重写整个文件，塞图片的话改一个数字就得重写几 MB。
+     *
+     * 老数据没有这个键 → 读出来是空表，**存量数据一条都不动**。
+     */
+    var photos: List<String> = emptyList(),
 ) {
     /** 还欠多少 */
     val unpaid: Double get() = (total - deposit).coerceAtLeast(0.0)
@@ -154,7 +166,20 @@ object SwiftDate {
 }
 
 object Json {
-    fun encodeCommissions(items: List<Commission>): JSONArray {
+    /**
+     * 把约稿写成 JSON 数组。
+     *
+     * 参考图有**两种写法**，由 [photoBytes] 决定：
+     *  - `null`（App 自己存盘那份）→ `"photos": ["p1.jpg", "p2.jpg"]`，只有文件名，文件小、存盘快；
+     *  - 给了取值函数（**导出备份**）→ `"photos": [{"name":"p1.jpg","b64":"/9j/4AA…"}]`，
+     *    把图本体 base64 一起带上 —— 逸风 2026-10-03 拍板「备份要带图」，换手机才不丢。
+     *
+     * 读的时候两种都认（见 [decodeCommissions]），所以两边互导没问题。
+     */
+    fun encodeCommissions(
+        items: List<Commission>,
+        photoBytes: ((String) -> ByteArray?)? = null,
+    ): JSONArray {
         val arr = JSONArray()
         for (c in items) {
             val o = JSONObject()
@@ -169,6 +194,24 @@ object Json {
             c.deadlineMillis?.let { o.put("deadline", SwiftDate.toSwiftMillis(it)) }
             o.put("note", c.note)
             o.put("mode", c.mode)
+            if (c.photos.isNotEmpty()) {
+                val ph = JSONArray()
+                for (name in c.photos) {
+                    val bytes = photoBytes?.invoke(name)
+                    if (bytes == null) {
+                        // 取不到图（文件被清掉了）→ 只写名字。
+                        // 宁可这一张丢，也不能让整份备份导不出来。
+                        ph.put(name)
+                    } else {
+                        ph.put(
+                            JSONObject()
+                                .put("name", name)
+                                .put("b64", android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
+                        )
+                    }
+                }
+                o.put("photos", ph)
+            }
             arr.put(o)
         }
         return arr
@@ -184,14 +227,20 @@ object Json {
      * 只认一种的话，把一份 iOS 备份直接放进 App 目录就会**读不出来 → 界面全空**，
      * 而用户看到的是「我的数据没了」。宁可多写两行，也不能让人以为数据丢了。
      */
-    fun readCommissions(text: String): List<Commission> {
+    fun readCommissions(text: String, onPhoto: ((String, ByteArray) -> Unit)? = null): List<Commission> {
         val t = text.trim()
-        if (t.startsWith("[")) return decodeCommissions(JSONArray(t))
+        if (t.startsWith("[")) return decodeCommissions(JSONArray(t), onPhoto)
         val root = JSONObject(t)
-        return decodeCommissions(root.optJSONArray("commissions") ?: JSONArray())
+        return decodeCommissions(root.optJSONArray("commissions") ?: JSONArray(), onPhoto)
     }
 
-    fun decodeCommissions(arr: JSONArray): List<Commission> {
+    /**
+     * 读约稿数组。
+     *
+     * @param onPhoto 备份里带着图（base64）时，每张图回调一次 —— 调用方负责把字节落盘。
+     *                传 null = 只管名字（App 自己存盘那份就是这么读的）。
+     */
+    fun decodeCommissions(arr: JSONArray, onPhoto: ((String, ByteArray) -> Unit)? = null): List<Commission> {
         val out = ArrayList<Commission>(arr.length())
         for (i in 0 until arr.length()) {
             val o = arr.optJSONObject(i) ?: continue
@@ -209,10 +258,42 @@ object Json {
                     note = o.optString("note"),
                     // 老数据没这个键 → buyer。iOS 版读这份文件时会忽略它，不影响互通
                     mode = o.optString("mode").ifBlank { AppMode.BUYER.key },
+                    photos = decodePhotos(o.optJSONArray("photos"), onPhoto),
                 )
             )
         }
         return out
+    }
+
+    /**
+     * 读参考图这一串，**两种写法都认**：
+     *  - `["p1.jpg", …]`              → App 自己存盘那份
+     *  - `[{"name":…,"b64":…}, …]`    → 备份里那份，带上图本体
+     *
+     * ⚠️ 文件名走 [Photos.safeName] 消毒：备份是可以从外面塞进来的，
+     *    里面要是写着 `../../commissions.json`，直接落盘就等于让人改我的数据。
+     */
+    private fun decodePhotos(arr: JSONArray?, onPhoto: ((String, ByteArray) -> Unit)?): List<String> {
+        if (arr == null) return emptyList()
+        val names = ArrayList<String>(arr.length())
+        for (i in 0 until arr.length()) {
+            when (val entry = arr.opt(i)) {
+                is String -> {
+                    val n = Photos.safeName(entry)
+                    if (n.isNotBlank()) names.add(n)
+                }
+                is JSONObject -> {
+                    val n = Photos.safeName(entry.optString("name"))
+                    if (n.isBlank()) continue
+                    names.add(n)
+                    val b64 = entry.optString("b64")
+                    if (b64.isNotBlank() && onPhoto != null) {
+                        runCatching { onPhoto(n, android.util.Base64.decode(b64, android.util.Base64.DEFAULT)) }
+                    }
+                }
+            }
+        }
+        return names
     }
 
     /** 日期可能是 Swift 的数字，也可能是别的工具导出的字符串 —— 两种都认 */
@@ -286,6 +367,55 @@ class Store(private val context: Context) {
 
     fun saveNotes(notes: Map<String, String>) {
         runCatching { notesFile.writeText(Json.encodeNotes(notes).toString()) }
+    }
+
+    // MARK: - 参考图（2026-10-03 加）
+
+    /**
+     * 图放哪：`files/photos/`。
+     * 用 filesDir（不是 cacheDir）—— cacheDir 会被系统在空间紧张时**自己删**，
+     * 用户配的参考图不能是这种命。
+     */
+    private val photosDir: File get() = File(context.filesDir, "photos").apply { if (!exists()) mkdirs() }
+
+    fun photoFile(name: String): File = File(photosDir, Photos.safeName(name))
+
+    fun photoExists(name: String): Boolean = photoFile(name).isFile
+
+    /** 读一张图的原字节（导出备份时要把它们 base64 进 JSON） */
+    fun readPhoto(name: String): ByteArray? = runCatching { photoFile(name).readBytes() }.getOrNull()
+
+    /**
+     * 从系统选择器给的 uri 收下一张图：压好、落盘，返回文件名。
+     * 失败（图坏了/读不到）返回 null —— 调用方提示一句就行，别崩。
+     */
+    fun savePhotoFrom(uri: Uri): String? {
+        val bytes = Photos.compress(context, uri) ?: return null
+        val name = "p" + UUID.randomUUID().toString().replace("-", "").take(14) + ".jpg"
+        return if (writePhoto(name, bytes)) name else null
+    }
+
+    /** 落盘一张图（恢复备份时用：备份里带着 base64，直接写下来） */
+    fun writePhoto(name: String, bytes: ByteArray): Boolean =
+        runCatching { photoFile(name).writeBytes(bytes); true }.getOrDefault(false)
+
+    fun deletePhotos(names: Collection<String>) {
+        names.forEach { runCatching { photoFile(it).delete() } }
+    }
+
+    /**
+     * 把**没有任何一条约稿引用**的图删掉，返回删了几个。
+     *
+     * 什么时候用：① 删单之后 ② 恢复备份（整批换掉）之后 ③ App 启动。
+     * 不做这件事的话，删单只是把记录删了，图会永远堆在目录里 ——
+     * 用户看不见，但手机空间实打实地少。
+     */
+    fun prunePhotos(referenced: Set<String>): Int {
+        var n = 0
+        photosDir.listFiles()?.forEach { f ->
+            if (f.name !in referenced && f.delete()) n++
+        }
+        return n
     }
 
     // MARK: - 示例数据的 id（2026-10-01 加）

@@ -60,7 +60,7 @@ import androidx.compose.ui.unit.sp
  * 存进 [Prefs.privacyAgreedVersion]：**以后政策改了就改这个字符串**，
  * App 下次启动会自动再弹一次同意页（改了什么也没瞒着人）。
  */
-const val POLICY_VERSION = "2026-10-03.2"
+const val POLICY_VERSION = "2026-10-03.3"
 
 /** 政策正文：一段标题 + 若干段正文 */
 private data class PolicySection(val heading: String, val body: List<String>)
@@ -121,6 +121,12 @@ private val policySections = listOf(
             //   都摊开写清楚。政策宁可写得难看，也别写得让人以为有多干净。
             AppCtx.s(R.string.privacy_net_visible),
             AppCtx.s(R.string.privacy_net_mirror),
+            // 2026-10-03 第三版：参考图。特意说了两件事 ——
+            //   ① 权限：不申请相册 / 存储，走系统图片选择器；
+            //   ② 备份会变大：图会 base64 进备份文件。这条不写清楚，
+            //      以后他看到备份突然几十 MB 会觉得「怎么变味了」。
+            AppCtx.s(R.string.privacy_photos_title),
+            AppCtx.s(R.string.privacy_photos_body),
         ),
     ),
     PolicySection(
@@ -182,6 +188,9 @@ private val policyPermissions = listOf(
     PolicyPermission(AppCtx.s(R.string.settings_biometric_legacy_title), AppCtx.s(R.string.settings_biometric_legacy_desc), AppCtx.s(R.string.settings_biometric_legacy_off)),
     PolicyPermission(AppCtx.s(R.string.settings_notify_title), AppCtx.s(R.string.settings_notify_desc), AppCtx.s(R.string.settings_notify_off)),
     PolicyPermission(AppCtx.s(R.string.settings_vibrate_title), AppCtx.s(R.string.settings_vibrate_desc), AppCtx.s(R.string.settings_vibrate_off)),
+    // 2026-10-03 第三版加：参考图用的系统选择器。**「不申请」也是一种要报备的事** ——
+    // 权限表里明写着一条「相册 / 存储：不申请」，比只在正文里提一句更让人放心。
+    PolicyPermission(AppCtx.s(R.string.settings_photos_title), AppCtx.s(R.string.settings_photos_desc), AppCtx.s(R.string.settings_photos_off)),
 )
 
 // MARK: - 正文（两处共用）

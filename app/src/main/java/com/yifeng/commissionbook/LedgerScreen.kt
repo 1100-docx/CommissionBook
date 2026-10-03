@@ -1,6 +1,12 @@
 package com.yifeng.commissionbook
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -641,6 +647,8 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
             mode = state.appMode,
             onDismiss = { creating = false },
             onSave = { state.upsert(it); creating = false },
+            onAddPhoto = { state.addPhoto(it) },
+            photoPath = { state.photoFile(it).absolutePath },
         )
     }
 
@@ -649,6 +657,8 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
             original = item,
             mode = state.appMode,
             onDismiss = { editing = null },
+            onAddPhoto = { state.addPhoto(it) },
+            photoPath = { state.photoFile(it).absolutePath },
             onSave = { new ->
                 // ② 在表单里刚改成「已交付」→ 来一下小庆祝
                 if (new.status == CommissionStatus.DELIVERED && item.status != CommissionStatus.DELIVERED) {
@@ -856,6 +866,11 @@ private fun CommissionCard(
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            // 有参考图就在这一行尾巴上挂个小角标（没图什么都不画，布局一点不动）
+            if (item.photos.isNotEmpty()) {
+                Spacer(Modifier.width(9.dp))
+                PhotoBadge(item.photos.size)
+            }
             Spacer(Modifier.weight(1f))
             val dl = deadlineText(item)
             if (dl != null) {
@@ -1156,7 +1171,19 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSave: (Commission) -> Unit) {
+fun EditSheet(
+    original: Commission?,
+    mode: AppMode,
+    onDismiss: () -> Unit,
+    onSave: (Commission) -> Unit,
+    /**
+     * 收下一张图（从系统图片选择器给的那个 uri）→ 返回落盘后的文件名。
+     * 默认实现返回 null（= 收不了），这样别处想单独用这个表单也不会崩。
+     */
+    onAddPhoto: (android.net.Uri) -> String? = { null },
+    /** 文件名 → 磁盘绝对路径（给缩略图解码用） */
+    photoPath: (String) -> String = { "" },
+) {
 
     var artist by remember { mutableStateOf(original?.artist ?: "") }
     var title by remember { mutableStateOf(original?.title ?: "") }
@@ -1167,6 +1194,34 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
     var hasDeadline by remember { mutableStateOf(original?.deadlineMillis != null) }
     var deadlineStr by remember { mutableStateOf(original?.deadlineMillis?.let { dayText(it) } ?: "") }
     var note by remember { mutableStateOf(original?.note ?: "") }
+
+    // 参考图（2026-10-03 加）
+    //
+    // ⚠️ 这里存的是**文件名**，图在本体收下的那一刻就已经落盘了（见 [Store.savePhotoFrom]）。
+    //    「先收图、再点保存」这个顺序是故意的：表单里能立刻看到缩略图（不然点了加图
+    //    什么都没发生，像坏了）；代价是中途取消会留下一张没人引用的图 ——
+    //    那些孤儿图会在下一次存盘时被 [AppState.persist] 顺手清掉。
+    var photos by remember { mutableStateOf(original?.photos ?: emptyList()) }
+    var viewerAt by remember { mutableStateOf<Int?>(null) }
+    var picking by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // 系统自带的图片选择器：**不要相册权限**，用户挑哪张才把哪张给我（见 Photos 顶部注释）。
+    // 一次能挑好几张（上限就是 6 张那个数），不用一张一张加。
+    val picker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(Photos.MAX_COUNT)
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        picking = true
+        scope.launch {
+            // 压缩是 CPU 活，挪到 IO 线程去 —— 6 张图在主线程解会把表单卡住
+            val added = withContext(Dispatchers.IO) {
+                uris.take(Photos.MAX_COUNT - photos.size).mapNotNull { onAddPhoto(it) }
+            }
+            photos = photos + added
+            picking = false
+        }
+    }
 
     val fieldShape = RoundedCornerShape(14.dp)
 
@@ -1264,6 +1319,41 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            // 参考图（2026-10-03 加，逸风要的「买家约稿的时候可以添加图片」）
+            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        AppCtx.s(R.string.photos_section),
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    if (photos.isNotEmpty()) {
+                        Text(
+                            AppCtx.s(R.string.photos_count, photos.size, Photos.MAX_COUNT),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        )
+                    }
+                }
+                PhotoStrip(
+                    names = photos,
+                    pathFor = photoPath,
+                    onAdd = {
+                        picker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    onRemove = { name -> photos = photos.filterNot { it == name } },
+                    onOpen = { i -> viewerAt = i },
+                )
+                PhotoHint(
+                    if (picking) AppCtx.s(R.string.photos_working)
+                    else if (photos.size >= Photos.MAX_COUNT) AppCtx.s(R.string.photos_max_reached, Photos.MAX_COUNT)
+                    else AppCtx.s(R.string.photos_hint)
+                )
+            }
+
             Spacer(Modifier.height(2.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text(AppCtx.s(R.string.common_cancel), fontSize = 15.sp) }
@@ -1280,6 +1370,7 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
                             note = note.trim(),
                             // 新单归当前模式；编辑老单时保持它原来的归属
                             mode = original?.mode ?: mode.key,
+                            photos = photos,
                         )
                         onSave(c)
                     },
@@ -1289,6 +1380,16 @@ fun EditSheet(original: Commission?, mode: AppMode, onDismiss: () -> Unit, onSav
                 ) { Text(AppCtx.s(R.string.common_save), fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
             }
         }
+    }
+
+    // 看大图（点缩略图进来，整屏、能左右翻）
+    viewerAt?.let { start ->
+        PhotoViewer(
+            names = photos,
+            startIndex = start,
+            pathFor = photoPath,
+            onDismiss = { viewerAt = null },
+        )
     }
 }
 
