@@ -481,4 +481,10 @@
     <string name="settings_install_title">安装未知应用</string>
     <string name="settings_install_desc">装新版本时用：打开系统安装界面，装不装由你点</string>
     <string name="settings_install_off">只是不能自动装，可以自己手动装</string>
+
+    <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
+         切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
+    <string name="privacy_policy_updated">最后更新：2026 年 10 月 3 日（第二版 —— 加入「检查更新」，并同步改掉原来「完全不联网」的说法）</string>
+    <string name="privacy_policy_scope">适用版本：安卓版 3.5.8（versionCode 32）及以后</string>
+    <string name="notify_default_title">一单约稿</string>
 </resources>

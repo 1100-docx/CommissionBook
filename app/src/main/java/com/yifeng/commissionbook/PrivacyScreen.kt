@@ -68,15 +68,15 @@ private data class PolicySection(val heading: String, val body: List<String>)
 /** 权限表的一行 */
 private data class PolicyPermission(val name: String, val why: String, val refuse: String)
 
-// ⚠️ 2026-10-03：这两个从 `const val` 降级成普通 `val`。
-//    多语言改造后它们取的是 `AppCtx.s(R.string.…)` —— 那是函数调用，
-//    而 `const` 要求编译期常量，留着 const 直接编译不过。
-private val POLICY_UPDATED = "最后更新：2026 年 10 月 3 日（第二版 —— 加入「检查更新」，并同步改掉原来「完全不联网」的说法）"
-private val POLICY_SCOPE = "适用版本：安卓版 3.5.7（versionCode 31）及以后"
-
-// 2026-10-03 加：这一版起带多语言了，顺手讲清楚「语言包哪来的」——
-// 界面能变英文，谁都会想「它是不是联网去下了什么」。实情是五个语种都在安装包里。
-private val POLICY_LANGUAGES = "内置语言包（简体中文 / 繁體中文（香港、台灣）/ English）随安装文件一起打包，不联网下载，也不上传任何内容。"
+// ⚠️ 2026-10-03 两个错都在这儿，别改回去：
+//   ① 一度是 `const val` —— 多语言改造后要取 `AppCtx.s(R.string.…)`，
+//      那是函数调用，`const` 要求编译期常量，留着直接编译不过，所以降成普通 `val`。
+//   ② 更要命的：原本文案是**写死的中文**，压根没进语言包 ——
+//      逸风切到英文看隐私政策，看到一半蹦出「最后更新：2026 年 10 月 3 日…」
+//      和「适用版本：安卓版 3.5.7…」，整页就这两行是中文。
+//      **隐私政策是政策，必须五种语言都读得懂**，所以这两条现在也是资源了。
+private val POLICY_UPDATED = AppCtx.s(R.string.privacy_policy_updated)
+private val POLICY_SCOPE = AppCtx.s(R.string.privacy_policy_scope)
 
 /** 一句话总结（单独拿出来，放最上面高亮） */
 private val POLICY_SUMMARY =

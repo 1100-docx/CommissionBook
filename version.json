@@ -1,8 +1,8 @@
 {
-  "versionCode": 31,
-  "versionName": "3.5.7",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.7.apk",
-  "size": 1979888,
-  "sha256": "cf8e24d781b8fe723837f977d20cafad9f79c29a1fdb6662909ccae6177513ff",
-  "notes": "① 删除前弹系统弹窗确认（归档 / 放回不弹）\n② 新增「检查更新」：启动自动查 + 设置里手动查，可直接下载安装\n③ 隐私政策如实写清：唯一联网动作、请求不带数据、以及必然暴露的 IP/文件名/时间、会经过第三方镜像\n④ 修复：镜像缓存导致查到旧版本号（清单加破缓存参数）\n⑤ 港台桌面图标名补上本地化"
+  "versionCode": 32,
+  "versionName": "3.5.8",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.8.apk",
+  "size": 1980900,
+  "sha256": "f8add3b09f1447db81a6a6ff0fc9393c9e560e71dd8cc8ccfa025abf7af38ce7",
+  "notes": "① 修复：英文下「深浅色」那行的选项把标题挤成「一个字母一行」——选项改成另起一行\n② 修复：隐私政策的「最后更新 / 适用版本」两行原来写死中文，没进语言包，现在 5 语种都有\n③ 修复：到期提醒里单子没名字时的「一单约稿」也补上多语言"
 }

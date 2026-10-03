@@ -437,9 +437,9 @@ System: Android %4$s (API %5$s)
     <string name="stats_status_summary">%1$s in progress · %2$s archived (archived ones are included here too)</string>
     <string name="stats_last_6_months_amount">Order amount over the last 6 months</string>
     <string name="stats_month_label">%1$s</string>
-    <string name="settings_follow_system">Follow System</string>
+    <string name="settings_follow_system">System</string>
     <string name="settings_light">Light</string>
-    <string name="settings_dark_mode">Dark Mode</string>
+    <string name="settings_dark_mode">Dark</string>
     <string name="ledger_locked">Commission Ledger Locked</string>
     <string name="settings_no_screen_lock">This phone has no screen lock set</string>
     <string name="common_unlock">Unlock</string>
@@ -489,4 +489,10 @@ System: Android %4$s (API %5$s)
     <string name="settings_install_title">Install unknown apps</string>
     <string name="settings_install_desc">Used when installing a new version: opens the system installer, you decide</string>
     <string name="settings_install_off">Only disables auto-install; you can still install manually</string>
+
+    <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
+         切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
+    <string name="privacy_policy_updated">Last updated: 3 October 2026 (revision 2 — update checks were added, and the earlier wording about never going online was corrected)</string>
+    <string name="privacy_policy_scope">Applies to: Android 3.5.8 (versionCode 32) and later</string>
+    <string name="notify_default_title">Untitled commission</string>
 </resources>

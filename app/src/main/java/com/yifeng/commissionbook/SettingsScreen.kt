@@ -184,6 +184,12 @@ fun SettingsScreen(
                             title = AppCtx.s(R.string.settings_theme),
                             subtitle = AppCtx.s(R.string.settings_theme_desc),
                             icon = Icons.Filled.DarkMode,
+                            // ⚠️ 2026-10-03：**必须另起一行**。
+                            //    英文那三颗胶囊是「Follow System / Light / Dark」，
+                            //    塞在右边会把标题和副标题挤到几乎没有宽度 ——
+                            //    逸风截图里就是「一个字母一行」，整页被撑成一列竖排字。
+                            //    中文时它俩宽度差不多、侥幸没露；一换英文就现原形。
+                            stackTrailing = true,
                             divider = false,
                             trailing = {
                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

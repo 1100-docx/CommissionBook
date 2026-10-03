@@ -501,6 +501,18 @@ fun GroupRow(
     subtitle: String? = null,
     icon: ImageVector? = null,
     divider: Boolean = true,
+    /**
+     * 右侧那坨（选项胶囊之类）**是不是挪到下一行**。
+     *
+     * ⚠️ 为什么需要它（2026-10-03 逸风截图报的 bug）：
+     *    右边塞的是三颗胶囊时，英文的「Follow System / Light / Dark」宽度能吃掉整行，
+     *    而中间那列文字是 `weight(1f)` —— 它拿的是**剩下来的宽度**，
+     *    剩到接近 0 时，标题和副标题就变成「一个字母一行」，
+     *    整个设置页被撑成一列竖排字（截图里就是那样）。
+     *    中文的「跟随系统 / 浅色 / 暗色」三颗加起来窄，侥幸没露；一换英文立刻现原形。
+     *    开着这个开关 = 选项自己占一行，标题那列拿到整行宽度，任何语言都不会再挤。
+     */
+    stackTrailing: Boolean = false,
     trailing: @Composable () -> Unit = {},
     onClick: (() -> Unit)? = null,
 ) {
@@ -522,7 +534,13 @@ fun GroupRow(
                         Modifier.clickable(interactionSource = interaction, indication = null) { onClick() }
                     } else Modifier
                 )
-                .padding(horizontal = 16.dp, vertical = 13.dp),
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 13.dp,
+                    // 选项另起一行时，这段底下留窄一点，不然两段之间会空出一大块
+                    bottom = if (stackTrailing) 4.dp else 13.dp,
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {
@@ -549,7 +567,21 @@ fun GroupRow(
                     )
                 }
             }
-            trailing()
+            // stackTrailing 时**不在这儿**塞 —— 它会把上面那列文字挤没（见参数注释）
+            if (!stackTrailing) trailing()
+        }
+        // 选项自己那一行：左边缘跟正文对齐（有图标就对齐到文字起点），靠右摆
+        if (stackTrailing) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = if (icon != null) 58.dp else 16.dp,
+                        end = 16.dp,
+                        bottom = 13.dp,
+                    ),
+                horizontalArrangement = Arrangement.End,
+            ) { trailing() }
         }
         if (divider) {
             Box(

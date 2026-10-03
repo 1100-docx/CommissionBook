@@ -116,7 +116,7 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val text = "${artist.ifBlank { who }} · ${title.ifBlank { "一单约稿" }}" +
+        val text = "${artist.ifBlank { who }} · ${title.ifBlank { AppCtx.s(R.string.notify_default_title) }}" +
             if (days <= 1) AppCtx.s(R.string.notify_due_tomorrow) else AppCtx.s(R.string.notify_three_days_left)
 
         val n = NotificationCompat.Builder(context, Reminders.CHANNEL_ID)
