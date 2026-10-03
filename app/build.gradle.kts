@@ -12,14 +12,26 @@ android {
         applicationId = "com.yifeng.commissionbook"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "2.2"
-        resourceConfigurations += listOf("zh")
+        versionCode = 31
+        versionName = "3.5.7"
+        // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
+        //    意思是「只打包中文资源，其它语言全砍掉」。
+        //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
+        //    界面上切了语言也还是中文，而且查不出原因（资源压根不在包里）。
+        resourceConfigurations += listOf("zh", "en", "zh-rHK", "zh-rTW")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // 2026-09-30 打开 R8：微信发文件有大小限制，11MB 的包发不出去（CDN 500）。
+            // minify = 剔掉没用到的代码（material-icons-extended 那几千个图标是重头）
+            // shrinkResources = 顺带剔掉没人用的资源
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -31,6 +43,9 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        // FlowRow（报价计算器里那排可变的加价项胶囊）还是试验 API，
+        // 统一在这里开一次，省得每个用到的 composable 都挂 @OptIn
+        freeCompilerArgs += "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
     }
 
     buildFeatures {

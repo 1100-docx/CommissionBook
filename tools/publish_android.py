@@ -3,7 +3,7 @@
 """发版打包：把 APK 复制进 dist/，并重建仓库根目录的 version.json（App 检查更新就读它）。"""
 import hashlib, json, pathlib, shutil, sys
 
-repo = pathlib.Path.home() / "Desktop/AndroidLearning/CommissionBook"
+repo = pathlib.Path.home() / "Developer/AndroidLearning/CommissionBook"
 apk = repo / "app/build/outputs/apk/release/app-release.apk"
 dist = repo / "dist"
 dist.mkdir(exist_ok=True)
