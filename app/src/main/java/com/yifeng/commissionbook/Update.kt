@@ -125,10 +125,20 @@ object Updater {
      *
      * ⚠️ 这是个**阻塞**调用，必须丢到 IO 线程跑（[doCheck] 里已经包好了）。
      * 超时给得短（6 秒）—— 这是启动时顺手做的一件事，不能让用户对着白屏等。
+     *
+     * ⚠️⚠️ **URL 尾巴上那个 `?t=时间戳` 不是凑数，是必须的**（2026-10-03 实测踩到）：
+     *     raw.githubusercontent.com 自己只给 `max-age=300`，但加速镜像会**自己再缓存一层**，
+     *     而且缓存时间比 5 分钟长。实测：清单刚从 33 改回 31，直连已经拿到 31，
+     *     gh-proxy.com 还在给 33 —— 用户刚发新版时查更新，会被告知「已是最新」，
+     *     也就是新版本永远推不出去（这个 bug 只有真机联网测才能发现，光看代码是好的）。
+     *     加了时间戳 = 每次都是全新 URL → 镜像缓存失效，只能回源拿最新的。
+     *     ⚠️ APK 那边**不加**：安装包缓存起来反而好（快、省流量），
+     *        而且文件名带版本号（CommissionBook_3.5.7.apk），新版本是新文件名，不会串。
      */
     fun fetch(): Release? {
+        val stamp = System.currentTimeMillis()
         for (base in MIRRORS) {
-            val text = readText(base + MANIFEST) ?: continue
+            val text = readText("$base$MANIFEST?t=$stamp") ?: continue
             parse(text)?.let { return it }
         }
         return null
@@ -264,6 +274,8 @@ object Updater {
             c.connectTimeout = connectMs
             c.readTimeout = readMs
             c.setRequestProperty("User-Agent", "CommissionBook-Android")
+            // 配合 URL 上的 ?t= 时间戳一起用：有的代理不认时间戳参数，但认这个头
+            c.setRequestProperty("Cache-Control", "no-cache")
             c.connect()
             val code = c.responseCode
             if (code in 300..399) {
