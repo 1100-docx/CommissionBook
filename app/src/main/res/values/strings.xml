@@ -503,4 +503,10 @@
     <string name="photos_count_badge">有 %1$d 张参考图</string>
     <string name="privacy_photos_title">参考图（2026-10-03 新加的）</string>
     <string name="privacy_photos_body">给某条约稿配的参考图，只存在这台手机里（App 私有目录，别的 App 读不到）。选图走的是系统自带的图片选择器：App 不申请相册 / 存储权限，也看不到你没选的那些图。导出备份时，图会以文字形式（base64）打包进备份文件 —— 这也是备份文件唯一比以前大的地方。</string>
+    <!-- 2026-10-04 加：给参考图配说明（逸风要的，来自用户反馈「建议加上图片备注」） -->
+    <string name="photos_note_add">加说明</string>
+    <string name="photos_note_edit">改说明</string>
+    <string name="photos_note_title">这张图的说明</string>
+    <string name="photos_note_placeholder">比如「客户给的配色参考」</string>
+    <string name="photos_note_desc">写给自己看的，比如「哪张是配色、哪张是姿势」。留空就是不要说明。</string>
 </resources>

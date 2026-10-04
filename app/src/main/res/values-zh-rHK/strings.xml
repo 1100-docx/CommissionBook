@@ -506,4 +506,10 @@
     <string name="photos_count_badge">有 %1$d 張參考圖</string>
     <string name="privacy_photos_title">參考圖（2026-10-03 新加嘅）</string>
     <string name="privacy_photos_body">你俾某張單配嘅參考圖，淨係喺呢部手機度（App 私有目錄，其他 App 讀唔到）。揀圖走嘅係系統自帶嘅圖片選擇器：App 唔申請相簿 / 儲存權限，亦都睇唔到你冇揀嗰啲圖。匯出備份嗰陣，圖會用文字形式（base64）打包入備份文件 —— 呢個亦係份備份唯一比從前大嘅地方。</string>
+    <!-- 2026-10-04 加：給參考圖配說明 -->
+    <string name="photos_note_add">加說明</string>
+    <string name="photos_note_edit">改說明</string>
+    <string name="photos_note_title">這張圖的說明</string>
+    <string name="photos_note_placeholder">比如「客戶給的配色參考」</string>
+    <string name="photos_note_desc">寫給自己看的，比如「哪張是配色、哪張是姿勢」。留空就是不要說明。</string>
 </resources>

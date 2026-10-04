@@ -1,8 +1,8 @@
 {
-  "versionCode": 34,
-  "versionName": "3.5.10",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.10.apk",
-  "size": 2002436,
-  "sha256": "a8e891886501b122f46ddfc35e596a757bbcff10faefb7380edbfcf972f662ab",
-  "notes": "新增：约稿可加参考图（最多 6 张，点开看大图，备份会带上图片）"
+  "versionCode": 35,
+  "versionName": "3.5.11",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.11.apk",
+  "size": 2003596,
+  "sha256": "33a5da26dc47cc544df7ddb549db7257cd7f87bd647e7bf9bff11337186b4584",
+  "notes": "新增：可以给参考图写一句说明（点开大图，底下那颗「加说明」）；备份会一起带上说明"
 }

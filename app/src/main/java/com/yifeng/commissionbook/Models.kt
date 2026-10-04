@@ -98,6 +98,19 @@ object Terms {
 }
 
 // MARK: - 一条约稿
+
+/**
+ * 一张参考图 + 它的说明（2026-10-04 加，逸风要的「给图加说明」，来自用户反馈「建议加上图片备注」）。
+ *
+ * ⚠️ 存盘用的就是这个形状：`"photos": [{"name":"p1.jpg","caption":"配色参考"}]`。
+ *    最老的数据存的是纯字符串数组 `["p1.jpg"]` —— 读的时候两种都认，见 [Json.decodePhotos]。
+ *    **iOS 端对应 `PhotoItem`，两边的键名必须一模一样**，不然备份互导会丢说明。
+ */
+data class Photo(
+    val name: String,
+    val caption: String = "",
+)
+
 data class Commission(
     val id: String = UUID.randomUUID().toString(),
     var artist: String = "",
@@ -116,15 +129,16 @@ data class Commission(
     var mode: String = AppMode.BUYER.key,
 
     /**
-     * 参考图（2026-10-03 加，逸风要的）。
+     * 参考图（2026-10-03 加，逸风要的；2026-10-04 起每张能带一句说明）。
      *
-     * 这里只存**文件名**（形如 `p3f9c2a1b7d4e5.jpg`），图本体躺在 App 私有目录
+     * 只存**文件名 + 说明**（说明可空），图本体躺在 App 私有目录
      * `files/photos/` 里（见 [Photos]）。为什么不直接把图塞进 json：
      * 每存一次盘都要重写整个文件，塞图片的话改一个数字就得重写几 MB。
      *
-     * 老数据没有这个键 → 读出来是空表，**存量数据一条都不动**。
+     * 老数据没有这个键（或存的是纯文件名数组）→ 读出来是空表 / 只带名字，
+     * **存量数据一条都不动**。
      */
-    var photos: List<String> = emptyList(),
+    var photos: List<Photo> = emptyList(),
 ) {
     /** 还欠多少 */
     val unpaid: Double get() = (total - deposit).coerceAtLeast(0.0)
@@ -170,8 +184,8 @@ object Json {
      * 把约稿写成 JSON 数组。
      *
      * 参考图有**两种写法**，由 [photoBytes] 决定：
-     *  - `null`（App 自己存盘那份）→ `"photos": ["p1.jpg", "p2.jpg"]`，只有文件名，文件小、存盘快；
-     *  - 给了取值函数（**导出备份**）→ `"photos": [{"name":"p1.jpg","b64":"/9j/4AA…"}]`，
+     *  - `null`（App 自己存盘那份）→ `"photos": [{"name":"p1.jpg","caption":"配色参考"}]`，只带文件名和说明，文件小、存盘快；
+     *  - 给了取值函数（**导出备份**）→ 每个对象里再多一个 `"b64":"/9j/4AA…"`，
      *    把图本体 base64 一起带上 —— 逸风 2026-10-03 拍板「备份要带图」，换手机才不丢。
      *
      * 读的时候两种都认（见 [decodeCommissions]），所以两边互导没问题。
@@ -196,18 +210,19 @@ object Json {
             o.put("mode", c.mode)
             if (c.photos.isNotEmpty()) {
                 val ph = JSONArray()
-                for (name in c.photos) {
-                    val bytes = photoBytes?.invoke(name)
+                for (p in c.photos) {
+                    // 2026-10-04：存盘也写成对象了（以前是纯字符串），这样说明才有地方放。
+                    // 读的那头两种都认，见 decodePhotos。
+                    val o2 = JSONObject().put("name", p.name)
+                    if (p.caption.isNotBlank()) o2.put("caption", p.caption)
+                    val bytes = photoBytes?.invoke(p.name)
                     if (bytes == null) {
-                        // 取不到图（文件被清掉了）→ 只写名字。
-                        // 宁可这一张丢，也不能让整份备份导不出来。
-                        ph.put(name)
+                        // 取不到图（文件被清掉了）→ 只留名字（说明还在）。
+                        // 宁可这一张图丢，也不能让整份备份导不出来。
+                        ph.put(o2)
                     } else {
-                        ph.put(
-                            JSONObject()
-                                .put("name", name)
-                                .put("b64", android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
-                        )
+                        o2.put("b64", android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
+                        ph.put(o2)
                     }
                 }
                 o.put("photos", ph)
@@ -267,25 +282,26 @@ object Json {
 
     /**
      * 读参考图这一串，**两种写法都认**：
-     *  - `["p1.jpg", …]`              → App 自己存盘那份
-     *  - `[{"name":…,"b64":…}, …]`    → 备份里那份，带上图本体
+     *  - `["p1.jpg", …]`                          → 最老的存盘，只有文件名
+     *  - `[{"name":…,"caption":…,"b64":…}, …]`    → 现在的存盘 / 备份（说明、图本体都是可选的）
      *
      * ⚠️ 文件名走 [Photos.safeName] 消毒：备份是可以从外面塞进来的，
      *    里面要是写着 `../../commissions.json`，直接落盘就等于让人改我的数据。
      */
-    private fun decodePhotos(arr: JSONArray?, onPhoto: ((String, ByteArray) -> Unit)?): List<String> {
+    private fun decodePhotos(arr: JSONArray?, onPhoto: ((String, ByteArray) -> Unit)?): List<Photo> {
         if (arr == null) return emptyList()
-        val names = ArrayList<String>(arr.length())
+        val out = ArrayList<Photo>(arr.length())
         for (i in 0 until arr.length()) {
             when (val entry = arr.opt(i)) {
                 is String -> {
                     val n = Photos.safeName(entry)
-                    if (n.isNotBlank()) names.add(n)
+                    if (n.isNotBlank()) out.add(Photo(n))
                 }
                 is JSONObject -> {
                     val n = Photos.safeName(entry.optString("name"))
                     if (n.isBlank()) continue
-                    names.add(n)
+                    // caption 缺了就是空串（老备份没有这个键）
+                    out.add(Photo(n, entry.optString("caption")))
                     val b64 = entry.optString("b64")
                     if (b64.isNotBlank() && onPhoto != null) {
                         runCatching { onPhoto(n, android.util.Base64.decode(b64, android.util.Base64.DEFAULT)) }
@@ -293,7 +309,7 @@ object Json {
                 }
             }
         }
-        return names
+        return out
     }
 
     /** 日期可能是 Swift 的数字，也可能是别的工具导出的字符串 —— 两种都认 */

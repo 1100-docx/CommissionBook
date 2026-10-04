@@ -124,7 +124,7 @@ class AppState(private val context: Context) {
     }
 
     /** 现在还挂在某条约稿上的图（**含另一模式**，别只算当前模式那份） */
-    private fun referencedPhotos(): Set<String> = items.flatMap { it.photos }.toSet()
+    private fun referencedPhotos(): Set<String> = items.flatMap { it.photos.map { p -> p.name } }.toSet()
 
     // MARK: - 参考图（2026-10-03 加）
 
@@ -149,7 +149,7 @@ class AppState(private val context: Context) {
         val gone = items.filter { it.id == id }
         items = items.filterNot { it.id == id }
         // 单子删了，它配的参考图也一起走（不留垃圾文件。persist 里还会再兜一次底）
-        store.deletePhotos(gone.flatMap { it.photos })
+        store.deletePhotos(gone.flatMap { it.photos.map { p -> p.name } })
         persist()
     }
 

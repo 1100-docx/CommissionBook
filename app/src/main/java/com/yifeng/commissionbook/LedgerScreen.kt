@@ -1218,7 +1218,7 @@ fun EditSheet(
             val added = withContext(Dispatchers.IO) {
                 uris.take(Photos.MAX_COUNT - photos.size).mapNotNull { onAddPhoto(it) }
             }
-            photos = photos + added
+            photos = photos + added.map { Photo(it) }
             picking = false
         }
     }
@@ -1337,14 +1337,14 @@ fun EditSheet(
                     }
                 }
                 PhotoStrip(
-                    names = photos,
+                    items = photos,
                     pathFor = photoPath,
                     onAdd = {
                         picker.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
-                    onRemove = { name -> photos = photos.filterNot { it == name } },
+                    onRemove = { name -> photos = photos.filterNot { it.name == name } },
                     onOpen = { i -> viewerAt = i },
                 )
                 PhotoHint(
@@ -1382,13 +1382,16 @@ fun EditSheet(
         }
     }
 
-    // 看大图（点缩略图进来，整屏、能左右翻）
+    // 看大图（点缩略图进来，整屏、能左右翻、底下能给这张写说明）
     viewerAt?.let { start ->
         PhotoViewer(
-            names = photos,
+            items = photos,
             startIndex = start,
             pathFor = photoPath,
             onDismiss = { viewerAt = null },
+            onSetCaption = { idx, caption ->
+                photos = photos.mapIndexed { i, p -> if (i == idx) p.copy(caption = caption) else p }
+            },
         )
     }
 }
