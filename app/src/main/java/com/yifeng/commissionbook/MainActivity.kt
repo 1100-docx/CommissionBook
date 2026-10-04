@@ -369,6 +369,8 @@ private fun RootScreen(
     // 2026-09-30 第三批：① 年度报告 / ⑥ 报价计算器（同样盖一层，连底栏一起盖住）
     var showReport by remember { mutableStateOf(false) }
     var showCalculator by remember { mutableStateOf(false) }
+    // 2026-10-06（只有安卓有）：支持作者页，同样盖一层
+    var showSponsor by remember { mutableStateOf(false) }
     // 2026-10-01：帮助页（同样盖一层）—— 状态在 MainActivity 那边（首启引导要够得着它）
 
     Box(Modifier.fillMaxSize()) {
@@ -414,6 +416,7 @@ private fun RootScreen(
                             state.markHelpSeen()
                             onShowHelp(true)
                         },
+                        onOpenSponsor = { showSponsor = true },
                     )
                 }
             }
@@ -474,6 +477,15 @@ private fun RootScreen(
                 mode = state.appMode,
                 onBack = { onShowHelp(false) },
             )
+        }
+
+        // 支持作者页（2026-10-06 加）：同一套出场方式，别两个页面两种动静
+        AnimatedVisibility(
+            visible = showSponsor,
+            enter = fadeIn(tween(200)) + slideInVertically(tween(260)) { it / 14 },
+            exit = fadeOut(tween(150)),
+        ) {
+            SponsorScreen(onBack = { showSponsor = false })
         }
     }
 }

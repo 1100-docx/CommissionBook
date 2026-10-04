@@ -1,8 +1,8 @@
 {
-  "versionCode": 35,
-  "versionName": "3.5.11",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.11.apk",
-  "size": 2003596,
-  "sha256": "33a5da26dc47cc544df7ddb549db7257cd7f87bd647e7bf9bff11337186b4584",
-  "notes": "新增：可以给参考图写一句说明（点开大图，底下那颗「加说明」）；备份会一起带上说明"
+  "versionCode": 36,
+  "versionName": "3.5.12",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.12.apk",
+  "size": 2133200,
+  "sha256": "227cdfcdfa2aa0cdb2b4b9d9b043c93985cc77bf31413218f6f13f4dd13da590",
+  "notes": "新增：支持作者（设置页最底下一行，完全自愿，不给也完全没关系）；隐私政策同步到第四版"
 }

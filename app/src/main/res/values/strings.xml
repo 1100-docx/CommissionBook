@@ -487,7 +487,7 @@
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">最后更新：2026 年 10 月 3 日（第三版 —— 加了「检查更新」和「参考图」，并改掉原来「完全不联网」的说法）</string>
+    <string name="privacy_policy_updated">最后更新：2026 年 10 月 6 日（第四版 —— 加了「支持作者」那一页的说明：收款码是静态图片，App 没有任何内购或付费功能）</string>
     <string name="privacy_policy_scope">适用版本：安卓版 %1$s（versionCode %2$d）及以后</string>
     <string name="notify_default_title">一单约稿</string>
 
@@ -509,4 +509,18 @@
     <string name="photos_note_title">这张图的说明</string>
     <string name="photos_note_placeholder">比如「客户给的配色参考」</string>
     <string name="photos_note_desc">写给自己看的，比如「哪张是配色、哪张是姿势」。留空就是不要说明。</string>
+    <!-- 支持作者（2026-10-06 加）：设置页最底下一行安静的入口 + 一个安静的小页。
+         ⚠️ **只有安卓版有**。iOS 那边这类功能必须走 App Store 的内购（要抽成、
+            要开发者账号、审核会拒），所以 iOS 版一行都没加 —— 别以为是漏做了。 -->
+    <string name="settings_support_section">支持</string>
+    <string name="settings_support_title">支持作者</string>
+    <string name="settings_support_desc">完全自愿，不给也完全没关系</string>
+    <string name="sponsor_title">支持作者</string>
+    <string name="sponsor_subtitle">如果你愿意的话</string>
+    <string name="sponsor_qr_hint">用微信「扫一扫」，或截屏后到相册里选这张图</string>
+    <string name="sponsor_thanks">这个小工具是我一个人一点点做出来的。你愿意用它，还愿意请我喝瓶水，我挺开心的。\n\n不给也完全没关系 —— 你用着，就是最大的支持。</string>
+    <string name="sponsor_no_pay">App 里没有任何付费功能：功能全都免费开放，不会因为你支持过就多给什么，也不会因为没支持就少给什么。</string>
+    <string name="sponsor_privacy">这个码只是一张图片。打开这一页不会联网、不会上传任何东西，App 也不知道谁扫过。</string>
+    <string name="privacy_support_title">自愿支持</string>
+    <string name="privacy_support_body">App 内「支持作者」那一页展示的收款码是静态图片，仅作自愿支持之用。本 App 没有任何内购或付费功能，不会获取、不会保存、也不会上传任何支付信息；支持与否、支持多少，都不影响你能用到的功能。</string>
 </resources>

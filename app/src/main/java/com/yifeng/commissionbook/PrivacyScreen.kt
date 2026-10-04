@@ -53,6 +53,12 @@ import androidx.compose.ui.unit.sp
 //    **不能再写了** —— 那是假话。现在的写法是「只在一个地方联网，且不上传任何数据」，
 //    并把这唯一一件事、用的什么权限、在哪儿能关掉，全列在第一条里。
 //    改动记录：政策版本号 POLICY_VERSION 也跟着改了，老用户下次启动会重读一遍。
+//
+// ⚠️ 2026-10-06 第四版：加了「支持作者」那一页。这一版**没有**任何新的联网行为、
+//    也没有新权限 —— 那个收款码在包里就是一张静态图片。
+//    加这一条是因为「展示收款码」这件事本身属于该报备的（别人一定会问
+//    「扫了会不会被 App 记下来」），所以单独写一条讲清楚，别让它藏在别处。
+//    改动记录：POLICY_VERSION 跟着改成第四版，老用户下次启动会重读一遍。
 
 /**
  * 这一版政策的版本号。
@@ -60,7 +66,7 @@ import androidx.compose.ui.unit.sp
  * 存进 [Prefs.privacyAgreedVersion]：**以后政策改了就改这个字符串**，
  * App 下次启动会自动再弹一次同意页（改了什么也没瞒着人）。
  */
-const val POLICY_VERSION = "2026-10-03.3"
+const val POLICY_VERSION = "2026-10-06.4"
 
 /** 政策正文：一段标题 + 若干段正文 */
 private data class PolicySection(val heading: String, val body: List<String>)
@@ -159,6 +165,12 @@ private val policySections = listOf(
             AppCtx.s(R.string.privacy_export_file),
             AppCtx.s(R.string.privacy_export_share_warning),
         ),
+    ),
+    // 2026-10-06 第四版：支持作者。三件事摊开写 ——
+    //   ① 那只是个静态图片；② App 没有任何内购/付费功能；③ 支不支持不影响功能。
+    PolicySection(
+        AppCtx.s(R.string.privacy_support_title),
+        listOf(AppCtx.s(R.string.privacy_support_body)),
     ),
     PolicySection(
         AppCtx.s(R.string.privacy_minors_title),

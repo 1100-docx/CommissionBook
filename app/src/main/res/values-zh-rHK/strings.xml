@@ -490,7 +490,7 @@
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">最後更新：2026 年 10 月 3 日（第三版 —— 加咗「檢查更新」同「參考圖」，並改返原來「完全唔聯網」嘅講法）</string>
+    <string name="privacy_policy_updated">最後更新：2026 年 10 月 6 日（第四版 —— 加咗「支持作者」嗰頁嘅說明：收款碼係靜態圖片，App 冇任何內購或者付費功能）</string>
     <string name="privacy_policy_scope">適用版本：安卓版 %1$s（versionCode %2$d）及以後</string>
     <string name="notify_default_title">一單約稿</string>
 
@@ -512,4 +512,17 @@
     <string name="photos_note_title">這張圖的說明</string>
     <string name="photos_note_placeholder">比如「客戶給的配色參考」</string>
     <string name="photos_note_desc">寫給自己看的，比如「哪張是配色、哪張是姿勢」。留空就是不要說明。</string>
+    <!-- 支持作者（2026-10-06）。**淨係安卓版有**：iOS 嗰邊呢類嘢一定要行 App Store 嘅內購，
+         所以 iOS 版一行都冇加。 -->
+    <string name="settings_support_section">支持</string>
+    <string name="settings_support_title">支持作者</string>
+    <string name="settings_support_desc">完全自願，唔畀都完全冇所謂</string>
+    <string name="sponsor_title">支持作者</string>
+    <string name="sponsor_subtitle">你想嘅話先至畀</string>
+    <string name="sponsor_qr_hint">用微信「掃一掃」，或者截圖之後喺相簿揀返呢張圖</string>
+    <string name="sponsor_thanks">呢個小工具係我一個人一點一點整出嚟嘅。你肯用佢，仲肯請我飲支水，我好開心。\n\n唔畀都完全冇所謂 —— 你用緊，就已經係最大嘅支持。</string>
+    <string name="sponsor_no_pay">App 入面冇任何付費功能：功能全部免費開放，唔會因為你支持過就多啲乜，亦都唔會因為冇支持就少啲乜。</string>
+    <string name="sponsor_privacy">呢個碼淨係一張圖。打開呢一頁唔會聯網、唔會上傳任何嘢，App 亦都唔知邊個掃過。</string>
+    <string name="privacy_support_title">自願支持</string>
+    <string name="privacy_support_body">App 入面「支持作者」嗰頁顯示嘅收款碼係靜態圖片，淨係用嚟自願支持。本 App 冇任何內購或者付費功能，唔會攞、唔會存、唔會上傳任何付款資料；支唔支持、支持幾多，都唔影響你用得到嘅功能。</string>
 </resources>

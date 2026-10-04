@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
@@ -65,6 +66,7 @@ fun SettingsScreen(
     onOpenFeedback: () -> Unit,
     onOpenCalculator: () -> Unit,
     onOpenHelp: () -> Unit,
+    onOpenSponsor: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -450,6 +452,27 @@ fun SettingsScreen(
                             title = AppCtx.s(R.string.settings_data_storage),
                             divider = false,
                             trailing = { InfoValue(AppCtx.s(R.string.settings_local_storage)) },
+                        )
+                    }
+                }
+
+                // ⑤ 支持作者（2026-10-06 加，**只有安卓版有**）
+                //
+                // 逸风要的「加赞助功能」就落成这一行 —— 刻意做成**安静的入口**：
+                // 放在设置页最底下、只有一枚小爱心、不做计数、主界面一个字都不出现。
+                // 理由：他现在缺的不是钱，是「有人在用」的确认；而收不到的时候，
+                // 任何计数都只是在提醒他「没人给」。
+                //
+                // ⚠️ iOS 版没有这一块（那边必须走 App Store 内购），别以为是漏做了。
+                Column {
+                    SectionLabel(AppCtx.s(R.string.settings_support_section))
+                    InsetGroup {
+                        GroupRow(
+                            title = AppCtx.s(R.string.settings_support_title),
+                            subtitle = AppCtx.s(R.string.settings_support_desc),
+                            icon = Icons.Filled.FavoriteBorder,
+                            divider = false,
+                            onClick = onOpenSponsor,
                         )
                     }
                 }
