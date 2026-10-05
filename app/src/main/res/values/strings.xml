@@ -357,6 +357,8 @@
     <string name="settings_notify_title">通知</string>
     <string name="settings_notify_desc">截止日前 3 天 / 1 天各提醒一次</string>
     <string name="settings_notify_off">只是收不到提醒，数据一条不少</string>
+    <string name="settings_exact_alarm_title">让提醒准点响</string>
+    <string name="settings_exact_alarm_desc">系统现在只允许它晚到最多 1 小时。点一下去开启「闹钟和提醒」，开了就准点了。</string>
     <string name="settings_vibrate_title">震动</string>
     <string name="settings_vibrate_desc">点按钮时轻轻震一下（可在设置里关）</string>
     <string name="settings_vibrate_off">只是没有震动反馈</string>

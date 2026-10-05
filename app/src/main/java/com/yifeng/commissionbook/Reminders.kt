@@ -74,10 +74,15 @@ object Reminders {
                     //    现在优先用精确闹钟（配合 USE_EXACT_ALARM，见 AndroidManifest）；
                     //    真拿不到权限（canScheduleExactAlarms() == false）就退回老办法，
                     //    宁可晚一点，也不能崩。
-                    val exact = Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms()
-                    if (exact) {
+                    // ⚠️ 2026-10-05 晚改（3.5.28）：原来是「canScheduleExactAlarms() 为真才敢用精确闹钟」。
+                    //    真机实测打脸：OPPO / Android 16 上 USE_EXACT_ALARM 明明是 granted=true，
+                    //    这个函数照样返回 false → 一路走降级 → 19:00 的提醒最晚能拖到 20:00。
+                    //    现在改成「**先直接要精确**，系统真不认（SecurityException）再退回不精确」：
+                    //    只要系统肯按 policy 权限放行就是准点的；真拿不到也不崩。
+                    //    拿不到的机型，设置页会多出一行「让提醒准点响 → 去开启」，点一下去系统里授权。
+                    try {
                         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending(context, c, d))
-                    } else {
+                    } catch (e: SecurityException) {
                         am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending(context, c, d))
                     }
                 } else {
@@ -85,6 +90,21 @@ object Reminders {
                 }
             }
         }
+    }
+
+    /**
+     * 系统给不给「精确闹钟」资格。
+     *
+     * false = 只能排不精确闹钟，提醒**可能晚到最多 1 小时**（设置页会因此显示一行「让提醒准点响」）。
+     * 只问系统、不做别的；安卓 12 以下一律 true。
+     *
+     * ⚠️ 2026-10-05（3.5.28）：注意这个函数**只用来决定要不要显示那个提示入口**，
+     *    排闹钟本身不再依赖它 —— 见 reschedule() 里那段注释。
+     */
+    fun exactAllowed(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < 31) return true
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        return am.canScheduleExactAlarms()
     }
 
     /** 截止日往前 d 天的 19:00 */

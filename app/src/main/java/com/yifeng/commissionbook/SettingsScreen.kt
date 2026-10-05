@@ -15,6 +15,8 @@ import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.SystemUpdate
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.outlined.Calculate
 import androidx.compose.material.icons.outlined.Check
@@ -30,6 +32,7 @@ import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Share
@@ -322,6 +325,28 @@ fun SettingsScreen(
                                 })
                             },
                         )
+                        // ⚠️ 2026-10-05 晚加（3.5.28）：系统没给「精确闹钟」资格时，多一行入口。
+                        //    起因：逸风那台 OPPO（Android 16）只声明 USE_EXACT_ALARM 不管用，
+                        //    闹钟 window=+1h —— 19:00 的提醒最晚能拖到 20:00。
+                        //    这行**只在真没资格时出现**，开了以后自己就没了（不用手动摘）。
+                        if (!Reminders.exactAllowed(context)) {
+                            GroupRow(
+                                title = AppCtx.s(R.string.settings_exact_alarm_title),
+                                subtitle = AppCtx.s(R.string.settings_exact_alarm_desc),
+                                icon = Icons.Outlined.Schedule,
+                                divider = false,
+                                onClick = {
+                                    // 跳到系统的「闹钟和提醒」授权页（安卓 12+ 才有这个页面）
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                                                .setData(Uri.fromParts("package", context.packageName, null))
+                                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
+                                    }
+                                },
+                            )
+                        }
                     }
                     Text(
                         AppCtx.s(R.string.settings_notification_hint),
