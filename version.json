@@ -1,8 +1,8 @@
 {
-  "versionCode": 57,
-  "versionName": "3.5.33",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.33.apk",
-  "size": 2151944,
-  "sha256": "1b787a8138ecb2168d2c9be0cae9dfe8bf925e323f819bd88b163418932819bb",
-  "notes": "· 提醒改成**默认关闭**了 —— 想用的话去 设置 → 提醒 打开\n· 打开的时候会先告诉你怎么让它更可靠：把「允许自启动」和「允许后台运行」也打开（不然手机省电策略可能把提醒掐掉，重启或者锁屏久了就不响）\n· 提醒本身没变：到期前 3 天 / 1 天，晚上 7 点各一次\n· 数据一条没动"
+  "versionCode": 58,
+  "versionName": "3.5.34",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.34.apk",
+  "size": 2150572,
+  "sha256": "74edcdb69a24c5773efd5dee922c2a9add0d18d800e9d06aba34ad13398eb88e",
+  "notes": "· 去掉了「打开提醒时弹的那段权限说明」—— 那个框不要了\n· 提醒仍然是默认关闭的，想用的人自己去 设置 → 提醒 打开\n· 数据一条没动"
 }

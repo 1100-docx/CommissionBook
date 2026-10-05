@@ -366,10 +366,6 @@ System: Android %4$s (API %5$s)
     <string name="settings_notify_title">Notifications</string>
     <string name="settings_notify_desc">Reminds you 3 days / 1 day before the due date</string>
     <string name="settings_notify_off">You just won\'t get reminders; no data is lost</string>
-    <string name="reminder_tips_title">Make reminders actually arrive</string>
-    <string name="reminder_tips_body">Your phone\'s battery saver can silently block reminders. Please go to Settings → Apps → Commission Ledger → Battery, and turn on Auto-start and Background running. Otherwise reminders may stay silent after a restart or a long screen-off.</string>
-    <string name="reminder_tips_go">Open settings</string>
-    <string name="reminder_tips_ok">Got it</string>
     <string name="settings_exact_alarm_title">Make reminders on time</string>
     <string name="settings_exact_alarm_desc">Right now your phone may let a reminder arrive up to an hour late. Tap to turn on the exact-alarm setting.</string>
     <string name="settings_vibrate_title">Vibration</string>

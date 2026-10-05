@@ -357,10 +357,6 @@
     <string name="settings_notify_title">通知</string>
     <string name="settings_notify_desc">截止日前 3 天 / 1 天各提醒一次</string>
     <string name="settings_notify_off">只是收不到提醒，資料一條不少</string>
-    <string name="reminder_tips_title">讓提醒真的能響</string>
-    <string name="reminder_tips_body">手機的省電策略會把提醒攔掉。請去「設定 → 應用 → 約稿賬本 → 耗電管理」，把「允許自啟動」和「允許背景執行」都打開 —— 不然手機重啟之後、或者鎖屏放久了，提醒可能一直不響。</string>
-    <string name="reminder_tips_go">去設定</string>
-    <string name="reminder_tips_ok">知道了</string>
     <string name="settings_exact_alarm_title">讓提醒準點響</string>
     <string name="settings_exact_alarm_desc">系統現在只允許它晚到最多 1 小時。點一下去開啟「鬧鐘和提醒」，開了就準點了。</string>
     <string name="settings_vibrate_title">震動</string>
