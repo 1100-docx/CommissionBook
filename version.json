@@ -1,8 +1,8 @@
 {
-  "versionCode": 44,
-  "versionName": "3.5.20",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.20.apk",
+  "versionCode": 45,
+  "versionName": "3.5.21",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.21.apk",
   "size": 2150088,
-  "sha256": "35e63ce2a4fe7c2ba859e3b018d2b630d3c72027e917a21e1ee26e2aa09016ee",
-  "notes": "· 界面小改：图标统一成细线样式，金额数字换成等宽字形（滚列表时不再左右抖）\n· 分享备份前多一道提醒：备份是明文文件（画师联系方式、参考图都在里面），发出去之前先确认一下\n· 已交付的单子不再显示「已超期」—— 归档箱里的那些也一样\n· 看大图那页：底下的按钮不再压到系统导航键上（左上角的 ✕ 也一并让开了状态栏）\n· 隐私政策里有一处日期写错了，改了"
+  "sha256": "b9b26946da3fac8559efedfbaa64b65b85952cdc6870d00d54bef56de53d9d7d",
+  "notes": "· 界面小改：大标题跟卡片左边缘对齐了、筛选那排降噪（只剩选中的那枚是实心色）\n· 图标统一成细线样式，金额数字换成等宽字形（滚列表时不再左右抖）\n· 分享备份前多一道提醒：备份是明文文件，发出去之前先确认一下\n· 已交付的单子不再显示「已超期」—— 归档箱里的那些也一样\n· 看大图那页：底下的按钮不再压到系统导航键上（左上角的 ✕ 也一并让开了状态栏）\n· 隐私政策里有一处日期写错了，改了"
 }

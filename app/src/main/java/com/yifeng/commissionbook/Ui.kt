@@ -162,7 +162,9 @@ fun SlimChip(
     val interaction = remember { MutableInteractionSource() }
     // 未选中：铺一层比底色略深的灰（iOS 那种「实心胶囊」），不描边 ——
     // 描边看着像安卓的 FilterChip；实心灰更干净，而且宽度一点没变，还是一排。
-    val fillUnselected = if (dark) cs.surfaceVariant.copy(alpha = 0.45f) else cs.surfaceVariant.copy(alpha = 0.8f)
+    // ⚠️ 2026-10-05 调淡：原来浅色下是 0.8，五个胶囊并排时整排都在抢眼，
+    //    反而把「哪个是选中的」这件事淹了。调成 0.45，选中的那枚（实心主色）立刻跳出来。
+    val fillUnselected = if (dark) cs.surfaceVariant.copy(alpha = 0.35f) else cs.surfaceVariant.copy(alpha = 0.45f)
     val bg by animateColorAsState(
         targetValue = if (selected) cs.primary else fillUnselected,
         animationSpec = tween(200),
@@ -175,7 +177,7 @@ fun SlimChip(
     )
     Box(
         modifier
-            .height(34.dp)
+            .height(32.dp)
             .clip(shape)
             .background(bg)
             .selectable(

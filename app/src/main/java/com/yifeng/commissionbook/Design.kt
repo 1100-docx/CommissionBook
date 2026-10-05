@@ -312,7 +312,9 @@ fun CollapsibleLargeTitle(
         Modifier
             .fillMaxWidth()
             .padding(
-                start = 20.dp,
+                // ⚠️ 2026-10-05：原来是 20.dp，跟下面卡片的 16.dp 差 4 —— 整列看起来「差一点点」，
+                //    这就是「说不上哪儿不齐但就是不舒服」的来源。对齐到 16。
+                start = 16.dp,
                 end = 12.dp,
                 top = (12f - 6f * collapse).dp,
                 bottom = (12f - 6f * collapse).dp,
@@ -333,7 +335,7 @@ fun CollapsibleLargeTitle(
                     caption,
                     fontSize = 13.sp,
                     color = cs.onSurfaceVariant.copy(alpha = capAlpha),
-                    modifier = Modifier.padding(top = 3.dp),
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
         }
