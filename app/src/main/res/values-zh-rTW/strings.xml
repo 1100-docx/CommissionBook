@@ -343,7 +343,7 @@
     <string name="privacy_minors_title">八、未成年人</string>
     <string name="privacy_minors_body">本 App 不收集任何個人資訊，因此也不存在「收集未成年人資訊」的問題。未成年人使用建議在監護人知情的情況下進行。</string>
     <string name="privacy_changes_title">九、政策變更</string>
-    <string name="privacy_changes_body">政策有變動時會跟著一起更新，並在這裡標註更新時間。最近一次更新是 2026 年 10 月 6 日 —— 加了第七條「自願支持」，把一件容易讓人誤會的事講清楚：那個收款碼只是一張靜態圖片。</string>
+    <string name="privacy_changes_body">政策有變動時會跟著一起更新，並在這裡標註更新時間。最近一次更新是 2026 年 10 月 5 日 —— 加了第七條「自願支持」，把一件容易讓人誤會的事講清楚：那個收款碼只是一張靜態圖片。</string>
     <string name="privacy_contact_title">十、聯絡方式</string>
     <string name="privacy_contact_body">有問題、有建議，或者想讓我刪點什麼（其實刪不了，因為我這兒什麼都沒有）：</string>
     <string name="privacy_contact_email">· 郵箱：error1100@icloud.com —— 在「設定 → 反饋與建議」裡點一下就替你寫好郵件</string>
@@ -489,7 +489,7 @@
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">最後更新：2026 年 10 月 6 日（第四版 —— 加了「支持作者」那一頁的說明：收款碼是靜態圖片，App 沒有任何內購或付費功能）</string>
+    <string name="privacy_policy_updated">最後更新：2026 年 10 月 5 日（第四版 —— 加了「支持作者」那一頁的說明：收款碼是靜態圖片，App 沒有任何內購或付費功能）</string>
     <string name="privacy_policy_scope">適用版本：安卓版 %1$s（versionCode %2$d）及以後</string>
     <string name="notify_default_title">一單約稿</string>
 
@@ -511,7 +511,7 @@
     <string name="photos_note_title">這張圖的說明</string>
     <string name="photos_note_placeholder">比如「客戶給的配色參考」</string>
     <string name="photos_note_desc">寫給自己看的，比如「哪張是配色、哪張是姿勢」。留空就是不要說明。</string>
-    <!-- 支持作者（2026-10-06）。**只有安卓版有**：iOS 那邊這類功能一律要走 App Store 的內購，
+    <!-- 支持作者（2026-10-05）。**只有安卓版有**：iOS 那邊這類功能一律要走 App Store 的內購，
          所以 iOS 版一行都沒加。 -->
     <string name="settings_support_section">支持</string>
     <string name="settings_support_title">支持作者</string>

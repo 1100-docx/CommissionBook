@@ -343,7 +343,7 @@
     <string name="privacy_minors_title">八、未成年人</string>
     <string name="privacy_minors_body">本 App 不收集任何个人信息，因此也不存在「收集未成年人信息」的问题。未成年人使用建议在监护人知情的情况下进行。</string>
     <string name="privacy_changes_title">九、政策变更</string>
-    <string name="privacy_changes_body">政策有变动时会跟着一起更新，并在这里标注更新时间。最近一次更新是 2026 年 10 月 6 日 —— 加了第七条「自愿支持」，把一件容易让人误会的事讲清楚：那个收款码只是一张静态图片。</string>
+    <string name="privacy_changes_body">政策有变动时会跟着一起更新，并在这里标注更新时间。最近一次更新是 2026 年 10 月 5 日 —— 加了第七条「自愿支持」，把一件容易让人误会的事讲清楚：那个收款码只是一张静态图片。</string>
     <string name="privacy_contact_title">十、联系方式</string>
     <string name="privacy_contact_body">有问题、有建议，或者想让我删点什么（其实删不了，因为我这儿什么都没有）：</string>
     <string name="privacy_contact_email">· 邮箱：error1100@icloud.com —— 在「设置 → 反馈与建议」里点一下就替你写好邮件</string>
@@ -487,7 +487,7 @@
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">最后更新：2026 年 10 月 6 日（第四版 —— 加了「支持作者」那一页的说明：收款码是静态图片，App 没有任何内购或付费功能）</string>
+    <string name="privacy_policy_updated">最后更新：2026 年 10 月 5 日（第四版 —— 加了「支持作者」那一页的说明：收款码是静态图片，App 没有任何内购或付费功能）</string>
     <string name="privacy_policy_scope">适用版本：安卓版 %1$s（versionCode %2$d）及以后</string>
     <string name="notify_default_title">一单约稿</string>
 
@@ -509,7 +509,7 @@
     <string name="photos_note_title">这张图的说明</string>
     <string name="photos_note_placeholder">比如「客户给的配色参考」</string>
     <string name="photos_note_desc">写给自己看的，比如「哪张是配色、哪张是姿势」。留空就是不要说明。</string>
-    <!-- 支持作者（2026-10-06 加）：设置页最底下一行安静的入口 + 一个安静的小页。
+    <!-- 支持作者（2026-10-05 加）：设置页最底下一行安静的入口 + 一个安静的小页。
          ⚠️ **只有安卓版有**。iOS 那边这类功能必须走 App Store 的内购（要抽成、
             要开发者账号、审核会拒），所以 iOS 版一行都没加 —— 别以为是漏做了。 -->
     <string name="settings_support_section">支持</string>

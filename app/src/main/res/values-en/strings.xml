@@ -352,7 +352,7 @@ System: Android %4$s (API %5$s)
     <string name="privacy_minors_title">8. Minors</string>
     <string name="privacy_minors_body">This app collects no personal information, so there\'s no issue of "collecting minors\' information." Minors should use it with a guardian\'s knowledge.</string>
     <string name="privacy_changes_title">9. Policy Changes</string>
-    <string name="privacy_changes_body">When features change, this policy changes with them and the date above is updated. The most recent change was on 6 October 2026, when section 7 on voluntary support was added to make one easily-misread point clear: the payment code is just a static image.</string>
+    <string name="privacy_changes_body">When features change, this policy changes with them and the date above is updated. The most recent change was on 5 October 2026, when section 7 on voluntary support was added to make one easily-misread point clear: the payment code is just a static image.</string>
     <string name="privacy_contact_title">10. Contact</string>
     <string name="privacy_contact_body">Questions, suggestions, or want me to delete something (I actually can\'t — there\'s nothing here on my end):</string>
     <string name="privacy_contact_email">· Email: error1100@icloud.com — tap it in "Settings → Feedback &amp; Suggestions" and your email will be written for you</string>
@@ -495,7 +495,7 @@ System: Android %4$s (API %5$s)
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">Last updated: 6 October 2026 (revision 4 - a note about the Support the author page was added: the payment code is a static image, and the app has no in-app purchases or paid features)</string>
+    <string name="privacy_policy_updated">Last updated: 5 October 2026 (revision 4 - a note about the Support the author page was added: the payment code is a static image, and the app has no in-app purchases or paid features)</string>
     <string name="privacy_policy_scope">Applies to: Android %1$s (versionCode %2$d) and later</string>
     <string name="notify_default_title">Untitled commission</string>
 
@@ -517,7 +517,7 @@ System: Android %4$s (API %5$s)
     <string name="photos_note_title">Note for this image</string>
     <string name="photos_note_placeholder">e.g. "colour reference from the client"</string>
     <string name="photos_note_desc">Just for you — e.g. "which one is the palette, which one is the pose". Leave it empty to remove the note.</string>
-    <!-- Support the author (2026-10-06). Android only: on iOS this kind of thing
+    <!-- Support the author (2026-10-05). Android only: on iOS this kind of thing
          has to go through App Store in-app purchase, so the iOS build has none of it. -->
     <string name="settings_support_section">Support</string>
     <string name="settings_support_title">Support the author</string>

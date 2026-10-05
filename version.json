@@ -1,8 +1,8 @@
 {
-  "versionCode": 37,
-  "versionName": "3.5.13",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.13.apk",
+  "versionCode": 38,
+  "versionName": "3.5.14",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.14.apk",
   "size": 2133304,
-  "sha256": "0e3ac7d921737554faf588a88d465392d690379323ad158727700e36d4073d41",
-  "notes": "· 参考图可以写一句说明了：点开大图，底下那颗「加说明」\n· 设置页最底下多了一行「支持作者」—— 完全自愿，不给也完全没关系\n· 隐私政策补上了条款序号（第七节：自愿支持）"
+  "sha256": "5545d9e73424bb09388966df5e69c59a389ae12744ef1665175fab208512b1c1",
+  "notes": "· 参考图可以写一句说明了：点开大图，底下那颗「加说明」\n· 设置页最底下一行多了「支持作者」—— 完全自愿，不给也完全没关系\n· 隐私政策补上了条款序号（第七节：自愿支持），并修了里面一处日期写错"
 }
