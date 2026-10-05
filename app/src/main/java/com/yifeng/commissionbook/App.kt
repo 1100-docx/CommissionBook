@@ -31,9 +31,5 @@ class App : Application() {
         super.onCreate()
         // 语言偏好也在这里读：通知渠道名是本地化字符串，冷启动时必须是对的语种。
         AppCtx.init(this, Prefs(this).appLanguage)
-        // 2026-10-05 晚加（3.5.29）：登记「重启后排提醒」那个持久化任务。
-        // 幂等 —— 每次进程起来登记一次就行（同一 JOB_ID 会覆盖）。
-        // OPPO 那类会拦开机广播的机器，就靠它把重启后的提醒捞回来，用户不用开任何权限。
-        RescheduleJob.schedule(this)
     }
 }
