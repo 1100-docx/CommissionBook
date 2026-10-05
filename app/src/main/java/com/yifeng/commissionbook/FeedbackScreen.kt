@@ -26,7 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -123,7 +123,7 @@ fun FeedbackScreen(onBack: () -> Unit) {
                     .padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, AppCtx.s(R.string.common_back)) {
+                CircleIconButton(Icons.AutoMirrored.Outlined.ArrowBack, AppCtx.s(R.string.common_back)) {
                     lightTick(haptic)
                     onBack()
                 }
@@ -158,7 +158,7 @@ fun FeedbackScreen(onBack: () -> Unit) {
                     )
                     Spacer(Modifier.height(12.dp))
                     TextButton(onClick = { lightTick(haptic); copyEmail() }) {
-                        Icon(Icons.Filled.ContentCopy, null, Modifier.size(18.dp), tint = cs.primary)
+                        Icon(Icons.Outlined.ContentCopy, null, Modifier.size(18.dp), tint = cs.primary)
                         Spacer(Modifier.width(6.dp))
                         Text(AppCtx.s(R.string.common_copy_email), fontSize = 14.sp)
                     }

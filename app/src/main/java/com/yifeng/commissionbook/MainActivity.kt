@@ -46,10 +46,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.PieChart
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.PieChart
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -491,10 +491,10 @@ private fun RootScreen(
 }
 
 private fun iconOf(t: Tab): ImageVector = when (t) {
-    Tab.Ledger -> Icons.Filled.ReceiptLong
-    Tab.Artists -> Icons.Filled.Group
-    Tab.Stats -> Icons.Filled.PieChart
-    Tab.Settings -> Icons.Filled.Settings
+    Tab.Ledger -> Icons.Outlined.ReceiptLong
+    Tab.Artists -> Icons.Outlined.Group
+    Tab.Stats -> Icons.Outlined.PieChart
+    Tab.Settings -> Icons.Outlined.Settings
 }
 
 /**

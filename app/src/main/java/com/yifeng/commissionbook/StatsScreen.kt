@@ -122,12 +122,13 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(44.dp),
                             )
-                            Text(money(list.sumOf { it.total }), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(money(list.sumOf { it.total }), fontSize = 15.sp, fontWeight = FontWeight.Bold, style = tnum)
                             Spacer(Modifier.weight(1f))
                             Text(
                                 "${Terms.paid(state.appMode)} ${money(list.sumOf { it.deposit })}",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = tnum,
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(
@@ -290,7 +291,7 @@ private fun StatCell(label: String, value: String, modifier: Modifier = Modifier
     Column(modifier) {
         Text(label, fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
         Spacer(Modifier.height(2.dp))
-        Text(value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+        Text(value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, style = tnum)
     }
 }
 

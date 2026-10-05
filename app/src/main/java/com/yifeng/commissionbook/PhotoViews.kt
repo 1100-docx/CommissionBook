@@ -29,8 +29,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Collections
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Collections
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ImageNotSupported
@@ -148,7 +148,7 @@ fun PhotoStrip(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            Icons.Filled.Close,
+                            Icons.Outlined.Close,
                             contentDescription = AppCtx.s(R.string.photos_remove),
                             tint = Color.White,
                             modifier = Modifier.size(13.dp),
@@ -253,7 +253,7 @@ fun PhotoViewer(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    Icons.Filled.Close,
+                    Icons.Outlined.Close,
                     contentDescription = AppCtx.s(R.string.common_cancel),
                     tint = Color.White,
                     modifier = Modifier.size(19.dp),
@@ -302,7 +302,7 @@ fun PhotoBadge(count: Int) {
     val cs = MaterialTheme.colorScheme
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
-            Icons.Filled.Collections,
+            Icons.Outlined.Collections,
             contentDescription = AppCtx.s(R.string.photos_count_badge, count),
             tint = cs.onSurfaceVariant.copy(alpha = 0.75f),
             modifier = Modifier.size(12.dp),

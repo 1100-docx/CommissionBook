@@ -20,7 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -249,7 +249,7 @@ fun HelpScreen(mode: AppMode, onBack: () -> Unit) {
                     .padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, AppCtx.s(R.string.common_back)) {
+                CircleIconButton(Icons.AutoMirrored.Outlined.ArrowBack, AppCtx.s(R.string.common_back)) {
                     lightTick(haptic)
                     onBack()
                 }
@@ -304,7 +304,7 @@ fun HelpScreen(mode: AppMode, onBack: () -> Unit) {
                                     Spacer(Modifier.height(6.dp))
                                     Row(verticalAlignment = Alignment.Top) {
                                         Icon(
-                                            Icons.Filled.Place,
+                                            Icons.Outlined.Place,
                                             null,
                                             tint = cs.primary,
                                             modifier = Modifier

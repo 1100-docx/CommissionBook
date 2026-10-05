@@ -1,8 +1,8 @@
 {
-  "versionCode": 43,
-  "versionName": "3.5.19",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.19.apk",
+  "versionCode": 44,
+  "versionName": "3.5.20",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.20.apk",
   "size": 2133704,
   "sha256": "3676eabcedcf801a9ec329614f3dbe1f9c2706048d1c93f4c14f2b4f08a80d5b",
-  "notes": "· 新增「支持作者」：在设置页最底下一行 —— 完全自愿，不给也完全没关系\n· 分享备份时会先提醒一句：备份是明文文件，里面有画师联系方式、金额和参考图，请妥善保管\n· 已交付的单子不再显示「已超期」（归档里的那些也一样）\n· 看大图那页：底下的按钮不再压到系统导航键上\n· 隐私政策更新到第四版 —— 装完会重新让你读一遍，正常"
+  "notes": "· 界面小改：图标统一成细线样式，金额数字换成等宽字形（滚列表时不再左右抖）\n· 分享备份前多一道提醒：备份是明文文件（画师联系方式、参考图都在里面），发出去之前先确认一下\n· 已交付的单子不再显示「已超期」—— 归档箱里的那些也一样\n· 看大图那页：底下的按钮不再压到系统导航键上（左上角的 ✕ 也一并让开了状态栏）\n· 隐私政策里有一处日期写错了，改了"
 }

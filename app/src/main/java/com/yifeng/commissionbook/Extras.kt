@@ -38,11 +38,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -198,7 +198,7 @@ fun CelebrateOverlay(show: Boolean, label: String = AppCtx.s(R.string.ledger_del
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    Icons.Filled.CheckCircle,
+                    Icons.Outlined.CheckCircle,
                     contentDescription = null,
                     tint = statusColor(CommissionStatus.DELIVERED),
                     modifier = Modifier.size(64.dp),
@@ -290,7 +290,7 @@ fun NudgeSheet(c: Commission, mode: AppMode, onDismiss: () -> Unit, onCopied: (S
                             clip.setText(AnnotatedString(body))
                             onCopied(AppCtx.s(R.string.script_copied, tone))
                         }) {
-                            Icon(Icons.Filled.ContentCopy, null, modifier = Modifier.size(15.dp))
+                            Icon(Icons.Outlined.ContentCopy, null, modifier = Modifier.size(15.dp))
                             Spacer(Modifier.width(5.dp))
                             Text(AppCtx.s(R.string.common_copy), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         }
@@ -409,7 +409,7 @@ fun QuoteCalculatorScreen(onBack: () -> Unit, onCopied: (String) -> Unit) {
                     .padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, AppCtx.s(R.string.common_back)) {
+                CircleIconButton(Icons.AutoMirrored.Outlined.ArrowBack, AppCtx.s(R.string.common_back)) {
                     lightTick(haptic)
                     onBack()
                 }
@@ -474,7 +474,7 @@ fun QuoteCalculatorScreen(onBack: () -> Unit, onCopied: (String) -> Unit) {
                             lightTick(haptic)
                             editing = true
                         }) {
-                            Icon(Icons.Filled.Tune, null, modifier = Modifier.size(15.dp))
+                            Icon(Icons.Outlined.Tune, null, modifier = Modifier.size(15.dp))
                             Spacer(Modifier.width(5.dp))
                             Text(AppCtx.s(R.string.artist_quote_custom), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         }
@@ -630,13 +630,13 @@ private fun QuoteExtrasSheet(
                                 lightTick(haptic)
                                 openForm(i)
                             }) {
-                                Icon(Icons.Filled.Edit, AppCtx.s(R.string.common_edit), Modifier.size(17.dp), tint = cs.primary)
+                                Icon(Icons.Outlined.Edit, AppCtx.s(R.string.common_edit), Modifier.size(17.dp), tint = cs.primary)
                             }
                             IconButton(onClick = {
                                 lightTick(haptic)
                                 onChange(list.filterIndexed { j, _ -> j != i })
                             }) {
-                                Icon(Icons.Filled.Close, AppCtx.s(R.string.common_delete), Modifier.size(17.dp), tint = cs.onSurfaceVariant)
+                                Icon(Icons.Outlined.Close, AppCtx.s(R.string.common_delete), Modifier.size(17.dp), tint = cs.onSurfaceVariant)
                             }
                         }
                     }
@@ -877,7 +877,7 @@ fun YearReportScreen(
                     .padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, AppCtx.s(R.string.common_back)) {
+                CircleIconButton(Icons.AutoMirrored.Outlined.ArrowBack, AppCtx.s(R.string.common_back)) {
                     lightTick(haptic)
                     onBack()
                 }

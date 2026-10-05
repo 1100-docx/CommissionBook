@@ -20,7 +20,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -111,6 +112,15 @@ fun StageBar(status: CommissionStatus, modifier: Modifier = Modifier) {
 }
 
 /** 「还剩 3 天 / 超期 2 天」这句 */
+/**
+ * 金额 / 日期这类数字统一用**等宽字形**（tabular figures）。
+ *
+ * 为什么：默认比例字形里「1」比「8」窄，列表滚动、数字跳动时整行会左右抖一下，
+ * 一屏钱看着就不稳。等宽之后每个数字占一样宽，金额列天然对齐 ——
+ * 这 App 的主角本来就是钱，这一下最划算（2026-10-05 加，逸风要「界面再干净一点」）。
+ */
+val tnum = TextStyle(fontFeatureSettings = "tnum")
+
 fun deadlineText(c: Commission): Pair<String, Boolean>? {
     // ⚠️ 2026-10-05 修：**已交付的单子不再报超期**。
     //    逸风报「已归档的条目中，已交付的依旧显示已超期」—— 交付完了就没「超期」这回事，
@@ -207,7 +217,7 @@ fun LockScreen(hasBio: Boolean, onUnlock: () -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    Icons.Filled.Lock,
+                    Icons.Outlined.Lock,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(34.dp),

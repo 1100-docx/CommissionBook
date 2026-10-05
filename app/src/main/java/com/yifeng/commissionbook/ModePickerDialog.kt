@@ -21,10 +21,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -136,7 +136,7 @@ fun ModePickerDialog(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        Icons.Filled.AutoAwesome,
+                        Icons.Outlined.AutoAwesome,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(22.dp),
@@ -160,14 +160,14 @@ fun ModePickerDialog(
 
                 Spacer(Modifier.height(20.dp))
                 ModeOption(
-                    icon = Icons.Filled.ShoppingBag,
+                    icon = Icons.Outlined.ShoppingBag,
                     title = AppCtx.s(R.string.settings_im_buyer),
                     sub = AppCtx.s(R.string.settings_buyer_desc),
                     onClick = { lightTick(haptic); onPick(AppMode.BUYER) },
                 )
                 Spacer(Modifier.height(12.dp))
                 ModeOption(
-                    icon = Icons.Filled.Palette,
+                    icon = Icons.Outlined.Palette,
                     title = AppCtx.s(R.string.settings_im_artist),
                     sub = AppCtx.s(R.string.settings_artist_desc),
                     onClick = { lightTick(haptic); onPick(AppMode.ARTIST) },
@@ -234,7 +234,7 @@ private fun ModeOption(
             Text(sub, fontSize = 11.5.sp, color = cs.onSurfaceVariant)
         }
         Icon(
-            Icons.Filled.ChevronRight,
+            Icons.Outlined.ChevronRight,
             contentDescription = null,
             tint = cs.onSurfaceVariant.copy(alpha = 0.50f),
             modifier = Modifier.size(20.dp),

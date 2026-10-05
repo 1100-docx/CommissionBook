@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -131,7 +131,7 @@ fun GuideDialog(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        Icons.Filled.MenuBook,
+                        Icons.Outlined.MenuBook,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(22.dp),

@@ -11,29 +11,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Autorenew
-import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.outlined.Autorenew
+import androidx.compose.material.icons.outlined.SystemUpdate
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.outlined.Calculate
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.PrivacyTip
-import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.PrivacyTip
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -158,7 +158,7 @@ fun SettingsScreen(
                                 AppCtx.s(R.string.settings_mode_buyer_desc)
                             else
                                 AppCtx.s(R.string.settings_mode_client_desc),
-                            icon = Icons.Filled.SwapHoriz,
+                            icon = Icons.Outlined.SwapHoriz,
                             divider = false,
                             trailing = {
                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -187,7 +187,7 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.settings_theme),
                             subtitle = AppCtx.s(R.string.settings_theme_desc),
-                            icon = Icons.Filled.DarkMode,
+                            icon = Icons.Outlined.DarkMode,
                             // ⚠️ 2026-10-03 改了三版，别再来回折腾：
                             //   ① 「长说明塞中间那列 + 英文三颗长胶囊」→ 标题被压成「一个字母一行」；
                             //   ② stackTrailing（胶囊另起一行）→ 逸风：「三颗另起一行看着不和谐」；
@@ -229,7 +229,7 @@ fun SettingsScreen(
                             else
                                 LANGUAGES.firstOrNull { it.first == langNow }?.second
                                     ?: AppCtx.s(R.string.settings_language_system),
-                            icon = Icons.Filled.Language,
+                            icon = Icons.Outlined.Language,
                             divider = false,
                             onClick = { showLangSheet = true },
                         )
@@ -285,7 +285,7 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.settings_protection),
                             subtitle = AppCtx.s(R.string.settings_lock_desc),
-                            icon = Icons.Filled.Lock,
+                            icon = Icons.Outlined.Lock,
                             divider = false,
                             trailing = {
                                 Switch(checked = lockOn, onCheckedChange = { v ->
@@ -311,7 +311,7 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.settings_remind_before_due),
                             subtitle = AppCtx.s(R.string.settings_deadline_reminder_desc),
-                            icon = Icons.Filled.NotificationsActive,
+                            icon = Icons.Outlined.NotificationsActive,
                             divider = false,
                             trailing = {
                                 Switch(checked = reminderOn, onCheckedChange = { v ->
@@ -338,20 +338,20 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.settings_export_backup),
                             subtitle = AppCtx.s(R.string.settings_export_backup_desc),
-                            icon = Icons.Filled.FileDownload,
+                            icon = Icons.Outlined.FileDownload,
                             onClick = { onExport(state.toJsonString()) },
                         )
                         GroupRow(
                             title = AppCtx.s(R.string.settings_share_backup),
                             subtitle = AppCtx.s(R.string.settings_share_backup_desc),
-                            icon = Icons.Filled.Share,
+                            icon = Icons.Outlined.Share,
                             // 2026-10-05 改：不再直接弹分享面板，先过一道隐私提醒
                             onClick = { askShare = true },
                         )
                         GroupRow(
                             title = AppCtx.s(R.string.settings_restore_from_file),
                             subtitle = AppCtx.s(R.string.settings_restore_ios_note),
-                            icon = Icons.Filled.Restore,
+                            icon = Icons.Outlined.Restore,
                             divider = false,
                             onClick = onImport,
                         )
@@ -368,7 +368,7 @@ fun SettingsScreen(
                             GroupRow(
                                 title = AppCtx.s(R.string.artist_quote_calculator),
                                 subtitle = AppCtx.s(R.string.common_tools_desc),
-                                icon = Icons.Filled.Calculate,
+                                icon = Icons.Outlined.Calculate,
                                 divider = false,
                                 onClick = onOpenCalculator,
                             )
@@ -385,7 +385,7 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.help_how_to_use_2),
                             subtitle = AppCtx.s(R.string.help_how_to_use_desc_2),
-                            icon = Icons.Filled.HelpOutline,
+                            icon = Icons.Outlined.HelpOutline,
                             divider = false,
                             onClick = onOpenHelp,
                         )
@@ -406,7 +406,7 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.settings_update_check),
                             subtitle = AppCtx.s(R.string.settings_update_check_desc, versionName),
-                            icon = Icons.Filled.SystemUpdate,
+                            icon = Icons.Outlined.SystemUpdate,
                             onClick = {
                                 updateScope.launch { doCheck(context, prefs) { updateStatus = it } }
                             },
@@ -414,7 +414,7 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.settings_update_auto),
                             subtitle = AppCtx.s(R.string.settings_update_auto_desc),
-                            icon = Icons.Filled.Autorenew,
+                            icon = Icons.Outlined.Autorenew,
                             divider = false,
                             trailing = {
                                 Switch(checked = autoUpdate, onCheckedChange = { v ->
@@ -432,21 +432,21 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.settings_version),
-                            icon = Icons.Filled.Info,
+                            icon = Icons.Outlined.Info,
                             trailing = { InfoValue(AppCtx.s(R.string.settings_version_android, versionName)) },
                         )
                         // 首次启动已经强制读过一遍，这里留个入口随时能翻回来
                         GroupRow(
                             title = AppCtx.s(R.string.privacy_policy_title),
                             subtitle = AppCtx.s(R.string.settings_offline_note),
-                            icon = Icons.Filled.PrivacyTip,
+                            icon = Icons.Outlined.PrivacyTip,
                             onClick = onOpenPrivacy,
                         )
                         // 反馈渠道（2026-09-29 加）：App 不联网，所以是「帮你写好，你自己发」
                         GroupRow(
                             title = AppCtx.s(R.string.help_feedback_title),
                             subtitle = AppCtx.s(R.string.settings_feedback_desc),
-                            icon = Icons.Filled.Email,
+                            icon = Icons.Outlined.Email,
                             onClick = onOpenFeedback,
                         )
                         GroupRow(title = AppCtx.s(R.string.common_count), subtitle = AppCtx.s(R.string.common_current_mode_all), trailing = { InfoValue(AppCtx.s(R.string.common_count_of_total, state.modeItems.size, state.items.size)) })
@@ -473,7 +473,7 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.settings_support_title),
                             subtitle = AppCtx.s(R.string.settings_support_desc),
-                            icon = Icons.Filled.FavoriteBorder,
+                            icon = Icons.Outlined.FavoriteBorder,
                             divider = false,
                             onClick = onOpenSponsor,
                         )
@@ -581,7 +581,7 @@ private fun LanguagePickerSheet(
                 ) {
                     Text(label, fontSize = 15.sp, modifier = Modifier.weight(1f))
                     if (picked) {
-                        Icon(Icons.Filled.Check, contentDescription = null,
+                        Icon(Icons.Outlined.Check, contentDescription = null,
                              tint = MaterialTheme.colorScheme.primary)
                     }
                 }

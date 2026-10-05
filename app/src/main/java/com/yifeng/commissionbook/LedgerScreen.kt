@@ -22,8 +22,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -48,17 +48,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.StickyNote2
-import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.StickyNote2
+import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -172,12 +172,12 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                 // 新增按钮（2026-09-30 从右下角搬上来）：
                 // 原来是右下角那颗悬浮球，逸风说「有点遮挡了」→ 挪到右上角。
                 // 顺带跟 iOS 版对齐（那边一直是右上角的 +）。
-                CircleIconButton(Icons.Filled.Search, AppCtx.s(R.string.common_search)) {
+                CircleIconButton(Icons.Outlined.Search, AppCtx.s(R.string.common_search)) {
                     searching = !searching
                     if (!searching) query = ""
                 }
                 Spacer(Modifier.width(8.dp))
-                CircleIconButton(Icons.Filled.Add, AppCtx.s(R.string.common_add)) { creating = true }
+                CircleIconButton(Icons.Outlined.Add, AppCtx.s(R.string.common_add)) { creating = true }
             }
 
             // ⚠️ 2026-10-02 改：**整页并进同一个 LazyColumn**。
@@ -246,7 +246,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        Icons.Filled.AutoAwesome,
+                        Icons.Outlined.AutoAwesome,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(15.dp),
@@ -381,7 +381,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                Icons.Filled.Warning,
+                                Icons.Outlined.Warning,
                                 contentDescription = null,
                                 tint = Color(0xFFFF9F0A),
                                 modifier = Modifier.size(14.dp),
@@ -442,7 +442,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                     ) { i -> showArchived = i == 1 }
                     SortButton(sort) { sort = it }
                     // ④ 多选入口（2026-10-01 加）
-                    CircleIconButton(Icons.Filled.Checklist, AppCtx.s(R.string.common_multi_select)) { selecting = true }
+                    CircleIconButton(Icons.Outlined.Checklist, AppCtx.s(R.string.common_multi_select)) { selecting = true }
                 }
             }
             }
@@ -688,7 +688,7 @@ private fun HeroCell(label: String, value: String, modifier: Modifier) {
     val w = androidx.compose.ui.graphics.Color.White
     Column(modifier) {
         Text(label, fontSize = 11.sp, color = w.copy(alpha = 0.8f))
-        Text(value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = w)
+        Text(value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = w, style = tnum)
     }
 }
 
@@ -697,13 +697,13 @@ private fun HeroCell(label: String, value: String, modifier: Modifier) {
 private fun SortButton(sort: SortMode, onPick: (SortMode) -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
-        CircleIconButton(Icons.Filled.SwapVert, sort.label) { open = true }
+        CircleIconButton(Icons.Outlined.SwapVert, sort.label) { open = true }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             SortMode.entries.forEach { s ->
                 DropdownMenuItem(
                     text = { Text(s.label, fontSize = 14.sp) },
                     leadingIcon = {
-                        if (s == sort) Icon(Icons.Filled.Check, null, modifier = Modifier.size(18.dp))
+                        if (s == sort) Icon(Icons.Outlined.Check, null, modifier = Modifier.size(18.dp))
                         else Spacer(Modifier.width(18.dp))
                     },
                     onClick = { onPick(s); open = false },
@@ -751,7 +751,7 @@ private fun StageArrow(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            if (forward) Icons.Filled.ArrowForward else Icons.AutoMirrored.Filled.ArrowBack,
+            if (forward) Icons.Outlined.ArrowForward else Icons.AutoMirrored.Outlined.ArrowBack,
             contentDescription = desc,
             tint = fg,
             modifier = Modifier.size(17.dp),
@@ -792,7 +792,7 @@ private fun CommissionCard(
             Box {
                 IconButton(onClick = { menu = true }, modifier = Modifier.size(32.dp)) {
                     Icon(
-                        Icons.Filled.MoreHoriz,
+                        Icons.Outlined.MoreHoriz,
                         contentDescription = AppCtx.s(R.string.common_more),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
@@ -861,12 +861,14 @@ private fun CommissionCard(
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = (-0.3).sp,
+                style = tnum,
             )
             Spacer(Modifier.width(7.dp))
             Text(
                 "${Terms.paid(mode)} ${money(item.deposit)}",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = tnum,
             )
             // 有参考图就在这一行尾巴上挂个小角标（没图什么都不画，布局一点不动）
             if (item.photos.isNotEmpty()) {
@@ -892,7 +894,7 @@ private fun CommissionCard(
             // 用图标代替 emoji：emoji 是彩色位图，跟整体线性圆角风格不搭
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    Icons.Filled.StickyNote2,
+                    Icons.Outlined.StickyNote2,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                     modifier = Modifier.size(13.dp),
@@ -933,7 +935,7 @@ private fun PickCard(
             ) {
                 if (checked) {
                     Icon(
-                        Icons.Filled.Check,
+                        Icons.Outlined.Check,
                         contentDescription = AppCtx.s(R.string.common_selected),
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(15.dp),
@@ -960,7 +962,7 @@ private fun PickCard(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            Text(money(item.total), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(money(item.total), fontSize = 15.sp, fontWeight = FontWeight.Bold, style = tnum)
         }
     }
 }
@@ -989,7 +991,7 @@ private fun BatchBar(
             Spacer(Modifier.weight(1f))
             TextButton(onClick = onArchive, enabled = count > 0) {
                 Icon(
-                    if (archivedView) Icons.AutoMirrored.Filled.ArrowBack else Icons.Filled.Archive,
+                    if (archivedView) Icons.AutoMirrored.Outlined.ArrowBack else Icons.Outlined.Archive,
                     contentDescription = null,
                     modifier = Modifier.size(17.dp),
                 )
@@ -998,7 +1000,7 @@ private fun BatchBar(
             }
             TextButton(onClick = onDelete, enabled = count > 0) {
                 Icon(
-                    Icons.Filled.DeleteOutline,
+                    Icons.Outlined.DeleteOutline,
                     contentDescription = null,
                     tint = cs.error,
                     modifier = Modifier.size(17.dp),
@@ -1109,7 +1111,7 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
 
         Spacer(Modifier.height(18.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(money(item.total), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = w)
+            Text(money(item.total), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = w, style = tnum)
             Spacer(Modifier.width(6.dp))
             Text(
                 AppCtx.s(R.string.ledger_total_price),
