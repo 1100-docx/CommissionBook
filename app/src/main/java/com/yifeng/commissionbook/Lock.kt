@@ -94,9 +94,6 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("autoBackup", false)
         set(v) = sp.edit().putBoolean("autoBackup", v).apply()
 
-    var reminderEnabled: Boolean
-        get() = sp.getBoolean("reminderEnabled", true)
-        set(v) = sp.edit().putBoolean("reminderEnabled", v).apply()
 
     /**
      * 隐私政策同意 —— 存的是**同意时那一版政策**的版本号（见 [POLICY_VERSION]）。
@@ -209,9 +206,6 @@ class Prefs(context: Context) {
      * 只用来做一件事：**自动问一次，问过就不再自动问**（用户拒了也别反复弹，
      * 之后就归他自己在设置里拨开关）。
      */
-    var notifAsked: Boolean
-        get() = sp.getBoolean("notifAsked", false)
-        set(v) = sp.edit().putBoolean("notifAsked", v).apply()
 
     companion object {
         /**

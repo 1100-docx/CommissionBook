@@ -1,8 +1,8 @@
 {
-  "versionCode": 54,
-  "versionName": "3.5.30",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.30.apk",
-  "size": 2150576,
-  "sha256": "c28f20d5d2f51bdf429140fe714c791179526f4fb7ea3b1af4bad8d1250e2286",
-  "notes": "· 撤掉了上一版新加的「重启后自动恢复提醒」—— 觉得没必要留，去掉了\n· 提醒本身不受影响：还是晚上 7 点，打开一次 App 就会把提醒重新排上\n· 数据一条没动"
+  "versionCode": 55,
+  "versionName": "3.5.31",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.31.apk",
+  "size": 2132624,
+  "sha256": "30c7aad45e39243e15776ef0d2e335fb32a0e7b247b97a7b56cc6d945416ec2f",
+  "notes": "· 这一版把「截止日提醒」去掉了 —— 提醒这块先不做了\n· 你的账本、参考图、备份一条没动，别的功能都在（自动更新、示例数据、分享、批量操作……）\n· 如果不太想要通知，可以顺手去手机「设置 → 通知」里把本应用的通知关掉"
 }

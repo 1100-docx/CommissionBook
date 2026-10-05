@@ -2,26 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
-
-    <!-- 2026-10-05 加：截止日提醒要**准点**响（19:00）。
-         `setAndAllowWhileIdle` 是「不精确闹钟」，系统给的窗口是 **±1 小时**
-         （模拟器实测 dumpsys alarm 里写着 window=+1h0m0s0ms）——
-         也就是说 19:00 的提醒可能 19:50 才到，这不叫提醒。
-         USE_EXACT_ALARM 是给「闹钟 / 日历」这类 App 用的特殊权限，**安装即授予、用户不能撤**，
-         也不需要弹窗；代码里还会用 canScheduleExactAlarms() 兜一道，拿不到就退回不精确的。
-         （不上架 Google Play 所以不受它那条政策约束；真上了架要另说。） -->
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-
-    <!-- 2026-10-05 晚加（安卓 3.5.28）：上面那条 USE_EXACT_ALARM 是「安装即授予」，按理说够用，
-         但逸风那台 OPPO（Android 16）实测 —— USE_EXACT_ALARM 明明 granted=true，
-         AlarmManager.canScheduleExactAlarms() 仍返回 false → 一路走降级 →
-         dumpsys alarm 里那条提醒是 window=+1h0m0s0ms（19:00 的提醒最晚能拖到 20:00）。
-         补声明 SCHEDULE_EXACT_ALARM（这条是「用户在设置里可授予」的那个），
-         系统设置里才会出现「闹钟和提醒」这一项，App 里那个「去开启」按钮也才有地方跳过去。
-         （不上架 Google Play，不受它的精确闹钟政策约束。） -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <!-- 2026-10-03 加：检查更新。
          ⚠️ 这个 App 在这之前是**没有 INTERNET 权限**的，隐私政策里那句
@@ -55,10 +36,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <receiver
-            android:name=".ReminderReceiver"
-            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
