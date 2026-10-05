@@ -751,7 +751,7 @@ private fun StageArrow(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            if (forward) Icons.Outlined.ArrowForward else Icons.AutoMirrored.Outlined.ArrowBack,
+            if (forward) Icons.Outlined.ArrowForward else Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = desc,
             tint = fg,
             modifier = Modifier.size(17.dp),
@@ -991,7 +991,7 @@ private fun BatchBar(
             Spacer(Modifier.weight(1f))
             TextButton(onClick = onArchive, enabled = count > 0) {
                 Icon(
-                    if (archivedView) Icons.AutoMirrored.Outlined.ArrowBack else Icons.Outlined.Archive,
+                    if (archivedView) Icons.AutoMirrored.Filled.ArrowBack else Icons.Outlined.Archive,
                     contentDescription = null,
                     modifier = Modifier.size(17.dp),
                 )

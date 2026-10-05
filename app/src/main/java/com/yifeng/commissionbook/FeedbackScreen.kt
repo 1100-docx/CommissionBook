@@ -123,7 +123,7 @@ fun FeedbackScreen(onBack: () -> Unit) {
                     .padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircleIconButton(Icons.AutoMirrored.Outlined.ArrowBack, AppCtx.s(R.string.common_back)) {
+                CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, AppCtx.s(R.string.common_back)) {
                     lightTick(haptic)
                     onBack()
                 }
