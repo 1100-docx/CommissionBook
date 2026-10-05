@@ -1,8 +1,8 @@
 {
-  "versionCode": 46,
-  "versionName": "3.5.22",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.22.apk",
-  "size": 2149832,
-  "sha256": "9e51c8b8bceed0e085e57734e74ee10315a369368108563bf1d71b2c8a143128",
-  "notes": "· 到期提醒的通知不再写画师名和稿件标题了 —— 只说「您有一单约稿即将到期」，下面写「还有 3 天到期」或「明天到期」\n· 手机上锁屏弹出的时候，旁边的人瞄一眼也看不出是什么单子、是谁的单子\n· 想不起是哪一单？点一下通知就进 App，里面还是原来的样子"
+  "versionCode": 47,
+  "versionName": "3.5.23",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.23.apk",
+  "size": 2149848,
+  "sha256": "34fef2e03c676ef6648a3f362575c4d2ba1e7467bf52573aa6d8b62bf76c0a1e",
+  "notes": "· 修了一个「提醒根本不响」的老毛病：App 没在后台的时候闹钟响，进程会崩，通知一条都发不出来（多语言那版起就坏了）\n· 到期提醒的通知不再写画师名和稿件标题了 —— 只说「您有一单约稿即将到期」，下面写「还有 3 天到期」或「明天到期」\n· 手机上锁屏弹出的时候，旁边的人瞄一眼也看不出是什么单子、是谁的单子\n· 想不起是哪一单？点一下通知就进 App，里面还是原来的样子"
 }
