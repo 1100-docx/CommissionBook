@@ -216,7 +216,20 @@ fun PhotoViewer(
     var draft by remember { mutableStateOf("") }
     val current = items.getOrNull(pager.currentPage)
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    // ⚠️ `decorFitsSystemWindows = false` 是 2026-10-05 为「加说明跟三大金刚键重合」加的：
+    //    这是个 Dialog（**另一个窗口**）。默认那个窗口自己 fit 系统栏，于是窗口里读到的
+    //    `WindowInsets.navigationBars` 是 0 —— 底下加多少 padding 都没用（逸风报「问题依旧」
+    //    就是这个原因，改 padding 改不动）。
+    //    关掉这个 fit，窗口真·边到边，insets 才会如实报进来，
+    //    下面那行 `windowInsetsPadding(WindowInsets.navigationBars)` 才生效。
+    //    ⚠️ 代价：顶上那颗 ✕ 也会跟着钻到状态栏底下，所以它那边补了 statusBars（见下）。
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -240,6 +253,9 @@ fun PhotoViewer(
             Box(
                 Modifier
                     .align(Alignment.TopStart)
+                    // 窗口边到边之后顶栏不再自动让位，这颗 ✕ 得自己躲状态栏 ——
+                    // 跟底部那摞躲导航栏是一对，别只修一边。
+                    .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(12.dp)
                     .size(36.dp)
                     .clip(CircleShape)

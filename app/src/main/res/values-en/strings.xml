@@ -515,7 +515,7 @@ System: Android %4$s (API %5$s)
     <string name="photos_note_add">Add note</string>
     <string name="photos_note_edit">Edit note</string>
     <string name="photos_note_title">Note for this image</string>
-    <string name="photos_note_placeholder">e.g. "colour reference from the client"</string>
+    <string name="photos_note_placeholder">Enter a note for this image</string>
     <string name="photos_note_desc">Just for you — e.g. "which one is the palette, which one is the pose". Leave it empty to remove the note.</string>
     <!-- Support the author (2026-10-05). Android only: on iOS this kind of thing
          has to go through App Store in-app purchase, so the iOS build has none of it. -->

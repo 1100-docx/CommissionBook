@@ -507,7 +507,7 @@
     <string name="photos_note_add">加说明</string>
     <string name="photos_note_edit">改说明</string>
     <string name="photos_note_title">这张图的说明</string>
-    <string name="photos_note_placeholder">比如「客户给的配色参考」</string>
+    <string name="photos_note_placeholder">请输入图片备注</string>
     <string name="photos_note_desc">写给自己看的，比如「哪张是配色、哪张是姿势」。留空就是不要说明。</string>
     <!-- 支持作者（2026-10-05 加）：设置页最底下一行安静的入口 + 一个安静的小页。
          ⚠️ **只有安卓版有**。iOS 那边这类功能必须走 App Store 的内购（要抽成、

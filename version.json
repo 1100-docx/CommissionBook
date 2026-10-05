@@ -1,8 +1,8 @@
 {
-  "versionCode": 38,
-  "versionName": "3.5.14",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.14.apk",
+  "versionCode": 39,
+  "versionName": "3.5.15",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.15.apk",
   "size": 2133304,
   "sha256": "5545d9e73424bb09388966df5e69c59a389ae12744ef1665175fab208512b1c1",
-  "notes": "· 参考图可以写一句说明了：点开大图，底下那颗「加说明」\n· 设置页最底下一行多了「支持作者」—— 完全自愿，不给也完全没关系\n· 隐私政策补上了条款序号（第七节：自愿支持），并修了里面一处日期写错"
+  "notes": "· 看大图那页：底下的按钮不再压到系统导航键上（顶上那颗 ✕ 也一并让开状态栏）\n· 图片说明的引导词改成「请输入图片备注」\n· 修了隐私政策里一处日期写错"
 }
