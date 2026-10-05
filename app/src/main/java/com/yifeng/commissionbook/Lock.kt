@@ -95,7 +95,9 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putBoolean("autoBackup", v).apply()
 
     var reminderEnabled: Boolean
-        get() = sp.getBoolean("reminderEnabled", true)
+        get() = sp.getBoolean("reminderEnabled", false)   // 2026-10-05（3.5.33）：改成**默认关** ——
+        // 逸风的要求：想用提醒的人自己去打开，打开时会先看到「去开自启动 / 后台运行」的说明。
+        // 老用户不受影响（存过这个键就还是他原来那个值）。
         set(v) = sp.edit().putBoolean("reminderEnabled", v).apply()
 
     /**

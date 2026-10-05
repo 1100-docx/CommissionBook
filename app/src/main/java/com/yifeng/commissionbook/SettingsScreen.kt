@@ -75,6 +75,15 @@ fun SettingsScreen(
 
     var lockOn by remember { mutableStateOf(prefs.lockEnabled) }
     var reminderOn by remember { mutableStateOf(prefs.reminderEnabled) }
+    // 「打开提醒时」那一段说明的开关（2026-10-05 晚加，3.5.33）
+    //
+    // 逸风的要求：提醒**默认关着**，谁想打开就先看到这段话 ——
+    //   因为手机上真正会掐掉提醒的是**省电策略**（自启动 / 后台运行）：
+    //   不打开这两样，重启之后、或者锁屏放久了，提醒就不响，
+    //   用户只会觉得「这功能坏了」，而不是「我没给它权限」。
+    // ⚠️ 系统没有统一 API 能直接跳到「自启动」设置页（各家 ROM 的页面都不一样），
+    //   所以这里只能把人送到**应用详情页**，让他自己往下翻。
+    var showReminderTips by remember { mutableStateOf(false) }
     // 语言选择那个 Sheet（2026-10-03 加）
     var showLangSheet by remember { mutableStateOf(false) }
     // 选完语言后的「要现在重启吗」确认框（2026-10-03 加）
@@ -281,6 +290,42 @@ fun SettingsScreen(
                     )
                 }
 
+                // 打开提醒时的那段说明（2026-10-05 晚加，3.5.33）
+                //
+                // ⚠️ 必须挂在提醒那一组**外面**（跟上面「要现在重启吗」一个道理）：
+                //    否则开关一动、界面一重画，它会跟着那一组一起消失。
+                if (showReminderTips) {
+                    AlertDialog(
+                        onDismissRequest = { showReminderTips = false; askNotif() },
+                        title = { Text(AppCtx.s(R.string.reminder_tips_title)) },
+                        text = {
+                            Text(
+                                AppCtx.s(R.string.reminder_tips_body),
+                                fontSize = 13.sp,
+                                lineHeight = 20.sp,
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                showReminderTips = false
+                                askNotif()
+                                runCatching {
+                                    context.startActivity(
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                            .setData(Uri.fromParts("package", context.packageName, null))
+                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    )
+                                }
+                            }) { Text(AppCtx.s(R.string.reminder_tips_go)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showReminderTips = false; askNotif() }) {
+                                Text(AppCtx.s(R.string.reminder_tips_ok))
+                            }
+                        },
+                    )
+                }
+
                 // ② 保护
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_security))
@@ -321,7 +366,10 @@ fun SettingsScreen(
                                     reminderOn = v
                                     prefs.reminderEnabled = v
                                     Reminders.reschedule(context, state.items, v)
-                                    if (v) askNotif()
+                                    // 打开提醒 → 先弹那段「去开自启动 / 后台运行」的说明
+                                    // （通知权限那问放在说明之后申请，免得两个弹窗叠一起）
+                                    // 关掉提醒 → 就按旧的来：只申请一次通知权限
+                                    if (v) showReminderTips = true else askNotif()
                                 })
                             },
                         )
