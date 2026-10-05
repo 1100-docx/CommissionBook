@@ -185,6 +185,40 @@ class MainActivity : FragmentActivity() {
                 var showHelp by remember { mutableStateOf(false) }
                 val scope = rememberCoroutineScope()
 
+                // ── 通知权限：安卓 13（API 33）起，能不能弹通知要用户点头 ──────────
+                //
+                // ⚠️ 2026-10-05 修的第二个坑（跟「冷启动崩溃」是两回事）：
+                //    这个申请原来**只挂在「设置 → 提醒」那个开关上**，而那个开关
+                //    `reminderEnabled` 默认就是 **true** —— 也就是说：装完打开，
+                //    开关已经是开着的，没人会去拨它，`askNotif()` 一辈子没被调用过，
+                //    于是**通知权限从来没申请过**（安卓 13+ 默认拒绝）→
+                //    闹钟照响、接收器照跑、`notify()` 照调用，系统默默丢掉 ——
+                //    **手机上一点动静都没有**，而且连个报错都看不到。
+                //
+                //    逸风在真机上「还是没响」，就是这一条。
+                //
+                // 现在跟 iOS 对齐（iOS 的顺序是「政策 → 权限 → 模式」）：
+                // ① 同意政策后立刻问一次；② 老用户进主界面时补问一次。
+                // 只自动问一次（`notifAsked`），拒了就不再骚扰。
+                val notifPerm = androidx.activity.compose.rememberLauncherForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+                ) { /* 给不给都放行，不拦人 */ }
+                val askNotifOnce: () -> Unit = {
+                    val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+                        this@MainActivity,
+                        android.Manifest.permission.POST_NOTIFICATIONS,
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                    if (android.os.Build.VERSION.SDK_INT >= 33 && !prefs.notifAsked && !granted) {
+                        prefs.notifAsked = true      // 先落旗子，免得同一轮问两遍
+                        notifPerm.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+                LaunchedEffect(agreed.value, locked.value) {
+                    if (agreed.value && !locked.value) {
+                        delay(600)                   // 让模式弹窗先站稳，别两个框叠一起
+                        askNotifOnce()
+                    }
+                }
 
                 // 引导晚 0.4 秒再冒出来 —— 紧跟在模式弹窗后面，别两个框「啪」一下叠一起
                 var guideReady by remember { mutableStateOf(false) }
@@ -201,6 +235,8 @@ class MainActivity : FragmentActivity() {
                         onAgree = {
                             prefs.privacyAgreedVersion = POLICY_VERSION
                             agreed.value = true
+                            // 2026-10-05：同意完就顺手问一次通知权限（跟 iOS 的「政策 → 权限」对齐）
+                            askNotifOnce()
                             // 万一他还开着保护，同意完顺手把脸也验了
                             if (locked.value) unlock()
                         },

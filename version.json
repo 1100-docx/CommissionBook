@@ -1,8 +1,8 @@
 {
-  "versionCode": 55,
-  "versionName": "3.5.31",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.31.apk",
-  "size": 2132624,
-  "sha256": "30c7aad45e39243e15776ef0d2e335fb32a0e7b247b97a7b56cc6d945416ec2f",
-  "notes": "· 这一版把「截止日提醒」去掉了 —— 提醒这块先不做了\n· 你的账本、参考图、备份一条没动，别的功能都在（自动更新、示例数据、分享、批量操作……）\n· 如果不太想要通知，可以顺手去手机「设置 → 通知」里把本应用的通知关掉"
+  "versionCode": 56,
+  "versionName": "3.5.32",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.32.apk",
+  "size": 2150572,
+  "sha256": "8abdf587d8b07f559e194b4726b7c500033b22b4e592125a160cd22b6d6376e6",
+  "notes": "· 把截止日提醒加回来了 —— 到期前 3 天 / 1 天，晚上 7 点各提醒一次\n· 已交付的、已归档的不提醒；通知里不出现画师名和稿件标题\n· 数据一条没动，别的功能都在"
 }

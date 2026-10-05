@@ -74,6 +74,7 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     var lockOn by remember { mutableStateOf(prefs.lockEnabled) }
+    var reminderOn by remember { mutableStateOf(prefs.reminderEnabled) }
     // 语言选择那个 Sheet（2026-10-03 加）
     var showLangSheet by remember { mutableStateOf(false) }
     // 选完语言后的「要现在重启吗」确认框（2026-10-03 加）
@@ -114,6 +115,22 @@ fun SettingsScreen(
     val scroll = rememberScrollState()
     val collapse = (scroll.value / 150f).coerceIn(0f, 1f)
 
+    // 安卓 13（API 33）起，弹通知要用户点头。
+    // 系统弹的那个「允许通知吗」框是原生的，我们不自己画。
+    val notifPermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            android.widget.Toast
+                .makeText(context, AppCtx.s(R.string.notify_no_permission), android.widget.Toast.LENGTH_LONG)
+                .show()
+        }
+    }
+    val askNotif = {
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     ScreenSurface(modifier) {
         Column(
@@ -288,6 +305,55 @@ fun SettingsScreen(
                             },
                         )
                     }
+                }
+
+                // ② 提醒
+                Column {
+                    SectionLabel(AppCtx.s(R.string.settings_reminders))
+                    InsetGroup {
+                        GroupRow(
+                            title = AppCtx.s(R.string.settings_remind_before_due),
+                            subtitle = AppCtx.s(R.string.settings_deadline_reminder_desc),
+                            icon = Icons.Outlined.NotificationsActive,
+                            divider = false,
+                            trailing = {
+                                Switch(checked = reminderOn, onCheckedChange = { v ->
+                                    reminderOn = v
+                                    prefs.reminderEnabled = v
+                                    Reminders.reschedule(context, state.items, v)
+                                    if (v) askNotif()
+                                })
+                            },
+                        )
+                        // ⚠️ 2026-10-05 晚加（3.5.28）：系统没给「精确闹钟」资格时，多一行入口。
+                        //    起因：逸风那台 OPPO（Android 16）只声明 USE_EXACT_ALARM 不管用，
+                        //    闹钟 window=+1h —— 19:00 的提醒最晚能拖到 20:00。
+                        //    这行**只在真没资格时出现**，开了以后自己就没了（不用手动摘）。
+                        if (!Reminders.exactAllowed(context)) {
+                            GroupRow(
+                                title = AppCtx.s(R.string.settings_exact_alarm_title),
+                                subtitle = AppCtx.s(R.string.settings_exact_alarm_desc),
+                                icon = Icons.Outlined.Schedule,
+                                divider = false,
+                                onClick = {
+                                    // 跳到系统的「闹钟和提醒」授权页（安卓 12+ 才有这个页面）
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                                                .setData(Uri.fromParts("package", context.packageName, null))
+                                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
+                    Text(
+                        AppCtx.s(R.string.settings_notification_hint),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                    )
                 }
 
                 // ③ 备份与恢复
