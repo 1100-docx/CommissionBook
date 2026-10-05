@@ -101,6 +101,21 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putBoolean("reminderEnabled", v).apply()
 
     /**
+     * 提醒时间（几点几分）—— 2026-10-05（3.5.36）逸风要求：
+     * 「显示通知的时间让用户自己决定比较好点，加一个时间选择器」。
+     *
+     * 之前是写死的 19:00（[Reminders] 里的常量）。现在存这儿，默认仍是 19:00，
+     * 老用户没存过这两个键 → 取的还是 19:00，行为一点不变。
+     */
+    var reminderHour: Int
+        get() = sp.getInt("reminderHour", 19)
+        set(v) = sp.edit().putInt("reminderHour", v).apply()
+
+    var reminderMinute: Int
+        get() = sp.getInt("reminderMinute", 0)
+        set(v) = sp.edit().putInt("reminderMinute", v).apply()
+
+    /**
      * 隐私政策同意 —— 存的是**同意时那一版政策**的版本号（见 [POLICY_VERSION]）。
      *
      * 空字符串 = 还没同意过 → 启动时先弹同意页，读完划到底才进得来。

@@ -202,7 +202,9 @@ System: Android %4$s (API %5$s)
     <string name="settings_protection_desc">When on, you\'ll need fingerprint / face / passcode to open the app, and it re-locks when you come back from the background.</string>
     <string name="settings_protection_path">Settings → Security → Protection</string>
     <string name="settings_deadline_reminder">Deadline Reminders</string>
-    <string name="settings_deadline_reminder_desc">For orders with a deadline, you get a reminder 3 days and 1 day before it\'s due (at 7 PM). Delivered and archived ones won\'t remind you.</string>
+    <string name="settings_deadline_reminder_desc">For orders with a deadline, you get a reminder 3 days and 1 day before it\'s due. Delivered and archived ones won\'t remind you.</string>
+    <string name="settings_reminder_time">Reminder time</string>
+    <string name="settings_reminder_time_desc">One reminder 3 days before the deadline and one the day before, at whatever time you pick. Takes effect right away.</string>
     <string name="settings_deadline_reminder_path">Settings → Reminders</string>
     <string name="settings_backup_restore">Backup / Restore</string>
     <string name="settings_backup_restore_desc">Export a JSON file — save it on your phone or send it via WeChat; it\'s "cross-compatible" with iOS backups. When restoring, you\'ll get a list of candidates to pick from.</string>

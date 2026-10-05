@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 // MARK: - 小工具
 
@@ -52,6 +55,78 @@ fun money(v: Double): String =
 val dayFmt = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA)
 
 fun dayText(millis: Long): String = dayFmt.format(Date(millis))
+
+/**
+ * 日期选择器（Material3 的 DatePicker）吃的是 **UTC 零点**，
+ * 而本 App 存的 `dateMillis` 是**本地零点** —— 两边不换算直接对招会差一天
+ * （东八区：把本地零点当 UTC 用的那天，会往前跳一格）。
+ *
+ * 所以：进选择器前「本地 → yyyy-MM-dd → 按 UTC 解析」，出来后「UTC → yyyy-MM-dd → 按本地解析」。
+ * 中间那根字符串（yyyy-MM-dd）就是两边都认的口径。
+ */
+private val utcDayFmt = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).apply {
+    timeZone = TimeZone.getTimeZone("UTC")
+}
+
+fun toPickerMillis(day: String): Long? = runCatching { utcDayFmt.parse(day)?.time }.getOrNull()
+
+fun fromPickerMillis(utcMillis: Long): String = utcDayFmt.format(Date(utcMillis))
+
+/** 19:00 / 7:00 PM —— 跟系统「24 小时制」开关走 */
+fun clockText(hour: Int, minute: Int, is24: Boolean): String {
+    if (is24) return String.format(Locale.CHINA, "%02d:%02d", hour, minute)
+    val h12 = when {
+        hour == 0 -> 12
+        hour > 12 -> hour - 12
+        else -> hour
+    }
+    val suffix = if (hour < 12) "AM" else "PM"
+    return String.format(Locale.CHINA, "%d:%02d %s", h12, minute, suffix)
+}
+
+/**
+ * 「点一下弹选择器」的字段 —— 日期、时间都用它。
+ *
+ * 长得跟 `OutlinedTextField` 是一家（圆角描边 + 左上小标签 + 右侧一个图标），
+ * 但**不能打字**：手机上敲日期要切输入法、还得校验格式，点选省事得多
+ * （2026-10-05 逸风要求：日期用日期选择器）。
+ */
+@Composable
+fun PickerField(
+    label: String,
+    value: String,
+    icon: ImageVector? = null,
+    placeholder: String? = null,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val cs = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(14.dp)
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .border(1.dp, cs.outline.copy(alpha = 0.5f), shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, fontSize = 12.sp, color = cs.onSurfaceVariant)
+            Spacer(Modifier.height(3.dp))
+            Text(
+                value.ifBlank { placeholder.orEmpty() },
+                fontSize = 15.sp,
+                color = if (value.isBlank()) cs.onSurfaceVariant.copy(alpha = 0.55f) else cs.onSurface,
+            )
+        }
+        if (icon != null) {
+            Spacer(Modifier.width(10.dp))
+            Icon(icon, contentDescription = null, tint = cs.primary, modifier = Modifier.size(19.dp))
+        }
+    }
+}
 
 /** 每个进度一个颜色，跟 iOS 版对齐 */
 fun statusColor(s: CommissionStatus, dark: Boolean = false): Color = when (s) {

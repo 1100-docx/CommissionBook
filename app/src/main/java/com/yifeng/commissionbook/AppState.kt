@@ -103,7 +103,7 @@ class AppState(private val context: Context) {
     init {
         reload()
         // 每次打开 App 重排一次闹钟：手机重启过、或者被省电模式清过，这一步能补回来
-        Reminders.reschedule(context, items, prefs.reminderEnabled)
+        Reminders.reschedule(context, items, prefs.reminderEnabled, prefs.reminderHour, prefs.reminderMinute)
     }
 
     fun reload() {
@@ -115,7 +115,7 @@ class AppState(private val context: Context) {
         store.saveCommissions(items)
         store.saveNotes(notes)
         // 数据一变就把提醒闹钟重排一遍 —— 最简单的做法，也最不容易漏
-        Reminders.reschedule(context, items, prefs.reminderEnabled)
+        Reminders.reschedule(context, items, prefs.reminderEnabled, prefs.reminderHour, prefs.reminderMinute)
         // 顺手清掉没人引用的参考图（删单、改单、恢复备份之后都走这儿）。
         // ⚠️ 只在这儿清、**不在启动时清**：万一 commissions.json 读坏了，
         //    [Store.loadCommissions] 会把文件改名留档、返回空表 ——

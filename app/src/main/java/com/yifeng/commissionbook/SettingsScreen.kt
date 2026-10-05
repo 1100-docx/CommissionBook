@@ -18,6 +18,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.outlined.Calculate
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Language
@@ -40,10 +41,15 @@ import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerLayoutType
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,6 +60,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.launch
 
@@ -75,6 +82,10 @@ fun SettingsScreen(
 
     var lockOn by remember { mutableStateOf(prefs.lockEnabled) }
     var reminderOn by remember { mutableStateOf(prefs.reminderEnabled) }
+    // 提醒时间（2026-10-05 加，3.5.36）：默认 19:00，用户点「提醒时间」那行自己改
+    var reminderHour by remember { mutableIntStateOf(prefs.reminderHour) }
+    var reminderMinute by remember { mutableIntStateOf(prefs.reminderMinute) }
+    var showTimePicker by remember { mutableStateOf(false) }
     var showLangSheet by remember { mutableStateOf(false) }
     // 选完语言后的「要现在重启吗」确认框（2026-10-03 加）
     //
@@ -309,17 +320,21 @@ fun SettingsScreen(
                 // ② 提醒
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_reminders))
+                    // 系统没给「精确闹钟」资格时下面会多一行（见 3.5.28 的注释）——
+                    // 这一行决定的是「谁是这组里的最后一行」，好让分隔线画对
+                    val showExactRow = !Reminders.exactAllowed(context)
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.settings_remind_before_due),
                             subtitle = AppCtx.s(R.string.settings_deadline_reminder_desc),
                             icon = Icons.Outlined.NotificationsActive,
-                            divider = false,
+                            // 开着提醒时下面还有「提醒时间」那行 → 这行要画分隔线
+                            divider = reminderOn,
                             trailing = {
                                 Switch(checked = reminderOn, onCheckedChange = { v ->
                                     reminderOn = v
                                     prefs.reminderEnabled = v
-                                    Reminders.reschedule(context, state.items, v)
+                                    Reminders.reschedule(context, state.items, v, reminderHour, reminderMinute)
                                     if (v) {
                                         // ① 先问通知权限（系统弹窗）
                                         askNotif()
@@ -335,11 +350,42 @@ fun SettingsScreen(
                                 })
                             },
                         )
+
+                        // 提醒时间（2026-10-05 加，3.5.36）
+                        //
+                        // 逸风原话：「显示通知的时间让用户自己决定比较好点，加一个时间选择器」。
+                        // 之前是写死的 19:00；现在这行点一下弹 M3 的表盘选择器，改完立刻重排闹钟。
+                        // ⚠️ 只在开关打开时出现 —— 提醒默认关着，关着的时候这行没有意义，
+                        //    设置页也能保持着「一眼看清」的样子。
+                        if (reminderOn) {
+                            GroupRow(
+                                title = AppCtx.s(R.string.settings_reminder_time),
+                                subtitle = AppCtx.s(R.string.settings_reminder_time_desc),
+                                icon = Icons.Outlined.Schedule,
+                                // 长说明另起一行通铺（规矩见 GroupRow 的 stackSubtitle 注释）
+                                stackSubtitle = true,
+                                divider = showExactRow,
+                                trailing = {
+                                    Text(
+                                        clockText(
+                                            reminderHour,
+                                            reminderMinute,
+                                            android.text.format.DateFormat.is24HourFormat(context),
+                                        ),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                },
+                                onClick = { showTimePicker = true },
+                            )
+                        }
+
                         // ⚠️ 2026-10-05 晚加（3.5.28）：系统没给「精确闹钟」资格时，多一行入口。
                         //    起因：逸风那台 OPPO（Android 16）只声明 USE_EXACT_ALARM 不管用，
                         //    闹钟 window=+1h —— 19:00 的提醒最晚能拖到 20:00。
                         //    这行**只在真没资格时出现**，开了以后自己就没了（不用手动摘）。
-                        if (!Reminders.exactAllowed(context)) {
+                        if (showExactRow) {
                             GroupRow(
                                 title = AppCtx.s(R.string.settings_exact_alarm_title),
                                 subtitle = AppCtx.s(R.string.settings_exact_alarm_desc),
@@ -547,6 +593,27 @@ fun SettingsScreen(
                     )
                 }
 
+                // 提醒时间选择器（2026-10-05 加，3.5.36）
+                // 跟上面那些框一个规矩：挂在最下面，不挤乱设置项的缩进。
+                if (showTimePicker) {
+                    ReminderTimeDialog(
+                        hour = reminderHour,
+                        minute = reminderMinute,
+                        is24 = android.text.format.DateFormat.is24HourFormat(context),
+                        onDismiss = { showTimePicker = false },
+                        onConfirm = { h, m ->
+                            reminderHour = h
+                            reminderMinute = m
+                            prefs.reminderHour = h
+                            prefs.reminderMinute = m
+                            // 改完**立刻**按新时点重排一遍闹钟 ——
+                            // 不然得等下次改数据/重开 App 才生效（那个「改时间不重排」的坑见知识库）
+                            Reminders.reschedule(context, state.items, reminderOn, h, m)
+                            showTimePicker = false
+                        },
+                    )
+                }
+
                 // 挂在最下面而不是上面那块里：Dialog 是另一个窗口，放哪儿都行，
                 // 放这儿是为了别把上面那串设置项的缩进搞乱。
                 UpdateDialog(updateStatus, prefs) { updateStatus = it }
@@ -670,5 +737,53 @@ private fun InfoValue(v: String) {
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * 提醒时间选择器（2026-10-05 加，3.5.36）。
+ *
+ * ⚠️ 为什么自己搭 Dialog 而不是用 AlertDialog：
+ *    M3 的表盘 [TimePicker] 自身宽 328dp，而 AlertDialog 左右各留 24dp 内边距，
+ *    在 360dp 宽的手机上表盘会被切掉边。自己搭的只留 12dp，什么机器都放得下。
+ * ⚠️ 表盘默认是「横排」（表盘 + 右侧输入框并排，给平板/横屏用的），
+ *    手机上必须显式给 [TimePickerLayoutType.Vertical]（表盘在上、两个数字框在下）。
+ * ⚠️ 点「取消」或点外面 = 没改任何东西（只有 [onConfirm] 才写盘）。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderTimeDialog(
+    hour: Int,
+    minute: Int,
+    is24: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (Int, Int) -> Unit,
+) {
+    val st = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = is24)
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                Modifier.padding(horizontal = 12.dp, vertical = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    AppCtx.s(R.string.settings_reminder_time),
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(12.dp))
+                TimePicker(state = st, layoutType = TimePickerLayoutType.Vertical)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text(AppCtx.s(R.string.common_cancel)) }
+                    TextButton(onClick = { onConfirm(st.hour, st.minute) }) {
+                        Text(AppCtx.s(R.string.common_done))
+                    }
+                }
+            }
+        }
     }
 }

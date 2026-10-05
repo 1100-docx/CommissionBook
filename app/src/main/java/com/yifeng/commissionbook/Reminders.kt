@@ -17,8 +17,12 @@ import java.util.Calendar
 /**
  * 截止日提醒。
  *
- * 跟 iOS 版对齐的口径：**到期前 3 天、1 天各一次，晚上 19:00**；
+ * 跟 iOS 版对齐的口径：**到期前 3 天、1 天各一次**；
  * 已交付的、已归档的**不提醒**。
+ *
+ * 时点：2026-10-05（3.5.36）逸风要求「时间让用户自己决定」之后，
+ * 由设置页的「提醒时间」决定（存 `Prefs.reminderHour / reminderMinute`，默认 19:00）——
+ * 所以 [reschedule] 把时点当参数收，不再写死常量。
  *
  * 安卓这边做法：用 `AlarmManager` 给每条约稿定两个闹钟，
  * 到点由系统喊醒 `ReminderReceiver`，它负责弹通知。
@@ -35,7 +39,6 @@ object Reminders {
     //    通知栏里那条频道名会变成空白。
     val CHANNEL_NAME: String get() = AppCtx.s(R.string.settings_deadline_reminder)
     private val DAYS_BEFORE = intArrayOf(3, 1)
-    private const val HOUR = 19
 
     /**
      * 建通知渠道（安卓 8+ 必须有）。
@@ -53,8 +56,19 @@ object Reminders {
         )
     }
 
-    /** 把所有闹钟重排一遍（每次数据一变、App 一启动都调它，最简单可靠） */
-    fun reschedule(context: Context, items: List<Commission>, enabled: Boolean) {
+    /**
+     * 把所有闹钟重排一遍（每次数据一变、App 一启动都调它，最简单可靠）。
+     *
+     * [hour] / [minute] = 设置页选的提醒时点；默认值 19:00 只是为了别处少传参，
+     * 调用方（AppState / 设置页）都**显式**把 `Prefs` 里的值传进来。
+     */
+    fun reschedule(
+        context: Context,
+        items: List<Commission>,
+        enabled: Boolean,
+        hour: Int = 19,
+        minute: Int = 0,
+    ) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         // 先全撤掉，再按当前数据重定 —— 避免「改了截止日，老闹钟还在」这种鬼事
         for (c in items) {
@@ -69,7 +83,7 @@ object Reminders {
             if (c.archived || c.status == CommissionStatus.DELIVERED) continue
             val deadline = c.deadlineMillis ?: continue
             for (d in DAYS_BEFORE) {
-                val at = triggerAt(deadline, d)
+                val at = triggerAt(deadline, d, hour, minute)
                 if (at > now) {
                     android.util.Log.i("CommissionBook", AppCtx.s(R.string.notify_set_alarm, c.title, d, java.util.Date(at)))
                     // ⚠️ 2026-10-05 改：以前只调 setAndAllowWhileIdle（不精确），
@@ -143,13 +157,13 @@ object Reminders {
         return am.canScheduleExactAlarms()
     }
 
-    /** 截止日往前 d 天的 19:00 */
-    private fun triggerAt(deadlineMillis: Long, d: Int): Long {
+    /** 截止日往前 d 天的 [hour]:[minute]（本地时区） */
+    private fun triggerAt(deadlineMillis: Long, d: Int, hour: Int, minute: Int): Long {
         val cal = Calendar.getInstance()
         cal.timeInMillis = deadlineMillis
         cal.add(Calendar.DAY_OF_YEAR, -d)
-        cal.set(Calendar.HOUR_OF_DAY, HOUR)
-        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.HOUR_OF_DAY, hour)
+        cal.set(Calendar.MINUTE, minute)
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
         return cal.timeInMillis

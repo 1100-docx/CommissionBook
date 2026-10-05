@@ -193,7 +193,9 @@
     <string name="settings_protection_desc">打开后进 App 要先按指纹 / 面容 / 密码，切后台回来也重新锁。</string>
     <string name="settings_protection_path">设置 → 安全 → 保护</string>
     <string name="settings_deadline_reminder">截止日提醒</string>
-    <string name="settings_deadline_reminder_desc">有截止日的单子，到期前 3 天和 1 天各提醒一次（晚上 7 点）。已交付的、归档的不提醒。</string>
+    <string name="settings_deadline_reminder_desc">有截止日的单子，到期前 3 天和 1 天各提醒一次。已交付的、归档的不提醒。</string>
+    <string name="settings_reminder_time">提醒时间</string>
+    <string name="settings_reminder_time_desc">到期前 3 天和 1 天各提醒一次，时间由你定，改完立刻生效。</string>
     <string name="settings_deadline_reminder_path">设置 → 提醒</string>
     <string name="settings_backup_restore">备份 / 恢复</string>
     <string name="settings_backup_restore_desc">导出一份 JSON，能存手机也能发微信；跟 iOS 版的备份「两边通用」。恢复时会把候选列出来让你挑。</string>

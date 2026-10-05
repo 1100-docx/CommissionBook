@@ -51,6 +51,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Checklist
@@ -62,9 +63,12 @@ import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -1199,6 +1203,10 @@ fun EditSheet(
     var deadlineStr by remember { mutableStateOf(original?.deadlineMillis?.let { dayText(it) } ?: "") }
     var note by remember { mutableStateOf(original?.note ?: "") }
 
+    // 日期选择器（2026-10-05 逸风要求：下单日期、截止日期都点选，不手打）
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showDeadlinePicker by remember { mutableStateOf(false) }
+
     // 参考图（2026-10-03 加）
     //
     // ⚠️ 这里存的是**文件名**，图在本体收下的那一刻就已经落盘了（见 [Store.savePhotoFrom]）。
@@ -1294,10 +1302,14 @@ fun EditSheet(
                 }
             }
 
-            OutlinedTextField(
-                dateText, { dateText = it }, label = { Text(AppCtx.s(R.string.ledger_order_date)) },
-                placeholder = { Text("yyyy-MM-dd") },
-                singleLine = true, shape = fieldShape, modifier = Modifier.fillMaxWidth(),
+            // 2026-10-05（3.5.36）逸风要求：日期不再手打，点一下弹日期选择器。
+            // ⚠️ 存的还是 "yyyy-MM-dd" 这根字符串（数据格式一点没动），
+            //    只是**填它的方式**从键盘换成选择器 —— 见 Ui.kt 的 PickerField。
+            PickerField(
+                label = AppCtx.s(R.string.ledger_order_date),
+                value = dateText,
+                icon = Icons.Outlined.CalendarMonth,
+                onClick = { showDatePicker = true },
             )
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1305,15 +1317,19 @@ fun EditSheet(
                     hasDeadline = it
                     if (it && deadlineStr.isBlank()) {
                         deadlineStr = dayText(System.currentTimeMillis() + 7L * 86_400_000L)
+                        // 刚打开就给默认「一周后」，顺手把选择器弹出来 ——
+                        // 打开截止日开关的人，下一步十有八九就是挑个日子，省一次点击。
+                        showDeadlinePicker = true
                     }
                 })
                 Text(AppCtx.s(R.string.ledger_set_deadline), fontSize = 14.sp)
             }
             if (hasDeadline) {
-                OutlinedTextField(
-                    deadlineStr, { deadlineStr = it }, label = { Text(AppCtx.s(R.string.ledger_deadline_2)) },
-                    placeholder = { Text("yyyy-MM-dd") },
-                    singleLine = true, shape = fieldShape, modifier = Modifier.fillMaxWidth(),
+                PickerField(
+                    label = AppCtx.s(R.string.ledger_deadline_2),
+                    value = deadlineStr,
+                    icon = Icons.Outlined.CalendarMonth,
+                    onClick = { showDeadlinePicker = true },
                 )
             }
 
@@ -1395,6 +1411,44 @@ fun EditSheet(
             onDismiss = { viewerAt = null },
 
         )
+    }
+
+    // 日期选择器（下单日期 / 截止日期共用同一个对话框，用是哪一边来决定写回哪个变量）
+    //
+    // ⚠️ `rememberDatePickerState` 的 initial 只在**进入组合**那一刻取一次；
+    //    对话框一关就退出组合，下次再开又会拿当时最新的值当初始值 —— 正好要的效果。
+    if (showDatePicker || showDeadlinePicker) {
+        val isDeadline = showDeadlinePicker
+        val st = rememberDatePickerState(
+            initialSelectedDateMillis = toPickerMillis(if (isDeadline) deadlineStr else dateText)
+                ?: System.currentTimeMillis(),
+        )
+        DatePickerDialog(
+            onDismissRequest = {
+                showDatePicker = false
+                showDeadlinePicker = false
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    // selectedDateMillis 是 **UTC 零点** —— 交给 fromPickerMillis 换成日期字符串，
+                    // 再由 parseDay 按本地时区解析回毫秒（两边口径见 Ui.kt 的注释）
+                    st.selectedDateMillis?.let { m ->
+                        val day = fromPickerMillis(m)
+                        if (isDeadline) deadlineStr = day else dateText = day
+                    }
+                    showDatePicker = false
+                    showDeadlinePicker = false
+                }) { Text(AppCtx.s(R.string.common_done)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showDatePicker = false
+                    showDeadlinePicker = false
+                }) { Text(AppCtx.s(R.string.common_cancel)) }
+            },
+        ) {
+            DatePicker(state = st, showModeToggle = false)
+        }
     }
 }
 
