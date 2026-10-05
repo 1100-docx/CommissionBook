@@ -403,6 +403,10 @@
     <string name="settings_export_backup_desc">存成 JSON 檔案，能儲存到手機 / 雲盤</string>
     <string name="settings_share_backup">分享備份</string>
     <string name="settings_share_backup_desc">直接發給微信 / 發給自己</string>
+    <!-- 分享備份前的隱私提醒（2026-10-05 加，逸風要的） -->
+    <string name="share_warn_title">分享前先看一眼</string>
+    <string name="share_warn_body">備份是一份明文的 JSON 檔案：裡面有你的約稿紀錄、金額、備註、畫師聯絡方式，參考圖也在裡頭（base64 編碼）。發給誰，就等於把這些全交給他了 —— 請妥善保管這份檔案。</string>
+    <string name="share_warn_continue">繼續分享</string>
     <string name="settings_restore_from_file">從檔案恢復</string>
     <string name="settings_restore_ios_note">跟 iOS 版的備份通用，兩邊都認</string>
     <string name="common_tools">小工具</string>

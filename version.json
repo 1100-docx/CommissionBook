@@ -1,8 +1,8 @@
 {
-  "versionCode": 42,
-  "versionName": "3.5.18",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.18.apk",
-  "size": 2132272,
-  "sha256": "72672cd222be91f58455f4ac722be0ddc8992324eee2ec666934d17b1f62eff9",
-  "notes": "· 已交付的单子不再显示「已超期」（归档里的那些也一样）\n· 「给图片写备注」这个功能整个撤掉了（入口、输入框、备份里那个字段一起清了）\n· 看大图那页：底下的按钮不再压到系统导航键上（顶上那颗 ✕ 也一并让开状态栏）\n· 修了隐私政策里一处日期写错"
+  "versionCode": 43,
+  "versionName": "3.5.19",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.19.apk",
+  "size": 2133704,
+  "sha256": "3676eabcedcf801a9ec329614f3dbe1f9c2706048d1c93f4c14f2b4f08a80d5b",
+  "notes": "· 分享备份前会先提醒一句：备份是明文文件，里面有画师联系方式和参考图，请妥善保管\n· 已交付的单子不再显示「已超期」（归档里的那些也一样）\n· 看大图那页：底下的按钮不再压到系统导航键上（顶上那颗 ✕ 也一并让开状态栏）\n· 隐私政策里那处写错的日期，改掉了"
 }

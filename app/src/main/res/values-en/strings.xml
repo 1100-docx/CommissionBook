@@ -412,6 +412,10 @@ System: Android %4$s (API %5$s)
     <string name="settings_export_backup_desc">Save as a JSON file to your phone or cloud drive</string>
     <string name="settings_share_backup">Share Backup</string>
     <string name="settings_share_backup_desc">Send it straight to WeChat or to yourself</string>
+    <!-- Privacy warning before sharing a backup (2026-10-05) -->
+    <string name="share_warn_title">One thing before you share</string>
+    <string name="share_warn_body">A backup is a plain-text JSON file: it contains your commission records, amounts, notes and artist contact details, plus reference images (base64 encoded). Whoever you send it to gets all of that — please keep the file safe.</string>
+    <string name="share_warn_continue">Share anyway</string>
     <string name="settings_restore_from_file">Restore from File</string>
     <string name="settings_restore_ios_note">Compatible with iOS backups — both sides can read it</string>
     <string name="common_tools">Tools</string>

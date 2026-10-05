@@ -86,6 +86,8 @@ fun SettingsScreen(
 
     // 检查更新（2026-10-03 加，**只有安卓版有**）
     var autoUpdate by remember { mutableStateOf(prefs.updateAutoCheck) }
+    // 「分享备份」前的隐私提醒（2026-10-05 加，逸风要的）
+    var askShare by remember { mutableStateOf(false) }
     // null = 不显示那个框
     var updateStatus by remember { mutableStateOf<UpdateStatus?>(null) }
     val updateScope = rememberCoroutineScope()
@@ -343,7 +345,8 @@ fun SettingsScreen(
                             title = AppCtx.s(R.string.settings_share_backup),
                             subtitle = AppCtx.s(R.string.settings_share_backup_desc),
                             icon = Icons.Filled.Share,
-                            onClick = { onShare(state.toJsonString(), Backup.fileName(manual = true)) },
+                            // 2026-10-05 改：不再直接弹分享面板，先过一道隐私提醒
+                            onClick = { askShare = true },
                         )
                         GroupRow(
                             title = AppCtx.s(R.string.settings_restore_from_file),
@@ -478,6 +481,37 @@ fun SettingsScreen(
                 }
 
                 // 检查更新那个框（2026-10-03 加）——
+                // 「分享备份」的隐私提醒（2026-10-05 加）
+                //
+                // ⚠️ 备份 JSON 是**明文**：画师名、金额、备注、联系方式、参考图（base64）全在里面，
+                //    发出去就等于全交出去。所以分享前先拦一句，别指望人记得。
+                //    逸风原话：「分享 json 文件的时候建议弹窗提醒请妥善保管文件，
+                //    因为里面保存了隐私信息」。
+                if (askShare) {
+                    AlertDialog(
+                        onDismissRequest = { askShare = false },
+                        title = { Text(AppCtx.s(R.string.share_warn_title)) },
+                        text = {
+                            Text(
+                                AppCtx.s(R.string.share_warn_body),
+                                fontSize = 13.sp,
+                                lineHeight = 20.sp,
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                askShare = false
+                                onShare(state.toJsonString(), Backup.fileName(manual = true))
+                            }) { Text(AppCtx.s(R.string.share_warn_continue)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { askShare = false }) {
+                                Text(AppCtx.s(R.string.common_cancel))
+                            }
+                        },
+                    )
+                }
+
                 // 挂在最下面而不是上面那块里：Dialog 是另一个窗口，放哪儿都行，
                 // 放这儿是为了别把上面那串设置项的缩进搞乱。
                 UpdateDialog(updateStatus, prefs) { updateStatus = it }
