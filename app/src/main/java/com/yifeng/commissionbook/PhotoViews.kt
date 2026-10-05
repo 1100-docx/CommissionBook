@@ -155,18 +155,7 @@ fun PhotoStrip(
                         )
                     }
                 }
-                // 这张图的说明（没写就不占位）—— 说明怎么加：点开大图，底下那颗按钮
-                if (item.caption.isNotBlank()) {
-                    Text(
-                        item.caption,
-                        fontSize = 10.sp,
-                        color = cs.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.width(78.dp).padding(top = 3.dp),
-                    )
-                }
+
             }
         }
         if (items.size < Photos.MAX_COUNT) {
@@ -209,16 +198,12 @@ fun PhotoViewer(
     startIndex: Int,
     pathFor: (String) -> String,
     onDismiss: () -> Unit,
-    onSetCaption: (Int, String) -> Unit,
 ) {
     if (items.isEmpty()) return
     val pager = rememberPagerState(
         initialPage = startIndex.coerceIn(0, items.size - 1),
         pageCount = { items.size },
     )
-    var editing by remember { mutableStateOf(false) }
-    var draft by remember { mutableStateOf("") }
-    val current = items.getOrNull(pager.currentPage)
 
     // ⚠️ `decorFitsSystemWindows = false` 是 2026-10-05 为「加说明跟三大金刚键重合」加的：
     //    这是个 Dialog（**另一个窗口**）。默认那个窗口自己 fit 系统栏，于是窗口里读到的
@@ -288,20 +273,7 @@ fun PhotoViewer(
                     .padding(bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                if (!current?.caption.isNullOrBlank()) {
-                    Text(
-                        current.caption,
-                        color = Color.White.copy(alpha = 0.92f),
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(Color.White.copy(alpha = 0.16f))
-                            .padding(horizontal = 14.dp, vertical = 7.dp),
-                    )
-                    Spacer(Modifier.height(10.dp))
-                }
+
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (items.size > 1) {
                         Text(
@@ -315,84 +287,12 @@ fun PhotoViewer(
                                 .padding(horizontal = 12.dp, vertical = 5.dp),
                         )
                     }
-                    Row(
-                        Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(Color.White.copy(alpha = 0.22f))
-                            .clickable {
-                                draft = current?.caption.orEmpty()
-                                editing = true
-                            }
-                            .padding(horizontal = 14.dp, vertical = 7.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Edit,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Text(
-                            AppCtx.s(
-                                if (current?.caption.isNullOrBlank()) R.string.photos_note_add
-                                else R.string.photos_note_edit
-                            ),
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
+
                 }
             }
         }
     }
 
-    if (editing) {
-        AlertDialog(
-            onDismissRequest = { editing = false },
-            // ⚠️ `decorFitsSystemWindows = false`：这个对话框也是个**独立窗口**，
-            //    默认它自己 fit 系统栏 —— 结果窗口里读到的键盘（IME）insets 是 0，
-            //    `.imePadding()` 就成了空操作：键盘弹起来盖住对话框，底下那颗「保存」够不着。
-            //    关掉 fit，insets 才如实报进来。（看大图那个 Dialog 同一天栽过同一个坑。）
-            properties = DialogProperties(decorFitsSystemWindows = false),
-            title = { Text(AppCtx.s(R.string.photos_note_title)) },
-            text = {
-                Column(
-                    Modifier
-                        // 逸风 2026-10-05：「Android 版……让这个界面可以滚动」。
-                        // 显式加一层滚动 —— 小屏 / 大字号 / 键盘顶上来时都能翻到底，
-                        // 别指望 M3 自带那层。
-                        .verticalScroll(rememberScrollState())
-                        .imePadding(),
-                ) {
-                    OutlinedTextField(
-                        value = draft,
-                        onValueChange = { draft = it },
-                        singleLine = true,
-                        placeholder = { Text(AppCtx.s(R.string.photos_note_placeholder), fontSize = 14.sp) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        AppCtx.s(R.string.photos_note_desc),
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    onSetCaption(pager.currentPage, draft.trim())
-                    editing = false
-                }) { Text(AppCtx.s(R.string.common_save)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { editing = false }) { Text(AppCtx.s(R.string.common_cancel)) }
-            },
-        )
-    }
 }
 
 /** 卡片上那枚小角标：一张图 + 张数。没图就什么都不画（布局一点不动） */

@@ -108,7 +108,7 @@ object Terms {
  */
 data class Photo(
     val name: String,
-    val caption: String = "",
+
 )
 
 data class Commission(
@@ -214,7 +214,7 @@ object Json {
                     // 2026-10-04：存盘也写成对象了（以前是纯字符串），这样说明才有地方放。
                     // 读的那头两种都认，见 decodePhotos。
                     val o2 = JSONObject().put("name", p.name)
-                    if (p.caption.isNotBlank()) o2.put("caption", p.caption)
+
                     val bytes = photoBytes?.invoke(p.name)
                     if (bytes == null) {
                         // 取不到图（文件被清掉了）→ 只留名字（说明还在）。
@@ -300,8 +300,7 @@ object Json {
                 is JSONObject -> {
                     val n = Photos.safeName(entry.optString("name"))
                     if (n.isBlank()) continue
-                    // caption 缺了就是空串（老备份没有这个键）
-                    out.add(Photo(n, entry.optString("caption")))
+                    out.add(Photo(n))
                     val b64 = entry.optString("b64")
                     if (b64.isNotBlank() && onPhoto != null) {
                         runCatching { onPhoto(n, android.util.Base64.decode(b64, android.util.Base64.DEFAULT)) }

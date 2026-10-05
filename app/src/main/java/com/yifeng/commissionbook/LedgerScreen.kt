@@ -346,6 +346,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                             val d = c.daysLeft()
                             Text(
                                 when {
+                                    c.status == CommissionStatus.DELIVERED -> AppCtx.s(R.string.ledger_delivered)
                                     d == null -> ""
                                     d < 0 -> AppCtx.s(R.string.ledger_overdue_days, -d)
                                     d == 0 -> AppCtx.s(R.string.notify_due_today)
@@ -353,7 +354,8 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                                 },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = if (d != null && d < 0) MaterialTheme.colorScheme.error
+                                color = if (c.status != CommissionStatus.DELIVERED && d != null && d < 0)
+                                            MaterialTheme.colorScheme.error
                                         else MaterialTheme.colorScheme.primary,
                             )
                         }
@@ -1389,9 +1391,7 @@ fun EditSheet(
             startIndex = start,
             pathFor = photoPath,
             onDismiss = { viewerAt = null },
-            onSetCaption = { idx, caption ->
-                photos = photos.mapIndexed { i, p -> if (i == idx) p.copy(caption = caption) else p }
-            },
+
         )
     }
 }

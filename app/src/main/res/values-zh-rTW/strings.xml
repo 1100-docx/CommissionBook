@@ -506,11 +506,7 @@
     <string name="privacy_photos_title">參考圖（2026-10-03 新加的）</string>
     <string name="privacy_photos_body">你幫某筆約稿配的參考圖，只存在這支手機裡（App 私有目錄，其他 App 讀不到）。選圖用的是系統內建的圖片選擇器：App 不申請相簿 / 儲存權限，也看不到你沒選的那些圖。匯出備份時，圖片會以文字形式（base64）打包進備份檔 —— 這也是這份備份唯一比以前大的地方。</string>
     <!-- 2026-10-04 加：給參考圖配說明 -->
-    <string name="photos_note_add">加說明</string>
-    <string name="photos_note_edit">改說明</string>
-    <string name="photos_note_title">這張圖的說明</string>
-    <string name="photos_note_placeholder">請輸入圖片備註</string>
-    <string name="photos_note_desc">寫給自己看的，比如「哪張是配色、哪張是姿勢」。留空就是不要說明。</string>
+
     <!-- 支持作者（2026-10-05）。**只有安卓版有**：iOS 那邊這類功能一律要走 App Store 的內購，
          所以 iOS 版一行都沒加。 -->
     <string name="settings_support_section">支持</string>

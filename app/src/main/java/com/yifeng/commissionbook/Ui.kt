@@ -112,6 +112,12 @@ fun StageBar(status: CommissionStatus, modifier: Modifier = Modifier) {
 
 /** 「还剩 3 天 / 超期 2 天」这句 */
 fun deadlineText(c: Commission): Pair<String, Boolean>? {
+    // ⚠️ 2026-10-05 修：**已交付的单子不再报超期**。
+    //    逸风报「已归档的条目中，已交付的依旧显示已超期」—— 交付完了就没「超期」这回事，
+    //    老挂着红字只会让人以为还有一笔没收。
+    //    iOS 那边一直就是这么处理的（`daysLeftText` 先判 `.delivered` 直接给「已交付」），
+    //    安卓这里漏了，跟它对齐。
+    if (c.status == CommissionStatus.DELIVERED) return AppCtx.s(R.string.ledger_delivered) to false
     val d = c.daysLeft() ?: return null
     val late = d < 0
     val s = when {
