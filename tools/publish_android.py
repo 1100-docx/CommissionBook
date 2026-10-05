@@ -10,7 +10,24 @@ dist.mkdir(exist_ok=True)
 
 version_name = sys.argv[1] if len(sys.argv) > 1 else "3.5.7"
 version_code = int(sys.argv[2]) if len(sys.argv) > 2 else 31
-notes = sys.argv[3] if len(sys.argv) > 3 else ""
+
+# 更新说明（App 的「检查更新」弹框里那一块「更新内容」显示的就是它）。
+#
+# ⚠️ 2026-10-06 改：**这段字以后归逸风自己写**。
+#    他原话「我还在想Android版本要不要显示更新的时候显示我写的更新说明」——
+#    要，而且本来就显示。所以做法是：说明写在 tools/更新说明.txt 里，
+#    这个脚本自动读进来。想改措辞就改那个 txt，不用重新编译（version.json
+#    是运行时联网取的，改完推上去，别人下次检查更新就看到新的了）。
+#
+#    优先级：命令行第 3 个参数 > tools/更新说明.txt > 留空。
+#    留空的话 App 那边会显示「（这一版没写更新说明）」。
+notes_file = repo / "tools/更新说明.txt"
+if len(sys.argv) > 3:
+    notes = sys.argv[3]
+elif notes_file.is_file():
+    notes = notes_file.read_text(encoding="utf-8").strip()
+else:
+    notes = ""
 
 h = hashlib.sha256()
 with apk.open("rb") as f:
