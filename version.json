@@ -1,8 +1,8 @@
 {
-  "versionCode": 36,
-  "versionName": "3.5.12",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.12.apk",
-  "size": 2133200,
-  "sha256": "227cdfcdfa2aa0cdb2b4b9d9b043c93985cc77bf31413218f6f13f4dd13da590",
-  "notes": "新增：支持作者（设置页最底下一行，完全自愿，不给也完全没关系）；隐私政策同步到第四版"
+  "versionCode": 37,
+  "versionName": "3.5.13",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.13.apk",
+  "size": 2133304,
+  "sha256": "0e3ac7d921737554faf588a88d465392d690379323ad158727700e36d4073d41",
+  "notes": "修正：隐私政策里「自愿支持」那条补上条款序号（七、），后面几条顺延：未成年人→八、政策变更→九、联系方式→十"
 }

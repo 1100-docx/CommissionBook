@@ -340,11 +340,11 @@
     <string name="privacy_export_title">六、匯出 / 分享備份的時候</string>
     <string name="privacy_export_file">· 備份是一個 JSON 檔案，由你主動匯出，存到哪、發給誰，完全由你決定</string>
     <string name="privacy_export_share_warning">· 一旦你把它發給別人（微信、QQ、網盤等），那份檔案就不再受本 App 保護了 —— 裡面含畫師聯絡方式，請自己收好</string>
-    <string name="privacy_minors_title">七、未成年人</string>
+    <string name="privacy_minors_title">八、未成年人</string>
     <string name="privacy_minors_body">本 App 不收集任何個人資訊，因此也不存在「收集未成年人資訊」的問題。未成年人使用建議在監護人知情的情況下進行。</string>
-    <string name="privacy_changes_title">八、政策變更</string>
-    <string name="privacy_changes_body">政策有變動時會跟著一起更新，並在這裡標註更新時間。最近一次更新是 2026 年 10 月 3 日 —— 因為加了「檢查更新」這個聯網功能，原來那句「完全不聯網」也跟著改掉了。</string>
-    <string name="privacy_contact_title">九、聯絡方式</string>
+    <string name="privacy_changes_title">九、政策變更</string>
+    <string name="privacy_changes_body">政策有變動時會跟著一起更新，並在這裡標註更新時間。最近一次更新是 2026 年 10 月 6 日 —— 加了第七條「自願支持」，把一件容易讓人誤會的事講清楚：那個收款碼只是一張靜態圖片。</string>
+    <string name="privacy_contact_title">十、聯絡方式</string>
     <string name="privacy_contact_body">有問題、有建議，或者想讓我刪點什麼（其實刪不了，因為我這兒什麼都沒有）：</string>
     <string name="privacy_contact_email">· 郵箱：error1100@icloud.com —— 在「設定 → 反饋與建議」裡點一下就替你寫好郵件</string>
     <string name="privacy_contact_email_note">（反饋是開啟你手機上的郵件 App 發的，不經過本 App。本 App 唯一的聯網動作只有檢查更新。）</string>
@@ -522,6 +522,6 @@
     <string name="sponsor_thanks">這個小工具是我一個人一點一點做出來的。你願意用它，還願意請我喝瓶水，我滿開心的。\n\n不給也完全沒關係 —— 你用著，就是最大的支持。</string>
     <string name="sponsor_no_pay">App 裡沒有任何付費功能：功能全都免費開放，不會因為你支持過就多給什麼，也不會因為沒支持就少給什麼。</string>
     <string name="sponsor_privacy">這個碼只是一張圖片。打開這一頁不會連網、不會上傳任何東西，App 也不知道誰掃過。</string>
-    <string name="privacy_support_title">自願支持</string>
+    <string name="privacy_support_title">七、自願支持</string>
     <string name="privacy_support_body">App 內「支持作者」那一頁顯示的收款碼是靜態圖片，僅供自願支持使用。本 App 沒有任何內購或付費功能，不取得、不儲存、也不上傳任何付款資訊；支持與否、支持多少，都不影響你能用到的功能。</string>
 </resources>

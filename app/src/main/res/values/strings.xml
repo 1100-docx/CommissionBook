@@ -340,11 +340,11 @@
     <string name="privacy_export_title">六、导出 / 分享备份的时候</string>
     <string name="privacy_export_file">· 备份是一个 JSON 文件，由你主动导出，存到哪、发给谁，完全由你决定</string>
     <string name="privacy_export_share_warning">· 一旦你把它发给别人（微信、QQ、网盘等），那份文件就不再受本 App 保护了 —— 里面含画师联系方式，请自己收好</string>
-    <string name="privacy_minors_title">七、未成年人</string>
+    <string name="privacy_minors_title">八、未成年人</string>
     <string name="privacy_minors_body">本 App 不收集任何个人信息，因此也不存在「收集未成年人信息」的问题。未成年人使用建议在监护人知情的情况下进行。</string>
-    <string name="privacy_changes_title">八、政策变更</string>
-    <string name="privacy_changes_body">政策有变动时会跟着一起更新，并在这里标注更新时间。最近一次更新是 2026 年 10 月 3 日 —— 因为加了「检查更新」这个联网功能，原来那句「完全不联网」也跟着改掉了。</string>
-    <string name="privacy_contact_title">九、联系方式</string>
+    <string name="privacy_changes_title">九、政策变更</string>
+    <string name="privacy_changes_body">政策有变动时会跟着一起更新，并在这里标注更新时间。最近一次更新是 2026 年 10 月 6 日 —— 加了第七条「自愿支持」，把一件容易让人误会的事讲清楚：那个收款码只是一张静态图片。</string>
+    <string name="privacy_contact_title">十、联系方式</string>
     <string name="privacy_contact_body">有问题、有建议，或者想让我删点什么（其实删不了，因为我这儿什么都没有）：</string>
     <string name="privacy_contact_email">· 邮箱：error1100@icloud.com —— 在「设置 → 反馈与建议」里点一下就替你写好邮件</string>
     <string name="privacy_contact_email_note">（反馈是打开你手机上的邮件 App 发的，不经过本 App。本 App 唯一的联网动作只有检查更新。）</string>
@@ -521,6 +521,6 @@
     <string name="sponsor_thanks">这个小工具是我一个人一点点做出来的。你愿意用它，还愿意请我喝瓶水，我挺开心的。\n\n不给也完全没关系 —— 你用着，就是最大的支持。</string>
     <string name="sponsor_no_pay">App 里没有任何付费功能：功能全都免费开放，不会因为你支持过就多给什么，也不会因为没支持就少给什么。</string>
     <string name="sponsor_privacy">这个码只是一张图片。打开这一页不会联网、不会上传任何东西，App 也不知道谁扫过。</string>
-    <string name="privacy_support_title">自愿支持</string>
+    <string name="privacy_support_title">七、自愿支持</string>
     <string name="privacy_support_body">App 内「支持作者」那一页展示的收款码是静态图片，仅作自愿支持之用。本 App 没有任何内购或付费功能，不会获取、不会保存、也不会上传任何支付信息；支持与否、支持多少，都不影响你能用到的功能。</string>
 </resources>

@@ -349,11 +349,11 @@ System: Android %4$s (API %5$s)
     <string name="privacy_export_title">6. When Exporting / Sharing a Backup</string>
     <string name="privacy_export_file">· A backup is a JSON file that you export yourself — where it\'s saved and who you send it to is entirely up to you</string>
     <string name="privacy_export_share_warning">· Once you send it to someone (WeChat, QQ, cloud drive, etc.), that file is no longer protected by this app — it contains artist contact info, so keep it safe</string>
-    <string name="privacy_minors_title">7. Minors</string>
+    <string name="privacy_minors_title">8. Minors</string>
     <string name="privacy_minors_body">This app collects no personal information, so there\'s no issue of "collecting minors\' information." Minors should use it with a guardian\'s knowledge.</string>
-    <string name="privacy_changes_title">8. Policy Changes</string>
-    <string name="privacy_changes_body">When features change, this policy changes with them and the date above is updated. The most recent change was on 3 October 2026, when update checks were added and the earlier wording about never going online was corrected.</string>
-    <string name="privacy_contact_title">9. Contact</string>
+    <string name="privacy_changes_title">9. Policy Changes</string>
+    <string name="privacy_changes_body">When features change, this policy changes with them and the date above is updated. The most recent change was on 6 October 2026, when section 7 on voluntary support was added to make one easily-misread point clear: the payment code is just a static image.</string>
+    <string name="privacy_contact_title">10. Contact</string>
     <string name="privacy_contact_body">Questions, suggestions, or want me to delete something (I actually can\'t — there\'s nothing here on my end):</string>
     <string name="privacy_contact_email">· Email: error1100@icloud.com — tap it in "Settings → Feedback &amp; Suggestions" and your email will be written for you</string>
     <string name="privacy_contact_email_note">(Feedback opens your phone email app — it does not go through this app. The only network activity here is update checks.)</string>
@@ -528,6 +528,6 @@ System: Android %4$s (API %5$s)
     <string name="sponsor_thanks">I built this little tool on my own, a bit at a time. If it is useful to you and you feel like buying me a bottle of water, that makes me happy.\n\nNot giving is completely fine too - you using it is already the biggest support.</string>
     <string name="sponsor_no_pay">There are no paid features in this app. Everything is free, and nothing changes whether you chip in or not.</string>
     <string name="sponsor_privacy">This code is just a picture. Opening this page does not go online and uploads nothing. The app has no idea who scanned it.</string>
-    <string name="privacy_support_title">Voluntary support</string>
+    <string name="privacy_support_title">7. Voluntary Support</string>
     <string name="privacy_support_body">The payment code shown on the Support the author page is a static image, provided for voluntary support only. This app has no in-app purchases and no paid features, and it never collects, stores or uploads any payment information. Whether you support, or how much, makes no difference to the features you can use.</string>
 </resources>
