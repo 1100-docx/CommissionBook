@@ -77,11 +77,8 @@ object Reminders {
 
     private fun pending(context: Context, c: Commission, d: Int): PendingIntent {
         val intent = Intent(context, ReminderReceiver::class.java).apply {
-            putExtra("title", c.title)
-            putExtra("artist", c.artist)
-            putExtra("mode", c.mode)
+            // 2026-10-05 通知文案不带画师名/标题之后，这里只需要「还剩几天」。
             putExtra("days", d)
-            putExtra("id", c.id)
         }
         var flags = PendingIntent.FLAG_UPDATE_CURRENT
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags = flags or PendingIntent.FLAG_IMMUTABLE
@@ -92,10 +89,8 @@ object Reminders {
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val title = intent.getStringExtra("title").orEmpty()
-        val artist = intent.getStringExtra("artist").orEmpty()
-        // 通知里指代人的词跟着这条记录自己的模式走（买家说「某位画师」，画师说「某位客户」）
-        val who = Terms.otherSome(AppMode.from(intent.getStringExtra("mode")))
+        // 2026-10-05 起这里只读「还剩几天」：
+        // 画师名 / 稿件标题 / 模式都不再进通知（会露在锁屏上）。
         val days = intent.getIntExtra("days", 0)
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -116,8 +111,11 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val text = "${artist.ifBlank { who }} · ${title.ifBlank { AppCtx.s(R.string.notify_default_title) }}" +
-            if (days <= 1) AppCtx.s(R.string.notify_due_tomorrow) else AppCtx.s(R.string.notify_three_days_left)
+        // ⚠️ 2026-10-05 改：正文不再带画师名、稿件标题、状态 ——
+        //    通知是顶在锁屏上的，旁边人瞄一眼就知道「谁的单子、画的什么、给到哪一步」。
+        //    逸风原话：「最好把画师名字也隐藏」。现在只说有一单要到期了 + 还剩几天。
+        //    代价：同一天有好几单到期时，几条通知长得一模一样，只能点进去看。
+        val text = if (days <= 1) AppCtx.s(R.string.notify_due_tomorrow) else AppCtx.s(R.string.notify_three_days_left)
 
         val n = NotificationCompat.Builder(context, Reminders.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)

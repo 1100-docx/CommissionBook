@@ -381,9 +381,9 @@
     <string name="privacy_policy_title">隱私政策</string>
     <string name="notify_set_alarm">定鬧鐘: %1$s 提前%2$s天 at=%3$s</string>
     <string name="notify_skip_past">跳過（時間已過）: %1$s 提前%2$s天 at=%3$s</string>
-    <string name="notify_due_tomorrow">　明天到期了</string>
-    <string name="notify_three_days_left">　還有 3 天</string>
-    <string name="notify_commission_due_soon">約稿快到期了</string>
+    <string name="notify_due_tomorrow">明天到期</string>
+    <string name="notify_three_days_left">還有 3 天到期</string>
+    <string name="notify_commission_due_soon">您有一單約稿即將到期</string>
     <string name="notify_no_permission">沒給通知許可權，到點就不會提醒你 —— 想開去手機設定裡開啟</string>
     <string name="common_data_local_only">資料都在這臺手機裡，不上傳</string>
     <string name="settings_mode_buyer_desc">我出錢約別人的稿：記「約了誰、給到哪一步」。對方叫「畫師」，錢那欄叫「已付 / 未付」。</string>

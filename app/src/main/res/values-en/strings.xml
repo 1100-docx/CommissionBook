@@ -390,9 +390,9 @@ System: Android %4$s (API %5$s)
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="notify_set_alarm">Set alarm: %1$s, %2$s days ahead, at=%3$s</string>
     <string name="notify_skip_past">Skipped (time passed): %1$s, %2$s days ahead, at=%3$s</string>
-    <string name="notify_due_tomorrow">  Due tomorrow</string>
-    <string name="notify_three_days_left">  3 days left</string>
-    <string name="notify_commission_due_soon">Commission due soon</string>
+    <string name="notify_due_tomorrow">Due tomorrow</string>
+    <string name="notify_three_days_left">3 days left</string>
+    <string name="notify_commission_due_soon">You have a commission due soon</string>
     <string name="notify_no_permission">Notifications are off, so you won\'t be reminded — turn them on in your phone\'s settings</string>
     <string name="common_data_local_only">All data stays on this phone, never uploaded</string>
     <string name="settings_mode_buyer_desc">I pay others for commissions: track "who I commissioned and how far along it is." The other party is the "artist," and the money column is "Paid / Unpaid."</string>
