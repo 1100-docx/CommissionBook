@@ -14,7 +14,7 @@ import java.util.Calendar
 /**
  * 截止日提醒。
  *
- * 跟 iOS 版对齐的口径：**到期前 3 天、1 天各一次，晚上 20:00**；
+ * 跟 iOS 版对齐的口径：**到期前 3 天、1 天各一次，晚上 19:00**；
  * 已交付的、已归档的**不提醒**。
  *
  * 安卓这边做法：用 `AlarmManager` 给每条约稿定两个闹钟，
@@ -32,7 +32,7 @@ object Reminders {
     //    通知栏里那条频道名会变成空白。
     val CHANNEL_NAME: String get() = AppCtx.s(R.string.settings_deadline_reminder)
     private val DAYS_BEFORE = intArrayOf(3, 1)
-    private const val HOUR = 20
+    private const val HOUR = 19
 
     /**
      * 建通知渠道（安卓 8+ 必须有）。
@@ -70,7 +70,7 @@ object Reminders {
                 if (at > now) {
                     android.util.Log.i("CommissionBook", AppCtx.s(R.string.notify_set_alarm, c.title, d, java.util.Date(at)))
                     // ⚠️ 2026-10-05 改：以前只调 setAndAllowWhileIdle（不精确），
-                    //    系统给的窗口是 ±1 小时 —— 20:00 的提醒可能 20:50 才到。
+                    //    系统给的窗口是 ±1 小时 —— 19:00 的提醒可能 19:50 才到。
                     //    现在优先用精确闹钟（配合 USE_EXACT_ALARM，见 AndroidManifest）；
                     //    真拿不到权限（canScheduleExactAlarms() == false）就退回老办法，
                     //    宁可晚一点，也不能崩。
@@ -87,7 +87,7 @@ object Reminders {
         }
     }
 
-    /** 截止日往前 d 天的 20:00 */
+    /** 截止日往前 d 天的 19:00 */
     private fun triggerAt(deadlineMillis: Long, d: Int): Long {
         val cal = Calendar.getInstance()
         cal.timeInMillis = deadlineMillis
