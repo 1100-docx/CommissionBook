@@ -2,7 +2,7 @@
   "versionCode": 39,
   "versionName": "3.5.15",
   "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.15.apk",
-  "size": 2133304,
-  "sha256": "5545d9e73424bb09388966df5e69c59a389ae12744ef1665175fab208512b1c1",
+  "size": 2133392,
+  "sha256": "009fd675af3149a72eee8a105e6ebdcd41b6531724f87319d76b9eef7a7a5505",
   "notes": "· 看大图那页：底下的按钮不再压到系统导航键上（顶上那颗 ✕ 也一并让开状态栏）\n· 图片说明的引导词改成「请输入图片备注」\n· 修了隐私政策里一处日期写错"
 }
