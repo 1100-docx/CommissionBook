@@ -1,8 +1,8 @@
 {
-  "versionCode": 52,
-  "versionName": "3.5.28",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.28.apk",
-  "size": 2150576,
-  "sha256": "3f271126d8644400a275f9e2a45a0d2a1c8989e846a6ea4aa034c169d853773b",
-  "notes": "· 让提醒更准点：有些手机（尤其省电策略比较凶的国产系统）只肯给「大概时间」—— 7 点的提醒可能拖到快 8 点才到\n· 这一版 App 会主动去要「精确闹钟」资格；万一你的手机还是不给，设置 → 提醒 里会多出一行「让提醒准点响」，点一下去开就行\n· 顺手再提一句：设置 → 应用 → 约稿账本 → 耗电管理，改成「允许后台运行」—— 不然半夜的提醒可能被系统冻掉\n· 提醒时间还是晚上 7 点（上一版从 8 点挪过来的），数据一条没动"
+  "versionCode": 53,
+  "versionName": "3.5.29",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.29.apk",
+  "size": 2150768,
+  "sha256": "75eaf15b5ca4405a257833fe9a771962a352de922b935f2313aa7d46752f4fdc",
+  "notes": "· 手机重启之后，提醒不会再丢了 —— 以前重启完必须自己打开一次 App 才会把提醒排回来，现在系统一开机 App 自己就补上了\n· 提醒时间还是晚上 7 点，数据一条没动"
 }

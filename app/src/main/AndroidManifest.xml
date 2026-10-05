@@ -4,6 +4,10 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- 2026-10-05 晚加（3.5.29）：开机后要把提醒闹钟重新排上。
+         ‼️ 闹钟存在系统的 AlarmManager 里，**手机一重启就全没了**（iOS 是系统帮着记的，没这问题）。
+         普通权限，安装即授予，不用问用户。 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- 2026-10-05 加：截止日提醒要**准点**响（19:00）。
          `setAndAllowWhileIdle` 是「不精确闹钟」，系统给的窗口是 **±1 小时**
@@ -59,6 +63,35 @@
         <receiver
             android:name=".ReminderReceiver"
             android:exported="false" />
+
+        <!-- 2026-10-05 晚加（3.5.29）：开机 / 覆盖安装之后，把提醒闹钟重新排一遍。
+             以前只有「打开 App」会重排 → 手机重启后只要不开 App，提醒就再也不响了。
+
+             ⚠️ 这里必须 exported="true"（跟隔壁 ReminderReceiver 不一样，别照抄那边）：
+                这两个 action 都是**系统专用广播**（protected broadcast），只有系统进程发得出来，
+                第三方应用根本发不了，所以开着 exported 没有安全风险；
+                但写成 false 的话，系统投递时会把它当「未导出接收器」**直接跳过** ——
+                2026-10-05 就栽在这上面：注册对、权限对、包也装了，
+                dumpsys activity broadcasts 里那条广播却始终「未投递」（dispatchTime 一直空着，永远不派）。 -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 2026-10-05 晚加（3.5.29）：重启后把提醒闹钟排回来 —— 走 JobScheduler 的持久化任务。
+             为什么不靠上面那个开机广播：OPPO 的「启动管理」会把它跳过（日志里 reason: oplus startup），
+             唯一解法是让用户开「自启动 + 后台运行 + 关联启动」—— 代价太大，不干。
+             JobScheduler 的任务存在系统里，重启由系统自己恢复，**用户一个权限都不用开**。
+             上面那个 receiver 留着当双保险（没被厂商拦的机器上它更快）。
+             BIND_JOB_SERVICE 权限是 JobService 的硬性要求，少了系统不认这个 service。 -->
+        <service
+            android:name=".RescheduleJobService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
