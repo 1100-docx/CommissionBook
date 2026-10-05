@@ -1,8 +1,8 @@
 {
-  "versionCode": 60,
-  "versionName": "3.5.36",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.36.apk",
+  "versionCode": 61,
+  "versionName": "3.5.37",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.37.apk",
   "size": 2237672,
-  "sha256": "6c9884af46578d6d67989559205562383a163b677876a0e0ad401a8f8fe0e753",
-  "notes": "· 新增 / 编辑约稿时，「下单日期」和「截止日期」不用再手打 —— 点一下弹出日期选择器，挑一天就好\n· 设置 → 提醒 里多了一行「提醒时间」：几点提醒你自己定（点开是时间选择器），默认还是 19:00\n· 选好时间立刻生效，不用重开 App\n· 数据一条没动"
+  "sha256": "c285b67bcc46ae279b0be94238f6204cb5e67b9f76ccf9c75d49739d812fb691",
+  "notes": "· 修一个多语言的 bug：之前切换语言后，隐私政策那几页还是中文（切语言后只有它不变）\n· 同一个毛病还影响：报价计算器的类型名、加价项的出厂名字 —— 一起修了\n· 现在切完语言重启一次，整份隐私政策就是新语言了\n· 数据一条没动"
 }

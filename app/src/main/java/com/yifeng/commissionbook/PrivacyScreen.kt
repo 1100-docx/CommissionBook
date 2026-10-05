@@ -102,7 +102,14 @@ private val POLICY_SCOPE get() = AppCtx.s(
 /** 一句话总结（单独拿出来，放最上面高亮） */
 private val POLICY_SUMMARY get() = AppCtx.s(R.string.privacy_intro)
 
-private val policySections = listOf(
+// ⚠️⚠️ 2026-10-05（3.5.37）**必须写成 `get()`**，别改回普通 `val`：
+//     顶层 `val` 是「第一次访问时求值一次，之后一直用那个结果」——
+//     而这里的每一段都要调 `AppCtx.s(...)` 取当前语言的字符串。
+//     写成普通 `val` 的话，第一次打开政策页是哪门语言，**那门语言就被钉死了**：
+//     用户切到英文、App 也重启了（recreate 不重载类），别的界面都变英文，
+//     只有这一页从头到尾还是中文 —— 逸风报的「隐私政策没有支持多语言」就是这个。
+//     上面 POLICY_UPDATED / POLICY_SCOPE / POLICY_SUMMARY 早就用过同一招（见那边的注释）。
+private val policySections: List<PolicySection> get() = listOf(
     PolicySection(
         AppCtx.s(R.string.privacy_section1_title),
         listOf(
@@ -191,7 +198,8 @@ private val policySections = listOf(
     ),
 )
 
-private val policyPermissions = listOf(
+// ⚠️ 同样是 `get()`（理由见上面 policySections 那段）：权限表也是**逐项取当前语言**的串。
+private val policyPermissions: List<PolicyPermission> get() = listOf(
     // 2026-10-03 加的这两条排在前面 —— 它们是这一版新增的、也是唯一跟「联不联网」
     // 有关的权限，先摆出来最省得人翻。
     PolicyPermission(AppCtx.s(R.string.settings_network_title), AppCtx.s(R.string.settings_network_desc), AppCtx.s(R.string.settings_network_off)),

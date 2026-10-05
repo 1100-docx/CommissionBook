@@ -306,7 +306,10 @@ fun NudgeSheet(c: Commission, mode: AppMode, onDismiss: () -> Unit, onCopied: (S
 
 // MARK: - ⑥ 报价计算器
 
-private val QUOTE_TYPES = listOf(AppCtx.s(R.string.common_avatar) to 50.0, AppCtx.s(R.string.common_half_body) to 100.0, AppCtx.s(R.string.common_full_body) to 200.0, AppCtx.s(R.string.artist_fursuit_full) to 400.0)
+// ⚠️ 2026-10-05（3.5.37）改成 `get()`：这四个名字都要按**当前语言**取（AppCtx.s），
+//    写成普通顶层 `val` 会被第一次访问时的语言钉死 —— 跟 PrivacyScreen 那个
+//    「切了语言、隐私政策还是中文」是同一个病（见那边的长注释）。
+private val QUOTE_TYPES: List<Pair<String, Double>> get() = listOf(AppCtx.s(R.string.common_avatar) to 50.0, AppCtx.s(R.string.common_half_body) to 100.0, AppCtx.s(R.string.common_full_body) to 200.0, AppCtx.s(R.string.artist_fursuit_full) to 400.0)
 
 /**
  * 一条加价项 —— **画师自己定的**：叫什么、加多少、按比例还是固定金额。
@@ -327,7 +330,9 @@ data class QuoteExtra(val name: String, val kind: Int, val value: Double) {
 }
 
 /** 没改过的时候用这三项（原来的写法，当出厂值留住） */
-val DEFAULT_QUOTE_EXTRAS = listOf(
+// ⚠️ 2026-10-05（3.5.37）同样改成 `get()`：这三项的名字也要按当前语言取，
+//    普通顶层 `val` 会被第一次访问时的语言钉死（同 PrivacyScreen 那个病）。
+val DEFAULT_QUOTE_EXTRAS: List<QuoteExtra> get() = listOf(
     QuoteExtra(AppCtx.s(R.string.artist_surcharge_rush), 0, 30.0),
     QuoteExtra(AppCtx.s(R.string.artist_surcharge_commercial), 0, 50.0),
     QuoteExtra(AppCtx.s(R.string.artist_surcharge_background), 0, 20.0),
