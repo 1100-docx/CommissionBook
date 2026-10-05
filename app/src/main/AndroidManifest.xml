@@ -5,6 +5,15 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- 2026-10-05 加：截止日提醒要**准点**响（20:00）。
+         `setAndAllowWhileIdle` 是「不精确闹钟」，系统给的窗口是 **±1 小时**
+         （模拟器实测 dumpsys alarm 里写着 window=+1h0m0s0ms）——
+         也就是说 20:00 的提醒可能 20:50 才到，这不叫提醒。
+         USE_EXACT_ALARM 是给「闹钟 / 日历」这类 App 用的特殊权限，**安装即授予、用户不能撤**，
+         也不需要弹窗；代码里还会用 canScheduleExactAlarms() 兜一道，拿不到就退回不精确的。
+         （不上架 Google Play 所以不受它那条政策约束；真上了架要另说。） -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
     <!-- 2026-10-03 加：检查更新。
          ⚠️ 这个 App 在这之前是**没有 INTERNET 权限**的，隐私政策里那句
             「系统层面就没有联网能力」就是靠这个立的旗子。加了它，政策也得改口

@@ -203,6 +203,16 @@ class Prefs(context: Context) {
         get() = sp.getString("appLanguage", "") ?: ""
         set(v) = sp.edit().putString("appLanguage", v).apply()
 
+    /**
+     * 「通知权限问过了没有」——2026-10-05 加。
+     *
+     * 只用来做一件事：**自动问一次，问过就不再自动问**（用户拒了也别反复弹，
+     * 之后就归他自己在设置里拨开关）。
+     */
+    var notifAsked: Boolean
+        get() = sp.getBoolean("notifAsked", false)
+        set(v) = sp.edit().putBoolean("notifAsked", v).apply()
+
     companion object {
         /**
          * 在 `Activity.attachBaseContext` 里读语言用。

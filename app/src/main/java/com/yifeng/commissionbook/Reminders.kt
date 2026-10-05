@@ -53,9 +53,17 @@ object Reminders {
                 val at = triggerAt(deadline, d)
                 if (at > now) {
                     android.util.Log.i("CommissionBook", AppCtx.s(R.string.notify_set_alarm, c.title, d, java.util.Date(at)))
-                    // 安卓 6+ 用 setAndAllowWhileIdle：省电模式下也能响，
-                    // 代价是系统可能挪动几分钟 —— 提醒这种事不需要精确到分
-                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending(context, c, d))
+                    // ⚠️ 2026-10-05 改：以前只调 setAndAllowWhileIdle（不精确），
+                    //    系统给的窗口是 ±1 小时 —— 20:00 的提醒可能 20:50 才到。
+                    //    现在优先用精确闹钟（配合 USE_EXACT_ALARM，见 AndroidManifest）；
+                    //    真拿不到权限（canScheduleExactAlarms() == false）就退回老办法，
+                    //    宁可晚一点，也不能崩。
+                    val exact = Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms()
+                    if (exact) {
+                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending(context, c, d))
+                    } else {
+                        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending(context, c, d))
+                    }
                 } else {
                     android.util.Log.i("CommissionBook", AppCtx.s(R.string.notify_skip_past, c.title, d, java.util.Date(at)))
                 }
