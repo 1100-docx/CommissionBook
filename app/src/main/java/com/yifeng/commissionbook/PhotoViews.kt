@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -348,9 +351,21 @@ fun PhotoViewer(
     if (editing) {
         AlertDialog(
             onDismissRequest = { editing = false },
+            // ⚠️ `decorFitsSystemWindows = false`：这个对话框也是个**独立窗口**，
+            //    默认它自己 fit 系统栏 —— 结果窗口里读到的键盘（IME）insets 是 0，
+            //    `.imePadding()` 就成了空操作：键盘弹起来盖住对话框，底下那颗「保存」够不着。
+            //    关掉 fit，insets 才如实报进来。（看大图那个 Dialog 同一天栽过同一个坑。）
+            properties = DialogProperties(decorFitsSystemWindows = false),
             title = { Text(AppCtx.s(R.string.photos_note_title)) },
             text = {
-                Column {
+                Column(
+                    Modifier
+                        // 逸风 2026-10-05：「Android 版……让这个界面可以滚动」。
+                        // 显式加一层滚动 —— 小屏 / 大字号 / 键盘顶上来时都能翻到底，
+                        // 别指望 M3 自带那层。
+                        .verticalScroll(rememberScrollState())
+                        .imePadding(),
+                ) {
                     OutlinedTextField(
                         value = draft,
                         onValueChange = { draft = it },

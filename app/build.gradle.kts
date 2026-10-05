@@ -12,8 +12,8 @@ android {
         applicationId = "com.yifeng.commissionbook"
         minSdk = 26
         targetSdk = 36
-        versionCode = 39
-        versionName = "3.5.15"
+        versionCode = 40
+        versionName = "3.5.16"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
