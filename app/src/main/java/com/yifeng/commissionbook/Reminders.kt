@@ -34,6 +34,22 @@ object Reminders {
     private val DAYS_BEFORE = intArrayOf(3, 1)
     private const val HOUR = 20
 
+    /**
+     * 建通知渠道（安卓 8+ 必须有）。
+     *
+     * ⚠️ 渠道名是**本地化字符串**，所以 AppCtx 必须先初始化好 ——
+     *    闹钟把进程冷启动的那条路上，靠的是 `App`（Application）里的 init，
+     *    见 App.kt 的注释。2026-10-05 就是这里踩的：那会儿没人 init，
+     *    渠道名成了空串，系统 createNotificationChannel 直接抛异常、进程崩。
+     */
+    fun ensureChannel(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+        )
+    }
+
     /** 把所有闹钟重排一遍（每次数据一变、App 一启动都调它，最简单可靠） */
     fun reschedule(context: Context, items: List<Commission>, enabled: Boolean) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -102,15 +118,8 @@ class ReminderReceiver : BroadcastReceiver() {
         val days = intent.getIntExtra("days", 0)
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            nm.createNotificationChannel(
-                NotificationChannel(
-                    Reminders.CHANNEL_ID,
-                    Reminders.CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_DEFAULT,
-                )
-            )
-        }
+        // 渠道的建立抽到 Reminders.ensureChannel（「测试提醒」按钮走同一条路，见那边注释）
+        Reminders.ensureChannel(context)
 
         val tap = PendingIntent.getActivity(
             context,

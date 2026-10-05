@@ -524,4 +524,6 @@
     <string name="sponsor_privacy">這個碼只是一張圖片。打開這一頁不會連網、不會上傳任何東西，App 也不知道誰掃過。</string>
     <string name="privacy_support_title">七、自願支持</string>
     <string name="privacy_support_body">App 內「支持作者」那一頁顯示的收款碼是靜態圖片，僅供自願支持使用。本 App 沒有任何內購或付費功能，不取得、不儲存、也不上傳任何付款資訊；支持與否、支持多少，都不影響你能用到的功能。</string>
+
+
 </resources>

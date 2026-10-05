@@ -525,4 +525,6 @@
     <string name="sponsor_privacy">呢個碼淨係一張圖。打開呢一頁唔會聯網、唔會上傳任何嘢，App 亦都唔知邊個掃過。</string>
     <string name="privacy_support_title">七、自願支持</string>
     <string name="privacy_support_body">App 入面「支持作者」嗰頁顯示嘅收款碼係靜態圖片，淨係用嚟自願支持。本 App 冇任何內購或者付費功能，唔會攞、唔會存、唔會上傳任何付款資料；支唔支持、支持幾多，都唔影響你用得到嘅功能。</string>
+
+
 </resources>

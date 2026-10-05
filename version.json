@@ -1,8 +1,8 @@
 {
-  "versionCode": 48,
-  "versionName": "3.5.24",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.24.apk",
+  "versionCode": 50,
+  "versionName": "3.5.26",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.26.apk",
   "size": 2149876,
-  "sha256": "38144c24a8ce4d3f9c5d3470afec68e75b7148f7ea11cd862ac2924ee501cff1",
+  "sha256": "b27680d17de4101b17f043067d170115bfb47afe7303ffdba2f4228aae6beec3",
   "notes": "· 修了两个「提醒根本不响」的毛病 —— 一个是首次打开没问你要通知权限，系统默认拒绝、通知被悄悄丢掉；另一个是 App 没在后台时闹钟响，进程会崩\n· 现在首次打开（或升级后第一次打开）会问一次「允许通知吗」—— 请点允许，不然提醒收不到\n· 到期提醒的通知不再写画师名和稿件标题了 —— 只说「您有一单约稿即将到期」，下面写「还有 3 天到期」或「明天到期」\n· 手机上锁屏弹出的时候，旁边的人瞄一眼也看不出是什么单子、是谁的单子\n· 想不起是哪一单？点一下通知就进 App，里面还是原来的样子"
 }

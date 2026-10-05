@@ -530,4 +530,6 @@ System: Android %4$s (API %5$s)
     <string name="sponsor_privacy">This code is just a picture. Opening this page does not go online and uploads nothing. The app has no idea who scanned it.</string>
     <string name="privacy_support_title">7. Voluntary Support</string>
     <string name="privacy_support_body">The payment code shown on the Support the author page is a static image, provided for voluntary support only. This app has no in-app purchases and no paid features, and it never collects, stores or uploads any payment information. Whether you support, or how much, makes no difference to the features you can use.</string>
+
+
 </resources>
