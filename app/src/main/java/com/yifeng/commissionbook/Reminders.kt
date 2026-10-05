@@ -7,7 +7,10 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import java.util.Calendar
 
@@ -90,6 +93,39 @@ object Reminders {
                 }
             }
         }
+    }
+
+    /**
+     * 请求「**允许后台运行**」（把本 App 加进电池优化白名单）。
+     *
+     * 2026-10-05 晚加（3.5.35），逸风要求的。为什么要这一下：
+     *   国产 ROM（他那台 OPPO 就是）会在后台把 App 冻住，闹钟到点了也不执行 ——
+     *   表现就是「**只有打开 App 那一刻才弹通知**」。加进白名单之后系统就不压它了。
+     *
+     * ⚠️ 跟「允许自启动」的区别（别混）：
+     *   - 「允许后台运行」= 电池优化白名单 ✅ **有标准 API**，系统弹自己的框，一键授权 → 做这个
+     *   - 「允许自启动」  = 各家 ROM 各写各的 ❌ 安卓没有标准 API，只能弹说明让人自己翻 → 不做
+     *
+     * 已在白名单里就不打扰；用户拒绝也不纠缠（不拦住开关）。
+     */
+    fun requestRunInBackground(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
+        if (pm.isIgnoringBatteryOptimizations(context.packageName)) return   // 已经允许过了
+        runCatching {
+            context.startActivity(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    .setData(Uri.fromParts("package", context.packageName, null))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+    }
+
+    /** 现在允许后台运行了吗（设置页要显示状态可以用） */
+    fun canRunInBackground(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+        val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return true
+        return pm.isIgnoringBatteryOptimizations(context.packageName)
     }
 
     /**

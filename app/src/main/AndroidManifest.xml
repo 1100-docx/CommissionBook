@@ -35,6 +35,12 @@
          系统会拦一道「允许安装未知应用」，拒绝就是装不了（App 也做不了手脚）。 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- 2026-10-05 晚加（安卓 3.5.35）：请求「允许后台运行」（= 加进电池优化白名单）。
+         ‼️ 这是**能一键授权**的那条 —— 系统弹它自己的框，点一下就好。
+            「允许自启动」做不到一键（各家 ROM 各写各的，安卓没有标准 API），那个不做。
+         不上架 Google Play，不受它的政策限制。 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <application
         android:name=".App"
         android:allowBackup="true"

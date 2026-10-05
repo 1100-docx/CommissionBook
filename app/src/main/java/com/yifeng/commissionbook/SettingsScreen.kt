@@ -320,7 +320,18 @@ fun SettingsScreen(
                                     reminderOn = v
                                     prefs.reminderEnabled = v
                                     Reminders.reschedule(context, state.items, v)
-                                    if (v) askNotif()
+                                    if (v) {
+                                        // ① 先问通知权限（系统弹窗）
+                                        askNotif()
+                                        // ② 2026-10-05 晚加（3.5.35）：隔 0.9 秒再请一次
+                                        //    「允许后台运行」—— 两个系统框前后脚出现，叠一起会看不清。
+                                        //    这一下是**能一键授权**的那个（加进电池优化白名单），
+                                        //    国产 ROM 的省电策略就不再压着闹钟，提醒才能自己准点响。
+                                        //    「允许自启动」没做：安卓没有标准 API，各家的页面都不一样。
+                                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                            Reminders.requestRunInBackground(context)
+                                        }, 900)
+                                    }
                                 })
                             },
                         )

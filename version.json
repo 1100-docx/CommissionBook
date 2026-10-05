@@ -1,8 +1,8 @@
 {
-  "versionCode": 58,
-  "versionName": "3.5.34",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.34.apk",
-  "size": 2150572,
-  "sha256": "74edcdb69a24c5773efd5dee922c2a9add0d18d800e9d06aba34ad13398eb88e",
-  "notes": "· 去掉了「打开提醒时弹的那段权限说明」—— 那个框不要了\n· 提醒仍然是默认关闭的，想用的人自己去 设置 → 提醒 打开\n· 数据一条没动"
+  "versionCode": 59,
+  "versionName": "3.5.35",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.35.apk",
+  "size": 2150608,
+  "sha256": "1f91690da79b970fe07202d15aac9298b53c73397a077b51ef012cf7d29d5609",
+  "notes": "· 打开「截止日提醒」开关时，会请你允许「后台运行」—— 允许之后，到点的提醒才不会被系统的省电策略压住\n· 这一条针对的就是「只有打开 App 才弹通知」那个毛病\n· 提醒仍是默认关闭，想用的自己去 设置 → 提醒 打开\n· 数据一条没动"
 }
