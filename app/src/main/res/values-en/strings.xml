@@ -429,6 +429,9 @@ System: Android %4$s (API %5$s)
     <string name="help_how_to_use_desc_2">Two lines each: what it does and where to find it</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
+    <!-- Easter egg (2026-10-06, 3.5.38): Settings → About → tap "Version" seven times -->
+    <string name="easter_title">You Really Are Bored</string>
+    <string name="easter_body">So you really are that bored.</string>
     <string name="settings_version_android">%1$s (Android)</string>
     <string name="settings_offline_note">No data collected · online only for update checks (works offline)</string>
     <string name="settings_feedback_desc">Anything awkward or any feature you want — tell us</string>

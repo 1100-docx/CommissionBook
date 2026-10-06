@@ -420,6 +420,9 @@
     <string name="help_how_to_use_desc_2">每條兩句話：幹啥用、從哪兒點進去</string>
     <string name="settings_about">關於</string>
     <string name="settings_version">版本</string>
+    <!-- 彩蛋（2026-10-06 加，3.5.38） -->
+    <string name="easter_title">你真係好得閒</string>
+    <string name="easter_body">睇嚟你真係好得閒喎</string>
     <string name="settings_version_android">%1$s（安卓版）</string>
     <string name="settings_offline_note">不收集任何信息 · 僅「檢查更新」時聯網（離線可看）</string>
     <string name="settings_feedback_desc">哪兒彆扭、想要啥功能，都能説</string>

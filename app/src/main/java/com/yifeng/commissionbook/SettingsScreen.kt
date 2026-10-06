@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -57,7 +58,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -104,6 +107,13 @@ fun SettingsScreen(
     // null = 不显示那个框
     var updateStatus by remember { mutableStateOf<UpdateStatus?>(null) }
     val updateScope = rememberCoroutineScope()
+
+    // 彩蛋（2026-10-06 加）：版本号连点了多少下、要不要弹那张小单子。
+    // 为什么是七下：安卓查「开发者选项」就是连点版本号七下 —— 借这个老规矩当暗门，
+    // 界面上不加任何提示，愿意乱点的人自己会发现。
+    var versionTaps by remember { mutableIntStateOf(0) }
+    var showEgg by remember { mutableStateOf(false) }
+    val eggHaptic = LocalHapticFeedback.current
 
     // 版本号从安装包里读，不写死 —— 免得包升了、设置页还写着旧号
     // （iOS 版那边栽过一次：两个人对着两份包争论到底装没装上）
@@ -515,6 +525,16 @@ fun SettingsScreen(
                             title = AppCtx.s(R.string.settings_version),
                             icon = Icons.Outlined.Info,
                             trailing = { InfoValue(AppCtx.s(R.string.settings_version_android, versionName)) },
+                            // 彩蛋入口：连点七下（2026-10-06 加）。
+                            // 每下都轻轻震一次，不然「点着没反应」很容易被当成卡了。
+                            onClick = {
+                                lightTick(eggHaptic)
+                                versionTaps += 1
+                                if (versionTaps >= 7) {
+                                    versionTaps = 0
+                                    showEgg = true
+                                }
+                            },
                         )
                         // 首次启动已经强制读过一遍，这里留个入口随时能翻回来
                         GroupRow(
@@ -591,6 +611,12 @@ fun SettingsScreen(
                             }
                         },
                     )
+                }
+
+                // 彩蛋（2026-10-06 加）：连点七下版本号弹的小单子。
+                // 跟上面那些框一个规矩：挂在最下面，别挤乱设置项的缩进。
+                if (showEgg) {
+                    EasterEggSheet(onDismiss = { showEgg = false })
                 }
 
                 // 提醒时间选择器（2026-10-05 加，3.5.36）
@@ -784,6 +810,55 @@ private fun ReminderTimeDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * 彩蛋（2026-10-06 加，3.5.38）。
+ *
+ * 逸风 2026-10-06 原话：「还是弹一个 Sheet，标题是你真的很闲，内容居中，是"看来你真的很闲了"」——
+ * 文案就这两句，别自作聪明往里加东西。
+ *
+ * ⚠️ 触发方式：设置 → 关于 →「版本」那行**连点七下**（见上面 GroupRow 的 onClick）。
+ *    为什么是七下：安卓查「开发者选项」就是连点版本号七下，借这个老规矩当暗门。
+ * ⚠️ 文案走词条（easter_title / easter_body），4 个语言包都补了 ——
+ *    绝不在代码里写死中文：切语言时那两行会当场露馅（3.5.37 修的就是这一类毛病）。
+ * ⚠️ 高度交给自己撑（只有两行字），别给死高 —— 英文那句比中文长，给死了会被裁。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EasterEggSheet(onDismiss: () -> Unit) {
+    val haptic = LocalHapticFeedback.current
+    ModalBottomSheet(
+        onDismissRequest = {
+            lightTick(haptic)
+            onDismiss()
+        },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 44.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                AppCtx.s(R.string.easter_title),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(30.dp))
+            Text(
+                AppCtx.s(R.string.easter_body),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

@@ -420,6 +420,9 @@
     <string name="help_how_to_use_desc_2">每条两句话：干啥用、从哪儿点进去</string>
     <string name="settings_about">关于</string>
     <string name="settings_version">版本</string>
+    <!-- 彩蛋（2026-10-06 加，3.5.38）：设置 → 关于 →「版本」连点七下 -->
+    <string name="easter_title">你真的很闲</string>
+    <string name="easter_body">看来你真的很闲了</string>
     <string name="settings_version_android">%1$s（安卓版）</string>
     <string name="settings_offline_note">不收集任何信息 · 仅「检查更新」时联网（离线可看）</string>
     <string name="settings_feedback_desc">哪儿别扭、想要啥功能，都能说</string>
