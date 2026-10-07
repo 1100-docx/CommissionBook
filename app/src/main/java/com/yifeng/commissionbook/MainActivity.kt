@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
+import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -77,6 +79,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
+import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -340,6 +343,52 @@ class MainActivity : FragmentActivity() {
         super.onStop()
         // 切后台 = 重新上锁；只是去选个文件的就不锁，免得回来又弹一次
         if (!expectingFileResult && prefs.lockEnabled) locked.value = true
+    }
+
+    // ---------- 全局触感（2026-10-07 加）----------
+
+    /** 这一根手指按下时的位置 */
+    private var touchDownX = 0f
+    private var touchDownY = 0f
+
+    /** 这一根手指动过没有（动过 = 滑动，不算点击） */
+    private var touchMoved = false
+
+    /** 系统的滑动判定阈值 */
+    private val touchSlop: Int by lazy { ViewConfiguration.get(this).scaledTouchSlop }
+
+    /**
+     * 全局触感 —— 跟 iOS 那只「装在窗口上的耳朵」对齐（iOS 侧见 Haptics.swift）。
+     *
+     * 逸风原话：「Android 版本不是全局震动，建议改成跟 iOS 一样的」。
+     * iOS 是给**窗口**挂一个 UITapGestureRecognizer，所以窗口底下的一切都震
+     * （sheet、弹窗、盖在最上面的锁屏页）。这边走 Activity 的触摸分发，
+     * 效果一样：整个窗口里每一次**点击**都算。
+     *
+     * ⚠️ 三条讲究，别简化：
+     *  ① **抬手（ACTION_UP）才震，不是按下去就震。** iOS 那条路是"手势被识别"才回调，
+     *     而 UITapGestureRecognizer 要等抬手才认。按下就震的话，手指划着列表走一路
+     *     会震一路 —— 那不是点击反馈，是骚扰。
+     *  ② **动了就不算点击**：超过系统 touchSlop 当滑动处理，不震。跟 ① 同一个道理。
+     *  ③ Compose 的 Dialog / ModalBottomSheet 活在**另一个 window** 里，
+     *     走不到这儿 —— 它们由各自的 lightTick() 兜着。两边可能同时触发，
+     *     所以 [Haptics.tick] 里有 60ms 去重，撞一起也只震一声。
+     */
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                touchDownX = ev.rawX
+                touchDownY = ev.rawY
+                touchMoved = false
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (abs(ev.rawX - touchDownX) > touchSlop || abs(ev.rawY - touchDownY) > touchSlop) {
+                    touchMoved = true
+                }
+            }
+            MotionEvent.ACTION_UP -> if (!touchMoved) Haptics.tick()
+        }
+        return super.dispatchTouchEvent(ev)
     }
 
     private fun unlock() {

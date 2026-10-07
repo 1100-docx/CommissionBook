@@ -82,6 +82,9 @@ object Haptics {
         }
     }.getOrNull()
 
+    /** 上一次震的时刻。用来吃掉「全局那只耳朵 + 按钮自己那次」撞在一起的重复。 */
+    private var lastTickAt = 0L
+
     /**
      * 震一下。
      *
@@ -92,6 +95,14 @@ object Haptics {
      *    触感这种东西**再怎么样也不能把界面搞崩**，震不动就算了。
      */
     fun tick(): Boolean = runCatching {
+        // ⚠️ 60ms 内重复调用直接当成功返回、不再震（2026-10-07 加）。
+        //    起因：全局触感（MainActivity.dispatchTouchEvent）和按钮自己的
+        //    lightTick() 会**同时**落在同一根手指上，只差几毫秒 ——
+        //    不去重的话按一下震两声，比不震更难受。
+        val now = android.os.SystemClock.uptimeMillis()
+        if (now - lastTickAt < 60L) return true
+        lastTickAt = now
+
         val v = vibrator() ?: return false
         if (!v.hasVibrator()) return false
 
