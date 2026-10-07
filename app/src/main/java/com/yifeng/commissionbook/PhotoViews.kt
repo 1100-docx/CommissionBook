@@ -39,6 +39,7 @@ import androidx.compose.material.icons.outlined.ImageNotSupported
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -241,21 +242,50 @@ fun PhotoViewer(
         val screenH = LocalConfiguration.current.screenHeightDp.dp
         Column(Modifier.fillMaxWidth().height(screenH * 0.86f)) {
 
-            // 顶上只留页码，居中一行。
-            // ⚠️ 2026-10-07 逸风：「把 Android 版的叉号去掉吧，毕竟有小托柄了」——
-            //    对着呢：ModalBottomSheet 顶上那把**系统托柄**本身就是标准出口
-            //    （往下拖 = 关掉，点旁边黑边也关），再挂一颗 ✕ 是同一件事做两遍。
-            //    （iOS 那边没有托柄，左上角那颗 ✕ 还得留着。）
-            Box(
-                Modifier.fillMaxWidth().padding(vertical = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
+            // 顶上：页码居中、分享在最右。
+            // ⚠️ 2026-10-07 定稿：本来左上角还有颗 ✕，逸风最后一句「把 Android 版的叉号去掉吧，
+            //    毕竟有小托柄了」—— 对着呢，系统托柄（往下拖）+ 点旁边黑边就是标准出口。
+            //    右边这颗分享**必须留**：「水印一开，发出去的就是带水印那张」，
+            //    这是水印唯一的出口，删了水印就白做了。
+            val ctx = LocalContext.current
+            Box(Modifier.fillMaxWidth()) {
                 if (items.size > 1) {
                     Text(
                         "${pager.currentPage + 1} / ${items.size}",
                         color = Color.White.copy(alpha = 0.85f),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
+                        modifier = Modifier.align(Alignment.Center).padding(vertical = 12.dp),
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        val photo = items[pager.currentPage]
+                        // ⚠️ 分享要用**大图**：屏幕上那张是 2200 的缩略图，
+                        //    发出去得重新取一张（上限 4096），再往上烧水印。
+                        val full = Photos.thumbnail(pathFor(photo.name), 4096)
+                        if (full == null) {
+                            toastNow(ctx, AppCtx.s(R.string.photos_missing))
+                        } else {
+                            val out = watermark?.let { Watermark.stamp(full, it) } ?: full
+                            val name = photo.name.substringBeforeLast('.') + ".png"
+                            val intent = sharePng(ctx, out, name)
+                            if (intent == null) {
+                                toastNow(ctx, AppCtx.s(R.string.common_share_failed_2))
+                            } else {
+                                ctx.startActivity(
+                                    Intent.createChooser(intent, AppCtx.s(R.string.wm_share_photo))
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = 2.dp),
+                ) {
+                    Icon(
+                        Icons.Outlined.Share,
+                        contentDescription = AppCtx.s(R.string.wm_share_photo),
+                        tint = Color.White,
                     )
                 }
             }
