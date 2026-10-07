@@ -89,6 +89,7 @@
     <string name="stats_next_year">Next Year ›</string>
     <string name="stats_image_failed">Failed to generate image — send me the details</string>
     <string name="stats_share_card">Share This Report</string>
+    <string name="stats_share_card_text">Share as Text</string>
     <string name="stats_save_or_share_hint">Save to your gallery or send it to a friend · Generated on your phone, never uploaded</string>
     <string name="ledger_title">Commission Ledger</string>
     <string name="stats_year_report_title">%1$s Annual Report</string>
@@ -479,6 +480,8 @@ System: Android %4$s (API %5$s)
     <string name="settings_update_check_desc">You are on version %1$s</string>
     <string name="settings_update_auto">Check automatically on launch</string>
     <string name="settings_update_auto_desc">Reads only a version number at launch, uploads nothing</string>
+    <string name="settings_update_locked_short">Not available on this device</string>
+    <string name="settings_update_locked">To keep everything running smoothly, updates are not available on this device.</string>
     <string name="settings_update_checking">Checking…</string>
     <string name="settings_update_latest">You are up to date (%1$s)</string>
     <string name="settings_update_failed">Cannot reach the network, try again later.</string>

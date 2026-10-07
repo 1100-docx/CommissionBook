@@ -534,6 +534,14 @@ fun GroupRow(
      * 所以规矩定成：**短标题跟控件同一行（跟上面「模式」那行一个规矩），长说明另起一行通铺**。
      */
     stackSubtitle: Boolean = false,
+    /**
+     * 「灰掉但还能点」的那种行（2026-10-07 加，老机兼容版用）。
+     *
+     * ⚠️ 跟 Material 的 `enabled = false` **不是一回事**：那个是彻底不响应点击，
+     *    而这儿要的是「看着是灰的、点下去有反应（弹个说明）」（逸风的要求）。
+     *    所以光把颜色压暗，`onClick` 照旧挂着 —— 视觉上像禁用，行为上还能解释一句。
+     */
+    dimmed: Boolean = false,
     trailing: @Composable () -> Unit = {},
     onClick: (() -> Unit)? = null,
 ) {
@@ -569,21 +577,31 @@ fun GroupRow(
                     Modifier
                         .size(30.dp)
                         .clip(RoundedCornerShape(9.dp))
-                        .background(cs.primary.copy(alpha = 0.13f)),
+                        .background(if (dimmed) cs.onSurface.copy(alpha = 0.06f) else cs.primary.copy(alpha = 0.13f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(icon, contentDescription = null, tint = cs.primary, modifier = Modifier.size(17.dp))
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = if (dimmed) cs.onSurfaceVariant.copy(alpha = 0.55f) else cs.primary,
+                        modifier = Modifier.size(17.dp),
+                    )
                 }
                 Spacer(Modifier.width(12.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = cs.onSurface)
+                Text(
+                    title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (dimmed) cs.onSurface.copy(alpha = 0.38f) else cs.onSurface,
+                )
                 if (subtitle != null && !stackSubtitle) {
                     Text(
                         subtitle,
                         fontSize = 12.sp,
                         lineHeight = 17.sp,
-                        color = cs.onSurfaceVariant,
+                        color = if (dimmed) cs.onSurfaceVariant.copy(alpha = 0.38f) else cs.onSurfaceVariant,
                         modifier = Modifier.padding(top = 3.dp),
                     )
                 }

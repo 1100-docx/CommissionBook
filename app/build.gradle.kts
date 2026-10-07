@@ -33,6 +33,27 @@ android {
                 "proguard-rules.pro",
             )
             signingConfig = signingConfigs.getByName("debug")
+            // 通用版：所有兼容开关都关着
+            buildConfigField("boolean", "LEGACY_COMPAT", "false")
+        }
+
+        // ⚠️ 老机兼容版（2026-10-07 加）——**只给特定用户**的单独一份包。
+        //
+        //    起因：一位用户的华为 nova 3（鸿蒙 2.0 / 麒麟 970）打开「年度报告」会闪退。
+        //    逸风的决定是「通用版别动，专门给她做一版」——所以这儿不是「降级版」，
+        //    而是**同一份代码、另一套开关**，产物跟她手机上的旧版是同一个包名，
+        //    装上去是覆盖升级（数据一定在）。
+        //
+        //    这一版比通用版多的两样：
+        //      ① 更新功能整块锁死（灰掉 + 弹窗说明）—— 免得她升回通用版又崩；
+        //      ② 年度报告那张卡不再「一进页面就录图」（见 Extras.kt）。
+        //
+        //    ⚠️ 跟 release 走同一套 R8 + 同一个签名，只有 BuildConfig.LEGACY_COMPAT 是 true。
+        //    ⚠️ `assembleRelease` 不受影响 —— 通用版的打包流程一行没改。
+        create("compat") {
+            initWith(getByName("release"))
+            versionNameSuffix = "-compat"
+            buildConfigField("boolean", "LEGACY_COMPAT", "true")
         }
     }
 

@@ -107,6 +107,8 @@ fun SettingsScreen(
     // 检查更新（2026-10-03 加，**只有安卓版有**）
     var autoUpdate by remember { mutableStateOf(prefs.updateAutoCheck) }
     // 「分享备份」前的隐私提醒（2026-10-05 加，逸风要的）
+    // 老机兼容版：点了灰掉的「更新」那两行 → 弹这句说明（2026-10-07 加）
+    var showUpdateLocked by remember { mutableStateOf(false) }
     var askShare by remember { mutableStateOf(false) }
     // null = 不显示那个框
     var updateStatus by remember { mutableStateOf<UpdateStatus?>(null) }
@@ -533,26 +535,56 @@ fun SettingsScreen(
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_update_section))
                     InsetGroup {
-                        GroupRow(
-                            title = AppCtx.s(R.string.settings_update_check),
-                            subtitle = AppCtx.s(R.string.settings_update_check_desc, versionName),
-                            icon = Icons.Outlined.SystemUpdate,
-                            onClick = {
-                                updateScope.launch { doCheck(context, prefs) { updateStatus = it } }
-                            },
-                        )
-                        GroupRow(
-                            title = AppCtx.s(R.string.settings_update_auto),
-                            subtitle = AppCtx.s(R.string.settings_update_auto_desc),
-                            icon = Icons.Outlined.Autorenew,
-                            divider = false,
-                            trailing = {
-                                Switch(checked = autoUpdate, onCheckedChange = { v ->
-                                    autoUpdate = v
-                                    prefs.updateAutoCheck = v
-                                })
-                            },
-                        )
+                        // ⚠️ 老机兼容版（2026-10-07 加）：这一整块**锁死**。
+                        //
+                        //    为什么：这台华为老机（nova 3 / 鸿蒙 2.0）上新版跑不好，
+                        //    专门给它做了这份兼容版。要是她还能「检查更新」升回通用版，
+                        //    前面这趟适配就白做了 —— 所以两行都压成灰的。
+                        //
+                        //    ⚠️ 灰归灰，**onClick 还挂着**：逸风要的是「点了弹窗说一句」，
+                        //       不是彻底点不动（那是 Material 的 `enabled = false`，会一声不吭）。
+                        //    ⚠️ 那个 `Switch(onCheckedChange = null)` 是**故意的**：
+                        //       Material 的 Switch 在 onCheckedChange 传 null 时不挂 toggleable，
+                        //       于是点它判不到「开关」上、会冒泡给整行 → 正好走弹窗那条路。
+                        if (BuildConfig.LEGACY_COMPAT) {
+                            GroupRow(
+                                title = AppCtx.s(R.string.settings_update_check),
+                                subtitle = AppCtx.s(R.string.settings_update_locked_short),
+                                icon = Icons.Outlined.SystemUpdate,
+                                dimmed = true,
+                                onClick = { showUpdateLocked = true },
+                            )
+                            GroupRow(
+                                title = AppCtx.s(R.string.settings_update_auto),
+                                subtitle = AppCtx.s(R.string.settings_update_locked_short),
+                                icon = Icons.Outlined.Autorenew,
+                                divider = false,
+                                dimmed = true,
+                                trailing = { Switch(checked = false, onCheckedChange = null) },
+                                onClick = { showUpdateLocked = true },
+                            )
+                        } else {
+                            GroupRow(
+                                title = AppCtx.s(R.string.settings_update_check),
+                                subtitle = AppCtx.s(R.string.settings_update_check_desc, versionName),
+                                icon = Icons.Outlined.SystemUpdate,
+                                onClick = {
+                                    updateScope.launch { doCheck(context, prefs) { updateStatus = it } }
+                                },
+                            )
+                            GroupRow(
+                                title = AppCtx.s(R.string.settings_update_auto),
+                                subtitle = AppCtx.s(R.string.settings_update_auto_desc),
+                                icon = Icons.Outlined.Autorenew,
+                                divider = false,
+                                trailing = {
+                                    Switch(checked = autoUpdate, onCheckedChange = { v ->
+                                        autoUpdate = v
+                                        prefs.updateAutoCheck = v
+                                    })
+                                },
+                            )
+                        }
                     }
                 }
 
@@ -647,6 +679,27 @@ fun SettingsScreen(
                         dismissButton = {
                             TextButton(onClick = { askShare = false }) {
                                 Text(AppCtx.s(R.string.common_cancel))
+                            }
+                        },
+                    )
+                }
+
+                // 老机兼容版点了灰掉的「更新」→ 说明一句（2026-10-07 加）。
+                // 文案是逸风定的：「为保障您的使用体验，更新功能无法对您开放」。
+                if (showUpdateLocked) {
+                    AlertDialog(
+                        onDismissRequest = { showUpdateLocked = false },
+                        title = { Text(AppCtx.s(R.string.settings_update_check)) },
+                        text = {
+                            Text(
+                                AppCtx.s(R.string.settings_update_locked),
+                                fontSize = 13.5.sp,
+                                lineHeight = 20.sp,
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showUpdateLocked = false }) {
+                                Text(AppCtx.s(R.string.update_ok))
                             }
                         },
                     )

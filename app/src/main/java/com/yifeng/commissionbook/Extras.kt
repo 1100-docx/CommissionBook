@@ -859,6 +859,8 @@ fun YearReportScreen(
     mode: AppMode,
     onBack: () -> Unit,
     onSharePng: (android.graphics.Bitmap) -> Unit,
+    /** 老机兼容版专用：把报告当**纯文字**发出去（见下面 `BuildConfig.LEGACY_COMPAT`） */
+    onShareText: (String) -> Unit,
     onCopied: (String) -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
@@ -869,7 +871,13 @@ fun YearReportScreen(
     val report = remember(items, year) { buildYearReport(items, year) }
 
     // 把这张卡「拍」成图片：Compose 1.7 的 GraphicsLayer
-    val gl = rememberGraphicsLayer()
+    //
+    // ⚠️ 老机兼容版（2026-10-07）**连创建都不创建**：
+    //    那位用户的华为 nova 3（鸿蒙 2.0 / 麒麟 970）一进这一页就闪退，
+    //    而这一页独有的、最可疑的东西就是它（GraphicsLayer 底下是 RenderNode，
+    //    在老华为那套魔改图形栈上最容易翻车）。兼容版改成发纯文字，彻底不碰。
+    //    `BuildConfig.LEGACY_COMPAT` 是编译期常量，这个分支一辈子不会变，写法是稳的。
+    val gl = if (BuildConfig.LEGACY_COMPAT) null else rememberGraphicsLayer()
 
     androidx.activity.compose.BackHandler { onBack() }
 
@@ -914,11 +922,11 @@ fun YearReportScreen(
                     }) { Text(AppCtx.s(R.string.stats_next_year), fontSize = 13.sp) }
                 }
 
-                // 这张就是要发出去的图
+                // 这张就是要发出去的图（兼容版不录，见上面 `gl` 那段注释）
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .captureTo(gl),
+                        .then(if (gl != null) Modifier.captureTo(gl) else Modifier),
                 ) {
                     ReportCard(report, mode)
                 }
@@ -927,18 +935,30 @@ fun YearReportScreen(
                 Button(
                     onClick = {
                         lightTick(haptic)
-                        scope.launch {
-                            runCatching {
-                                val bmp = gl.toImageBitmap().asAndroidBitmap()
-                                onSharePng(bmp)
-                            }.onFailure { onCopied(AppCtx.s(R.string.stats_image_failed)) }
+                        if (BuildConfig.LEGACY_COMPAT) {
+                            // 兼容版：发文字。一个字都不画，所以不可能在这里闪退。
+                            onShareText(reportText(report, mode))
+                        } else {
+                            scope.launch {
+                                runCatching {
+                                    val bmp = gl!!.toImageBitmap().asAndroidBitmap()
+                                    onSharePng(bmp)
+                                }.onFailure { onCopied(AppCtx.s(R.string.stats_image_failed)) }
+                            }
                         }
                     },
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = cs.primary),
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                 ) {
-                    Text(AppCtx.s(R.string.stats_share_card), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        AppCtx.s(
+                            if (BuildConfig.LEGACY_COMPAT) R.string.stats_share_card_text
+                            else R.string.stats_share_card
+                        ),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -1036,6 +1056,44 @@ private fun ReportLine(label: String, value: String) {
         Text(value, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
     }
 }
+
+/**
+ * 老机兼容版专用：把年度报告拼成一段纯文字。
+ * **不碰任何绘图 / 位图 API**，所以在老华为那种图形栈上也不会出岔子。
+ * 词条全部复用界面上已有的那几条，不新增翻译。
+ */
+fun reportText(r: YearReport, mode: AppMode): String = buildString {
+    appendLine(AppCtx.s(R.string.stats_year_report_title, r.year))
+    appendLine()
+    appendLine(
+        AppCtx.s(if (mode == AppMode.ARTIST) R.string.stats_earnings_this_year else R.string.stats_spent_this_year)
+            + " " + money(r.total)
+    )
+    appendLine(AppCtx.s(R.string.stats_summary_line, r.count, r.delivered, money(r.avg)))
+    appendLine(
+        AppCtx.s(R.string.stats_top_collaborator) + "：" +
+            (r.topPartner?.let { AppCtx.s(R.string.stats_collaborator_orders, it.first, it.second) } ?: "—")
+    )
+    appendLine(
+        AppCtx.s(R.string.stats_largest_order) + "：" +
+            (r.biggest?.let { "${it.artist.ifBlank { AppCtx.s(R.string.script_unnamed) }} ${money(it.total)}" } ?: "—")
+    )
+    appendLine(
+        AppCtx.s(R.string.stats_busiest_month) + "：" +
+            (r.busiest?.let { AppCtx.s(R.string.stats_month_amount, it.first + 1, money(it.second)) } ?: "—")
+    )
+    appendLine(Terms.unpaid(mode) + "：" + money(r.unpaid))
+    appendLine()
+    append(AppCtx.s(R.string.common_author))
+}
+
+/** 发一段纯文字（走系统分享面板）。跟 [sharePng] 一个路子，只是不带文件、不要任何权限。 */
+fun shareText(context: Context, text: String): Intent? = runCatching {
+    Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+}.getOrNull()
 
 /** 一句话提示（复制完、生成失败这类） */
 fun toastNow(context: Context, msg: String) {

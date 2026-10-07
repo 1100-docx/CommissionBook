@@ -85,6 +85,7 @@
     <string name="stats_next_year">下一年 ›</string>
     <string name="stats_image_failed">生成图片失败，反馈给我看看</string>
     <string name="stats_share_card">分享这张报告</string>
+    <string name="stats_share_card_text">分享报告文字</string>
     <string name="stats_save_or_share_hint">存进相册或直接发给朋友都行 · 图片在手机上生成，不上传</string>
     <string name="ledger_title">约稿账本</string>
     <string name="stats_year_report_title">%1$s 年度报告</string>
@@ -471,6 +472,8 @@
     <string name="settings_update_check_desc">当前版本 %1$s</string>
     <string name="settings_update_auto">启动时自动检查更新</string>
     <string name="settings_update_auto_desc">只在启动时读一个版本号，不上传任何数据</string>
+    <string name="settings_update_locked_short">此设备暂不开放</string>
+    <string name="settings_update_locked">为保障您的使用体验，更新功能无法对您开放</string>
     <string name="settings_update_checking">正在检查…</string>
     <string name="settings_update_latest">已是最新版本（%1$s）</string>
     <string name="settings_update_failed">连不上网络，等会儿再试。</string>

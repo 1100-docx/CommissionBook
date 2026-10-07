@@ -297,6 +297,15 @@ class MainActivity : FragmentActivity() {
                                     startActivity(Intent.createChooser(intent, AppCtx.s(R.string.stats_share_annual_report)))
                                 }
                             },
+                            // 老机兼容版那条路：发纯文字（兼容版里 gl 是 null，走不到上面图片那条）
+                            onShareText = { text ->
+                                val intent = shareText(this, text)
+                                if (intent == null) {
+                                    toast(AppCtx.s(R.string.common_share_failed))
+                                } else {
+                                    startActivity(Intent.createChooser(intent, AppCtx.s(R.string.stats_share_annual_report)))
+                                }
+                            },
                             onCopied = { msg -> toast(msg) },
                         )
                     }
@@ -341,6 +350,8 @@ class MainActivity : FragmentActivity() {
             var startupUpdate by remember { mutableStateOf<UpdateStatus?>(null) }
             LaunchedEffect(agreed.value, locked.value) {
                 if (!agreed.value || locked.value) return@LaunchedEffect
+                // 老机兼容版：更新的活儿一概不干（连静默检查都不发，那是一次网络请求）
+                if (BuildConfig.LEGACY_COMPAT) return@LaunchedEffect
                 if (!prefs.updateAutoCheck) return@LaunchedEffect
                 if (System.currentTimeMillis() - prefs.lastUpdateCheckAt < 12L * 60 * 60 * 1000) {
                     return@LaunchedEffect
@@ -455,6 +466,8 @@ private fun RootScreen(
     onImport: () -> Unit,
     onShare: (String, String) -> Unit,
     onSharePng: (android.graphics.Bitmap) -> Unit,
+    /** 老机兼容版：年度报告发纯文字那条路（见 YearReportScreen） */
+    onShareText: (String) -> Unit,
     onCopied: (String) -> Unit,
 ) {
     val tabs = Tab.entries
@@ -553,6 +566,7 @@ private fun RootScreen(
                 mode = state.appMode,
                 onBack = { showReport = false },
                 onSharePng = onSharePng,
+                onShareText = onShareText,
                 onCopied = onCopied,
             )
         }
