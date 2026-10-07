@@ -4,5 +4,5 @@
   "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.39.apk",
   "size": 2239024,
   "sha256": "2aae8b8e68f2a17eda66cebea5c05ad8636c7f6aa45afe6138a45aa773001297",
-  "notes": "· 加了震动反馈：点按钮、切开关、点进度都会轻轻震一下\n· 之前安卓这边其实是「哑」的（系统那条触感通道被 ROM 掐了），现在改成自己直接震，震得动了\n· 震动强度可选：轻 / 中 / 重 —— 设置 → 外观 →「震动强度」\n· 不想震也行：设置里有「震动」总开关，关掉就完全静音\n· 数据一条没动"
+  "notes": "· 加上震动了：以前点了没反应的地方，现在会震一下\n· 震动强度可以在设置里调：轻 / 中 / 重\n· 之前有些机型（比如 OPPO）怎么都不震 —— 这个 bug 修了\n· 数据一条没动"
 }
