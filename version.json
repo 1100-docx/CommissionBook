@@ -4,5 +4,5 @@
   "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.39.apk",
   "size": 2239024,
   "sha256": "2aae8b8e68f2a17eda66cebea5c05ad8636c7f6aa45afe6138a45aa773001297",
-  "notes": "· 加上震动了：以前点了没反应的地方，现在会震一下\n· 震动强度可以在设置里调：轻 / 中 / 重\n· 之前有些机型（比如 OPPO）怎么都不震 —— 这个 bug 修了\n· 数据一条没动"
+  "notes": "· 安卓版加上触感震动：设置 → 触感（轻 / 中 / 重 三档，也可以关掉）\n· 以前点按钮在你手机上是不震的 —— 现在能震了，而且跟系统的「触感反馈」开关无关\n· 上一版的小彩蛋还在：设置 → 关于 →「版本」连点七下\n· 数据一条没动"
 }
