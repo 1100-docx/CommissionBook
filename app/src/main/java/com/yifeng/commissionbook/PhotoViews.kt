@@ -62,7 +62,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
@@ -249,7 +248,11 @@ fun PhotoViewer(
         val screenH = LocalConfiguration.current.screenHeightDp.dp
         Column(Modifier.fillMaxWidth().height(screenH * 0.86f)) {
 
-            // 顶栏：✕ 在左、页码居中、✓ 在右（跟 iOS 那边一颗一颗对上）
+            // 顶栏：左上角一颗 ✕、页码居中。
+            // ⚠️ 2026-10-07：本来左右各一颗（✕ 在左、✓ 在右），逸风问「作用一样吗，一样就删掉一个」——
+            //    确实都是 close，所以只留左边这颗 ✕。
+            //    右边那个 `Spacer(size = 48.dp)` 是**占位**，跟左边那颗 IconButton 对称，页码才真居中；
+            //    想换成只留右边那颗对号：把 ✕ 那颗删了、占位挪到左边、图标换 `Icons.Outlined.Check`。
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -271,13 +274,7 @@ fun PhotoViewer(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick = close) {
-                    Icon(
-                        Icons.Outlined.Check,
-                        contentDescription = AppCtx.s(R.string.common_done),
-                        tint = Color.White,
-                    )
-                }
+                Spacer(Modifier.size(48.dp))
             }
 
             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
