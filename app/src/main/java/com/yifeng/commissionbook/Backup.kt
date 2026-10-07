@@ -67,10 +67,44 @@ object Backup {
     }
 
     /** 写进用户选的那个位置（SAF 给的 uri） */
-    fun writeTo(context: Context, uri: Uri, text: String): Boolean = runCatching {
-        context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray()) }
-        true
-    }.getOrDefault(false)
+    fun writeTo(context: Context, uri: Uri, text: String): Boolean =
+        writeBytes(context, uri, text.toByteArray()) != null
+
+    /**
+     * 往用户选的那个位置写字节。**返回盘上真实的字节数**（写不成给 null）。
+     *
+     * ⚠️ 2026-10-07 大改，起因：逸风连着两次反馈「安卓导出的 Excel 是空的」。
+     *    老写法是「`openOutputStream` 没抛异常就算成功」，这里头藏着两个坑：
+     *    ① 有的系统文件管理器（ColorOS 那个就中招）`openOutputStream` 会**返回 null** ——
+     *       老写法的 `?.use {}` 于是**一个字节都没写**，可它照样 `return true`、
+     *       提示「已保存」，盘上留下的却是个 **0 字节的空文件**。用户看到的就是「表是空的」。
+     *    ② `"wt"`（截断写）不是每个 provider 都认，认不了会直接抛异常 → 整个失败。
+     *    现在：写不进去就**明说失败**；"wt" 不成退到 "w"；
+     *    写完还把同一份文件**读回来数一遍字节**，长度/内容对不上也算失败。
+     *    这样「提示已保存」这句话才真的可信 —— 也才有字节数可报。
+     */
+    fun writeBytes(context: Context, uri: Uri, bytes: ByteArray): Int? {
+        var ok = false
+        runCatching {
+            val out = context.contentResolver.openOutputStream(uri, "wt")
+                ?: context.contentResolver.openOutputStream(uri, "w")
+            if (out != null) {
+                out.use {
+                    it.write(bytes)
+                    it.flush()
+                }
+                ok = true
+            }
+        }
+        if (!ok) return null
+
+        // 写完之后**照着用户点开的那个文件**读回来核对（同一个 URI）
+        val back = runCatching {
+            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+        }.getOrNull() ?: return null
+
+        return if (back.size == bytes.size && back.contentEquals(bytes)) back.size else null
+    }
 
     /** 读用户选的那个文件 */
     fun readFrom(context: Context, uri: Uri): String? = runCatching {
@@ -88,6 +122,23 @@ object Backup {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         Intent(Intent.ACTION_SEND).apply {
             type = "application/json"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, name)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }.getOrNull()
+
+    /**
+     * 「发出去」的字节版 —— 导出报表写不进用户选的位置时兜底用。
+     * 跟 [share] 一样：先落一份到 cache，再用 FileProvider 给出去。
+     */
+    fun shareBytes(context: Context, name: String, bytes: ByteArray, mime: String): Intent? = runCatching {
+        val dir = File(context.cacheDir, "share").apply { mkdirs() }
+        val file = File(dir, name)
+        file.writeBytes(bytes)
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        Intent(Intent.ACTION_SEND).apply {
+            type = mime
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_SUBJECT, name)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

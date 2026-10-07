@@ -83,6 +83,9 @@ import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/** Excel 报表的 MIME 类型（系统那个「存到哪」的界面靠它认扩展名） */
+private const val MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
 class MainActivity : FragmentActivity() {
 
     private lateinit var state: AppState
@@ -102,17 +105,26 @@ class MainActivity : FragmentActivity() {
     /** 选完文件回来的那一下不该再验一次锁 */
     private var expectingFileResult = false
 
-    /** 「另存为」按下时，先把要写的文本放这儿，等用户选完位置再写 */
-    private var pendingText = ""
-
+    /**
+     * 导出 JSON 备份。
+     *
+     * ⚠️ 内容要在**回调里现算**（2026-10-07 改，原因见下面 createXlsx 那段长注释）：
+     *    老写法是先把文字存进一个字段，中间 App 一旦被系统回收重建，字段就没了 ——
+     *    回调照样跑、手里却是空的 → 盘上留下一个 0 字节的「备份」。
+     */
     private val createDoc = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri: Uri? ->
         expectingFileResult = false
-        if (uri != null) {
-            val ok = Backup.writeTo(this, uri, pendingText)
-            toast(if (ok) AppCtx.s(R.string.common_saved) else AppCtx.s(R.string.common_save_failed))
-        }
+        if (uri == null) return@registerForActivityResult
+        val n = Backup.writeBytes(this, uri, state.toJsonString().toByteArray())
+        toast(
+            if (n != null) {
+                AppCtx.s(R.string.common_saved)
+            } else {
+                AppCtx.s(R.string.common_save_failed)
+            }
+        )
     }
 
     /**
@@ -120,25 +132,37 @@ class MainActivity : FragmentActivity() {
      *
      * ⚠️ 走系统这个「存到哪」的界面（SAF），所以**不用任何存储权限** ——
      *    跟导出 JSON 备份是同一条路。
-     * ⚠️ 字节先攒在 [pendingXlsx] 里：那个界面回来才知道用户选了哪个位置，
-     *    中间这段时间得有人拿着数据。
+     *
+     * ⚠️ **字节必须在这个回调里现算，不能提前攒进字段**（2026-10-07 修，
+     *    逸风两次反馈「安卓导出的 Excel 是空的」，根子就在这儿）：
+     *    按下导出 → 系统弹「存到哪」，这中间 App 退到后台，**进程可能被系统回收**；
+     *    回来时 Activity 重建、这个回调照样触发，可事先攒好的 ByteArray 已经随旧实例没了
+     *    → 老代码在那儿直接 `return`，而**系统那边早就把文件建好了**，
+     *    于是盘上留下一个 **0 字节的空表**，连个失败提示都没有 —— 看着就是「表是空的」。
+     *    现在改成「现场取数据 → 现拼字节 → 写 → 读回来核对长度」，一步都不依赖旧实例的状态。
      */
-    private var pendingXlsx: ByteArray? = null
-
     private val createXlsx = registerForActivityResult(
-        ActivityResultContracts.CreateDocument(
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        ActivityResultContracts.CreateDocument(MIME_XLSX)
     ) { uri: Uri? ->
         expectingFileResult = false
-        val bytes = pendingXlsx
-        pendingXlsx = null
-        if (uri == null || bytes == null) return@registerForActivityResult
-        val ok = runCatching {
-            contentResolver.openOutputStream(uri, "wt")?.use { it.write(bytes) }
-            true
-        }.getOrDefault(false)
-        toast(if (ok) AppCtx.s(R.string.common_saved) else AppCtx.s(R.string.common_save_failed))
+        if (uri == null) return@registerForActivityResult
+
+        val bytes = Report.buildXlsx(state.modeItems)
+        val n = Backup.writeBytes(this, uri, bytes)
+        if (n != null) {
+            // 报一下**盘上真实的字节数**：以后再遇见「是不是空的」这种疑问，看这一句就知道
+            toast(AppCtx.s(R.string.report_saved_size, n / 1024))
+        } else {
+            // 那个位置写不进去（provider 给了个空流 / 不让写）—— 别让他白导一趟：
+            // 落到 cache 再走系统分享面板，至少文件能拿到手。
+            val intent = Backup.shareBytes(this, Report.fileName(), bytes, MIME_XLSX)
+            if (intent == null) {
+                toast(AppCtx.s(R.string.common_save_failed))
+            } else {
+                toast(AppCtx.s(R.string.report_write_fallback))
+                startActivity(Intent.createChooser(intent, AppCtx.s(R.string.report_entry)))
+            }
+        }
     }
 
     private val openDoc = registerForActivityResult(
@@ -284,8 +308,9 @@ class MainActivity : FragmentActivity() {
                             pager = pager,
                             showHelp = showHelp,
                             onShowHelp = { showHelp = it },
-                            onExport = { text ->
-                                pendingText = text
+                            onExport = { _ ->
+                                // ⚠️ 内容不在这儿拼了（2026-10-07 改）：存到哪是系统弹窗问的，
+                                //    回来的时候 App 可能已被回收重建 —— 见 createDoc 的注释。
                                 expectingFileResult = true
                                 createDoc.launch(Backup.fileName(manual = true))
                             },
@@ -298,7 +323,8 @@ class MainActivity : FragmentActivity() {
                                 if (reportItems.isEmpty()) {
                                     toast(AppCtx.s(R.string.report_empty_hint))
                                 } else {
-                                    pendingXlsx = Report.buildXlsx(reportItems)
+                                    // ⚠️ 这儿**不预先拼字节**（2026-10-07 改，见 createXlsx 的注释）：
+                                    //    等回调回来时现场拼，才不会因为 App 被回收而丢掉内容。
                                     expectingFileResult = true
                                     createXlsx.launch(Report.fileName())
                                 }

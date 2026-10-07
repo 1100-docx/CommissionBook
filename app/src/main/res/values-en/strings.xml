@@ -571,6 +571,8 @@ System: Android %4$s (API %5$s)
     <!-- 当前这本一条都没有时的提示（2026-10-07 加）：只导当前模式那一本，
          空的那本导出来只有表头，用户会以为功能坏了 —— 干脆先说一句。 -->
     <string name="report_empty_hint">This ledger is empty — switch to the mode that has entries</string>
+    <string name="report_saved_size">Saved · %1$d KB</string>
+    <string name="report_write_fallback">Couldn\'t write there — sharing the file instead</string>
     <string name="common_yes">Yes</string>
     <string name="common_no">No</string>
 </resources>
