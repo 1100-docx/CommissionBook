@@ -30,8 +30,17 @@ object XlsxWriter {
         data class Text(val v: String) : Cell
         /** 数字（写成真数字） */
         data class Number(val v: Double) : Cell
-        /** 公式（比如 `SUM(D2:D9)`） */
-        data class Formula(val v: String) : Cell
+        /**
+         * 公式（比如 `SUM(D2:D9)`）。
+         *
+         * ⚠️ **`cached` 一定要给**（2026-10-07 逸风真机反馈后加的）。
+         *    不带的话：文件里只有一个公式、没有结果值，Excel 自己会算、
+         *    可**手机上那些看图/看表的预览器不算** —— 打开就是一片空白格子，
+         *    用户看到的是"合计没导出来"。
+         *    写上 `cached` 就等于"顺手把算好的结果也存一份"：
+         *    会算的地方（Excel/WPS）照旧按公式算，不会算的地方至少显示得出数字。
+         */
+        data class Formula(val v: String, val cached: Double? = null) : Cell
     }
 
     /**
@@ -110,8 +119,12 @@ object XlsxWriter {
                     is Cell.Number ->
                         append("<c r=\"$ref\"><v>${trimNumber(cell.v)}</v></c>")
 
-                    is Cell.Formula ->
-                        append("<c r=\"$ref\"><f>${escape(cell.v)}</f></c>")
+                    is Cell.Formula -> {
+                        append("<c r=\"$ref\"><f>${escape(cell.v)}</f>")
+                        // 顺手把算好的结果也存一份 —— 不算公式的预览器（手机上的看图/看表 App）靠它
+                        cell.cached?.let { append("<v>${trimNumber(it)}</v>") }
+                        append("</c>")
+                    }
                 }
             }
             append("</row>")
@@ -129,6 +142,9 @@ object XlsxWriter {
             "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"" +
             " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">" +
             "<sheets><sheet name=\"${escape(sheetName)}\" sheetId=\"1\" r:id=\"rId1\"/></sheets>" +
+            // ⚠️ 逼 Excel/WPS 打开时重算一遍：我们写的缓存值只是给"不会算的预览器"兜底，
+            //    真算过的地方还是让它按公式来 —— 用户在 Excel 里删几行，合计得跟着变。
+            "<calcPr calcId=\"0\" fullCalcOnLoad=\"1\"/>" +
             "</workbook>"
 
     private const val CONTENT_TYPES =

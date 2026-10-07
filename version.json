@@ -1,8 +1,8 @@
 {
-  "versionCode": 68,
-  "versionName": "3.6.2",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.6.2.apk",
+  "versionCode": 70,
+  "versionName": "3.6.5",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.6.5.apk",
   "size": 2242784,
-  "sha256": "8d6f36671de3b337a68181d171a8f0ff50cb87c1746ae9e87acd954f297be03c",
-  "notes": "· 新功能：导出 Excel 报表（设置 → 备份与恢复 → 导出 Excel 报表）\n· 导出一份 .xlsx，表里有画师、内容、总价、已付、未付、状态、日期、备注\n· 底下自动带四行合计（总价 / 已付 / 未付 / 条数），用 Excel 打开能自己算\n· 备注和内容里的特殊字符都处理过了，不会把表格撑坏\n· 顺便：本机不装 Excel 也能看，WPS、手机上的表格 App 都打得开\n· 数据一条没动"
+  "sha256": "e6902d1501602246be039323896374a457f570ecbe7b36d2205f4b4ff995a127",
+  "notes": "· 修一个报表的 bug：合计那三行（总价合计 / 已付合计 / 未付合计）在手机上打开是空的\n· 现在会直接把算好的数字显示出来，不用等 Excel 去算\n· 那三行在 Excel / WPS 里依然是**活的公式**，你删掉几行它会自己跟着变\n· 顺带：报表现在用 Excel、WPS、手机自带的表格预览都能正常打开\n· 数据一条没动"
 }

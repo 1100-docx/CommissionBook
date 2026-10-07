@@ -78,6 +78,13 @@ object Report {
         val last = items.size + 1
         fun sumCol(ref: String) = if (items.isEmpty()) "0" else "SUM($ref$first:$ref$last)"
 
+        // ⚠️ 合计要**同时**给"公式"和"算好的数"——
+        //    只给公式的话，手机上那些不算公式的预览器打开就是一片空白
+        //    （2026-10-07 逸风真机反馈："总价合计那三格是空的"）。见 Cell.Formula 的注释。
+        val sumTotal = items.sumOf { it.total }
+        val sumPaid = items.sumOf { it.deposit }
+        val sumUnpaid = items.sumOf { it.unpaid }
+
         rows.add(
             listOf(
                 XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_count)),
@@ -87,19 +94,19 @@ object Report {
         rows.add(
             listOf(
                 XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_total)),
-                XlsxWriter.Cell.Formula(sumCol("D")),
+                XlsxWriter.Cell.Formula(sumCol("D"), sumTotal),
             )
         )
         rows.add(
             listOf(
                 XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_paid)),
-                XlsxWriter.Cell.Formula(sumCol("E")),
+                XlsxWriter.Cell.Formula(sumCol("E"), sumPaid),
             )
         )
         rows.add(
             listOf(
                 XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_unpaid)),
-                XlsxWriter.Cell.Formula(sumCol("F")),
+                XlsxWriter.Cell.Formula(sumCol("F"), sumUnpaid),
             )
         )
 
