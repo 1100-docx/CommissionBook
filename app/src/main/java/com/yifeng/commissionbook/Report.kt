@@ -34,7 +34,36 @@ object Report {
     fun buildXlsx(items: List<Commission>): ByteArray {
         val rows = ArrayList<List<XlsxWriter.Cell>>()
 
-        // ① 表头
+        // 合计要**同时**给"公式"和"算好的数"——
+        // 只给公式的话，手机上那些不算公式的预览器打开就是一片空白
+        // （2026-10-07 逸风真机反馈："总价合计那三格是空的"）。见 Cell.Formula 的注释。
+        val sumTotal = items.sumOf { it.total }
+        val sumPaid = items.sumOf { it.deposit }
+        val sumUnpaid = items.sumOf { it.unpaid }
+
+        // ⚠️ 数据从第 **3** 行开始（第 1 行合计、第 2 行表头），公式的行号要跟着走。
+        val firstDataRow = 3
+        val lastDataRow = items.size + 2
+        fun sumCol(ref: String) =
+            if (items.isEmpty()) "0" else "SUM($ref$firstDataRow:$ref$lastDataRow)"
+
+        // ① 合计行：**横排一行、放在表头上面**（2026-10-07 逸风要求挪上去）。
+        //    四组「名字 + 数字」挨着排，数字正好落在它对应的那一列下面 ——
+        //    总价合计的数落在 D（总价）列，看着才顺。
+        rows.add(
+            listOf(
+                XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_count)),
+                XlsxWriter.Cell.Number(items.size.toDouble()),
+                XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_total)),
+                XlsxWriter.Cell.Formula(sumCol("D"), sumTotal),
+                XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_paid)),
+                XlsxWriter.Cell.Formula(sumCol("E"), sumPaid),
+                XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_unpaid)),
+                XlsxWriter.Cell.Formula(sumCol("F"), sumUnpaid),
+            )
+        )
+
+        // ② 表头
         rows.add(
             listOf(
                 AppCtx.s(R.string.report_col_index),
@@ -51,7 +80,7 @@ object Report {
             ).map { XlsxWriter.Cell.Text(it) }
         )
 
-        // ② 数据
+        // ③ 数据
         val dayFmt = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA)
         items.forEachIndexed { i, c ->
             rows.add(
@@ -70,45 +99,6 @@ object Report {
                 )
             )
         }
-
-        // ③ 空一行 + 合计四行。
-        //    合计用**公式**算，不写死数字 —— 这样用户在 Excel 里删掉几行，合计会自己跟着变。
-        rows.add(emptyList())
-        val first = 2
-        val last = items.size + 1
-        fun sumCol(ref: String) = if (items.isEmpty()) "0" else "SUM($ref$first:$ref$last)"
-
-        // ⚠️ 合计要**同时**给"公式"和"算好的数"——
-        //    只给公式的话，手机上那些不算公式的预览器打开就是一片空白
-        //    （2026-10-07 逸风真机反馈："总价合计那三格是空的"）。见 Cell.Formula 的注释。
-        val sumTotal = items.sumOf { it.total }
-        val sumPaid = items.sumOf { it.deposit }
-        val sumUnpaid = items.sumOf { it.unpaid }
-
-        rows.add(
-            listOf(
-                XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_count)),
-                XlsxWriter.Cell.Number(items.size.toDouble()),
-            )
-        )
-        rows.add(
-            listOf(
-                XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_total)),
-                XlsxWriter.Cell.Formula(sumCol("D"), sumTotal),
-            )
-        )
-        rows.add(
-            listOf(
-                XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_paid)),
-                XlsxWriter.Cell.Formula(sumCol("E"), sumPaid),
-            )
-        )
-        rows.add(
-            listOf(
-                XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_unpaid)),
-                XlsxWriter.Cell.Formula(sumCol("F"), sumUnpaid),
-            )
-        )
 
         return XlsxWriter.build(AppCtx.s(R.string.report_sheet_name), rows)
     }

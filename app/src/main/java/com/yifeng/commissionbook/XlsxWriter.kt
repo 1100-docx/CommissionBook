@@ -90,6 +90,13 @@ object XlsxWriter {
     private fun sheetXml(rows: List<List<Cell>>): String = buildString {
         append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>")
         append("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">")
+        // ⚠️ `<dimension>` 一定要给（2026-10-07 加）：它写着"这张表用到了哪一块"。
+        //    手机上的预览器（那种不带公式引擎的看图/看表 App）会**照它**决定画多大一片网格 ——
+        //    少了这一句，有的预览器干脆当空表，一个格子都不显示。
+        //    位置有讲究：必须在 `<cols>` **前面**（schema 里 dimension 排第一）。
+        val maxCols = rows.maxOfOrNull { it.size } ?: 0
+        val dim = if (maxCols == 0 || rows.isEmpty()) "A1" else "A1:${colName(maxCols - 1)}${rows.size}"
+        append("<dimension ref=\"$dim\"/>")
         // 列宽：内容/备注宽一点，金额那几列窄一点，打开就有个能看的样子
         append("<cols>")
         append("<col min=\"1\" max=\"1\" width=\"6\"/>")

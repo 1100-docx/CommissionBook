@@ -290,9 +290,18 @@ class MainActivity : FragmentActivity() {
                                 createDoc.launch(Backup.fileName(manual = true))
                             },
                             onExportReport = {
-                                pendingXlsx = Report.buildXlsx(state.modeItems)
-                                expectingFileResult = true
-                                createXlsx.launch(Report.fileName())
+                                // ⚠️ 这本一条都没有就别导（2026-10-07 加，逸风真机反馈后）：
+                                //    报表只导**当前模式那一本**，另一个模式的记录不会混进来。
+                                //    当前这本是空的，导出来就是一张只有表头的空表 ——
+                                //    用户看了只会以为「功能坏了」。先说一句，别让他白导。
+                                val reportItems = state.modeItems
+                                if (reportItems.isEmpty()) {
+                                    toast(AppCtx.s(R.string.report_empty_hint))
+                                } else {
+                                    pendingXlsx = Report.buildXlsx(reportItems)
+                                    expectingFileResult = true
+                                    createXlsx.launch(Report.fileName())
+                                }
                             },
                             onImport = {
                                 expectingFileResult = true
