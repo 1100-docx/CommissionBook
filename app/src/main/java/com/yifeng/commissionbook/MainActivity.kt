@@ -83,9 +83,6 @@ import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** Excel 报表的 MIME 类型（系统那个「存到哪」的界面靠它认扩展名） */
-private const val MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
 class MainActivity : FragmentActivity() {
 
     private lateinit var state: AppState
@@ -127,43 +124,9 @@ class MainActivity : FragmentActivity() {
         )
     }
 
-    /**
-     * 导出 Excel 报表（2026-10-07 加）。
-     *
-     * ⚠️ 走系统这个「存到哪」的界面（SAF），所以**不用任何存储权限** ——
-     *    跟导出 JSON 备份是同一条路。
-     *
-     * ⚠️ **字节必须在这个回调里现算，不能提前攒进字段**（2026-10-07 修，
-     *    逸风两次反馈「安卓导出的 Excel 是空的」，根子就在这儿）：
-     *    按下导出 → 系统弹「存到哪」，这中间 App 退到后台，**进程可能被系统回收**；
-     *    回来时 Activity 重建、这个回调照样触发，可事先攒好的 ByteArray 已经随旧实例没了
-     *    → 老代码在那儿直接 `return`，而**系统那边早就把文件建好了**，
-     *    于是盘上留下一个 **0 字节的空表**，连个失败提示都没有 —— 看着就是「表是空的」。
-     *    现在改成「现场取数据 → 现拼字节 → 写 → 读回来核对长度」，一步都不依赖旧实例的状态。
-     */
-    private val createXlsx = registerForActivityResult(
-        ActivityResultContracts.CreateDocument(MIME_XLSX)
-    ) { uri: Uri? ->
-        expectingFileResult = false
-        if (uri == null) return@registerForActivityResult
-
-        val bytes = Report.buildXlsx(state.modeItems)
-        val n = Backup.writeBytes(this, uri, bytes)
-        if (n != null) {
-            // 报一下**盘上真实的字节数**：以后再遇见「是不是空的」这种疑问，看这一句就知道
-            toast(AppCtx.s(R.string.report_saved_size, n / 1024))
-        } else {
-            // 那个位置写不进去（provider 给了个空流 / 不让写）—— 别让他白导一趟：
-            // 落到 cache 再走系统分享面板，至少文件能拿到手。
-            val intent = Backup.shareBytes(this, Report.fileName(), bytes, MIME_XLSX)
-            if (intent == null) {
-                toast(AppCtx.s(R.string.common_save_failed))
-            } else {
-                toast(AppCtx.s(R.string.report_write_fallback))
-                startActivity(Intent.createChooser(intent, AppCtx.s(R.string.report_entry)))
-            }
-        }
-    }
+    // 导出 Excel 报表（2026-10-07 加）→ **2026-10-07 当天就撤了**：
+    // 逸风原话「算了，撤掉这个功能，双端」。原来那套 createXlsx / Report / XlsxWriter
+    // 已经删掉（在 git 历史里），捡回来的清单见 tools/已撤掉-导出Excel报表-2026-10-07.md。
 
     private val openDoc = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -314,21 +277,8 @@ class MainActivity : FragmentActivity() {
                                 expectingFileResult = true
                                 createDoc.launch(Backup.fileName(manual = true))
                             },
-                            onExportReport = {
-                                // ⚠️ 这本一条都没有就别导（2026-10-07 加，逸风真机反馈后）：
-                                //    报表只导**当前模式那一本**，另一个模式的记录不会混进来。
-                                //    当前这本是空的，导出来就是一张只有表头的空表 ——
-                                //    用户看了只会以为「功能坏了」。先说一句，别让他白导。
-                                val reportItems = state.modeItems
-                                if (reportItems.isEmpty()) {
-                                    toast(AppCtx.s(R.string.report_empty_hint))
-                                } else {
-                                    // ⚠️ 这儿**不预先拼字节**（2026-10-07 改，见 createXlsx 的注释）：
-                                    //    等回调回来时现场拼，才不会因为 App 被回收而丢掉内容。
-                                    expectingFileResult = true
-                                    createXlsx.launch(Report.fileName())
-                                }
-                            },
+                            // onExportReport（导出 Excel 报表）2026-10-07 撤掉，见类顶部那行注释
+
                             onImport = {
                                 expectingFileResult = true
                                 openDoc.launch(arrayOf("application/json", "text/plain", "*/*"))
@@ -502,7 +452,6 @@ private fun RootScreen(
     showHelp: Boolean,
     onShowHelp: (Boolean) -> Unit,
     onExport: (String) -> Unit,
-    onExportReport: () -> Unit,
     onImport: () -> Unit,
     onShare: (String, String) -> Unit,
     onSharePng: (android.graphics.Bitmap) -> Unit,
@@ -559,7 +508,6 @@ private fun RootScreen(
                         state = state,
                         prefs = prefs,
                         onExport = onExport,
-                        onExportReport = onExportReport,
                         onImport = onImport,
                         onShare = onShare,
                         onOpenPrivacy = { showPrivacy = true },

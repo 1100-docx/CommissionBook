@@ -541,32 +541,7 @@
 
     <string name="haptic_off">關</string>
 
-    <!-- 导出 Excel 报表（2026-10-07 加，见 Report.kt） -->
-    <string name="report_entry">匯出 Excel 報表</string>
-    <string name="report_entry_desc">匯成 .xlsx，用 Excel / WPS / 試算表軟體開啟</string>
-    <string name="report_file_prefix">約稿帳本報表</string>
-    <string name="report_sheet_name">約稿帳本</string>
-    <string name="report_col_index">序號</string>
-    <string name="report_col_artist">畫師 / 客戶</string>
-    <string name="report_col_title">內容</string>
-    <string name="report_col_total">總價</string>
-    <string name="report_col_paid">已付</string>
-    <string name="report_col_unpaid">未付</string>
-    <string name="report_col_status">狀態</string>
-    <string name="report_col_date">下單日期</string>
-    <string name="report_col_deadline">截止日期</string>
-    <string name="report_col_archived">已封存</string>
-    <string name="report_col_note">備註</string>
-    <string name="report_sum_count">合計筆數</string>
-    <string name="report_sum_total">總價合計</string>
-    <string name="report_sum_paid">已付合計</string>
-    <string name="report_sum_unpaid">未付合計</string>
 
-    <!-- 当前这本一条都没有时的提示（2026-10-07 加）：只导当前模式那一本，
-         空的那本导出来只有表头，用户会以为功能坏了 —— 干脆先说一句。 -->
-    <string name="report_empty_hint">這本帳本一筆都沒有，先切到有紀錄的那個模式</string>
-    <string name="report_saved_size">已儲存 · %1$d KB</string>
-    <string name="report_write_fallback">這個位置寫不進去 —— 改成直接分享給你</string>
     <string name="common_yes">是</string>
     <string name="common_no">否</string>
 </resources>

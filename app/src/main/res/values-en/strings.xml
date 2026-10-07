@@ -547,32 +547,7 @@ System: Android %4$s (API %5$s)
 
     <string name="haptic_off">Off</string>
 
-    <!-- 导出 Excel 报表（2026-10-07 加，见 Report.kt） -->
-    <string name="report_entry">Export Excel Report</string>
-    <string name="report_entry_desc">Exports an .xlsx you can open in Excel, WPS or Numbers</string>
-    <string name="report_file_prefix">CommissionBook-Report</string>
-    <string name="report_sheet_name">CommissionBook</string>
-    <string name="report_col_index">No.</string>
-    <string name="report_col_artist">Artist / Client</string>
-    <string name="report_col_title">Details</string>
-    <string name="report_col_total">Total</string>
-    <string name="report_col_paid">Paid</string>
-    <string name="report_col_unpaid">Unpaid</string>
-    <string name="report_col_status">Status</string>
-    <string name="report_col_date">Order Date</string>
-    <string name="report_col_deadline">Due Date</string>
-    <string name="report_col_archived">Archived</string>
-    <string name="report_col_note">Notes</string>
-    <string name="report_sum_count">Entries</string>
-    <string name="report_sum_total">Total Amount</string>
-    <string name="report_sum_paid">Total Paid</string>
-    <string name="report_sum_unpaid">Total Unpaid</string>
 
-    <!-- 当前这本一条都没有时的提示（2026-10-07 加）：只导当前模式那一本，
-         空的那本导出来只有表头，用户会以为功能坏了 —— 干脆先说一句。 -->
-    <string name="report_empty_hint">This ledger is empty — switch to the mode that has entries</string>
-    <string name="report_saved_size">Saved · %1$d KB</string>
-    <string name="report_write_fallback">Couldn\'t write there — sharing the file instead</string>
     <string name="common_yes">Yes</string>
     <string name="common_no">No</string>
 </resources>

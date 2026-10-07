@@ -41,23 +41,34 @@ object Report {
         val sumPaid = items.sumOf { it.deposit }
         val sumUnpaid = items.sumOf { it.unpaid }
 
-        // ⚠️ 数据从第 **3** 行开始（第 1 行合计、第 2 行表头），公式的行号要跟着走。
-        val firstDataRow = 3
-        val lastDataRow = items.size + 2
+        // ⚠️ 数据从第 **6** 行开始（第 1–4 行合计、第 5 行表头），公式的行号要跟着走。
+        val firstDataRow = 6
+        val lastDataRow = items.size + 5
         fun sumCol(ref: String) =
             if (items.isEmpty()) "0" else "SUM($ref$firstDataRow:$ref$lastDataRow)"
 
-        // ① 合计行：**横排一行、放在表头上面**（2026-10-07 逸风要求挪上去）。
-        //    四组「名字 + 数字」挨着排，数字正好落在它对应的那一列下面 ——
-        //    总价合计的数落在 D（总价）列，看着才顺。
+        // ① 合计：**竖排四行**（名字在 A 列、数字在 B 列），整块放在**表头上面**。
+        //    2026-10-07 逸风拿截图定的版式 —— 数字落在 B 列，跟「画师 / 客户」那一列对齐。
         rows.add(
             listOf(
                 XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_count)),
                 XlsxWriter.Cell.Number(items.size.toDouble()),
+            )
+        )
+        rows.add(
+            listOf(
                 XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_total)),
                 XlsxWriter.Cell.Formula(sumCol("D"), sumTotal),
+            )
+        )
+        rows.add(
+            listOf(
                 XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_paid)),
                 XlsxWriter.Cell.Formula(sumCol("E"), sumPaid),
+            )
+        )
+        rows.add(
+            listOf(
                 XlsxWriter.Cell.Text(AppCtx.s(R.string.report_sum_unpaid)),
                 XlsxWriter.Cell.Formula(sumCol("F"), sumUnpaid),
             )

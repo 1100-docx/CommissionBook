@@ -75,10 +75,8 @@ fun SettingsScreen(
     state: AppState,
     prefs: Prefs,
     onExport: (String) -> Unit,
-    // 导出 Excel 报表（2026-10-07 加，见 Report.kt）：
-    //   不传文本、也不传字节 —— 报表内容由 Activity 那边现算现拿（它够得着 AppState）。
-    //   这里只负责「用户点了这一行」。
-    onExportReport: () -> Unit,
+    // 导出 Excel 报表（2026-10-07 加，**同日撤掉**）—— 原来这儿有个 onExportReport 回调，
+    // 撤功能时一起删了。捡回来的清单见 tools/已撤掉-导出Excel报表-2026-10-07.md。
     onImport: () -> Unit,
     onShare: (String, String) -> Unit,
     onOpenPrivacy: () -> Unit,
@@ -479,15 +477,7 @@ fun SettingsScreen(
                             // 2026-10-05 改：不再直接弹分享面板，先过一道隐私提醒
                             onClick = { askShare = true },
                         )
-                        // 导出 Excel 报表（2026-10-07 加）。
-                        // 摆在这儿：上面三条是「备份 / 分享备份 / 恢复备份」这一组，
-                        // 报表是**另一种用途**（不是备份，是拿去用/给别人看），所以紧跟着备份那几行、别混进去。
-                        GroupRow(
-                            title = AppCtx.s(R.string.report_entry),
-                            subtitle = AppCtx.s(R.string.report_entry_desc),
-                            icon = Icons.Outlined.TableChart,
-                            onClick = onExportReport,
-                        )
+                        // 导出 Excel 报表那一行 2026-10-07 撤掉了（逸风：「算了，撤掉这个功能，双端」）
                         GroupRow(
                             title = AppCtx.s(R.string.settings_restore_from_file),
                             subtitle = AppCtx.s(R.string.settings_restore_ios_note),
