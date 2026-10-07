@@ -325,68 +325,66 @@ fun PhotoViewer(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
 
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (items.size > 1) {
-                        Text(
-                            "${pager.currentPage + 1} / ${items.size}",
-                            color = Color.White.copy(alpha = 0.85f),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(50))
-                                .background(Color.White.copy(alpha = 0.14f))
-                                .padding(horizontal = 12.dp, vertical = 5.dp),
-                        )
-                    }
-
-                    // 分享这张图（2026-10-07 加）。
-                    // ⚠️ 水印一开，**发出去的就是带水印那张** —— 这才是水印的用处所在：
-                    //    不然图根本出不去，水印只能在这台手机上自己看。
-                    val ctx = LocalContext.current
-                    Row(
-                        Modifier
+                if (items.size > 1) {
+                    Text(
+                        "${pager.currentPage + 1} / ${items.size}",
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
                             .clip(RoundedCornerShape(50))
                             .background(Color.White.copy(alpha = 0.14f))
-                            .clickable {
-                                val photo = items[pager.currentPage]
-                                // ⚠️ 分享要用**大图**：屏幕上那张是 2200 的缩略图，
-                                //    发出去得重新取一张（上限 4096），再往上烧水印。
-                                val full = Photos.thumbnail(pathFor(photo.name), 4096)
-                                if (full == null) {
-                                    toastNow(ctx, AppCtx.s(R.string.photos_missing))
-                                } else {
-                                    val out = watermark?.let { Watermark.stamp(full, it) } ?: full
-                                    val name = photo.name.substringBeforeLast('.') + ".png"
-                                    val intent = sharePng(ctx, out, name)
-                                    if (intent == null) {
-                                        toastNow(ctx, AppCtx.s(R.string.common_share_failed_2))
-                                    } else {
-                                        ctx.startActivity(
-                                            Intent.createChooser(intent, AppCtx.s(R.string.wm_share_photo))
-                                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        )
-                                    }
-                                }
-                            }
-                            .padding(horizontal = 14.dp, vertical = 7.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Outlined.Share,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(15.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            AppCtx.s(R.string.wm_share_photo),
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-
+                            .padding(horizontal = 12.dp, vertical = 5.dp),
+                    )
                 }
+
+            }
+
+            // 分享这张图（2026-10-07 加，当天从底部挪到右上角）。
+            // ⚠️ 一开始它跟页码一起蹲在底部那一摞里，逸风真机报「又跟三大金刚键重合了」——
+            //    底部那块地方已经在「加说明」上栽过一次（见上面 navigationBars 那段），
+            //    别再往那儿塞东西。挪到顶上跟 ✕ 对面：上面只有状态栏，
+            //    跟 ✕ 一个写法（statusBars + 12dp + 36dp 圆），谁来都压不着。
+            // ⚠️ 水印一开，**发出去的就是带水印那张** —— 这才是水印的用处所在：
+            //    不然图根本出不去，水印只能在这台手机上自己看。
+            val ctx = LocalContext.current
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(12.dp)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.16f))
+                    .clickable {
+                        val photo = items[pager.currentPage]
+                        // ⚠️ 分享要用**大图**：屏幕上那张是 2200 的缩略图，
+                        //    发出去得重新取一张（上限 4096），再往上烧水印。
+                        val full = Photos.thumbnail(pathFor(photo.name), 4096)
+                        if (full == null) {
+                            toastNow(ctx, AppCtx.s(R.string.photos_missing))
+                        } else {
+                            val out = watermark?.let { Watermark.stamp(full, it) } ?: full
+                            val name = photo.name.substringBeforeLast('.') + ".png"
+                            val intent = sharePng(ctx, out, name)
+                            if (intent == null) {
+                                toastNow(ctx, AppCtx.s(R.string.common_share_failed_2))
+                            } else {
+                                ctx.startActivity(
+                                    Intent.createChooser(intent, AppCtx.s(R.string.wm_share_photo))
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            }
+                        }
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Outlined.Share,
+                    contentDescription = AppCtx.s(R.string.wm_share_photo),
+                    tint = Color.White,
+                    modifier = Modifier.size(19.dp),
+                )
             }
         }
     }
