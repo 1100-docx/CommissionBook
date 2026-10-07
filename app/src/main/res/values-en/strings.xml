@@ -281,6 +281,8 @@ System: Android %4$s (API %5$s)
     <string name="ledger_note_hint">Note (a quick line)</string>
     <string name="ledger_unlock_ledger">Unlock Ledger</string>
     <string name="ledger_unlock_biometric">Unlock with Fingerprint / Face / Passcode</string>
+    <string name="ledger_unlock_biometric_short">Verify it\'s you</string>
+    <string name="settings_lock_verify_reason">Verify to turn off Protection</string>
     <string name="common_saved">Saved ✓</string>
     <string name="common_save_failed">Save failed. Try another location.</string>
     <string name="common_backup_unreadable">Can\'t read this file. It may not be a backup from this app.</string>
@@ -419,8 +421,12 @@ System: Android %4$s (API %5$s)
     <string name="haptic_medium">Medium</string>
     <string name="haptic_heavy">Heavy</string>
     <string name="settings_security">Security</string>
-    <string name="settings_lock_desc">When on, you\'ll need fingerprint / face / passcode to open the app, and it re-locks when you return from the background.</string>
+    <string name="settings_lock_desc">When on, you\'ll need fingerprint / face / passcode to open the app, and it re-locks when you return from the background. You\'ll also have to verify before switching it off.</string>
     <string name="settings_no_passcode_2">This phone has no lock screen passcode yet — set one in Settings first</string>
+    <string name="settings_blur">Blur in the background</string>
+    <string name="settings_blur_desc">Hides the amounts on the background task card — and blocks screenshots too.</string>
+    <string name="settings_lock_verify_failed">Not verified — protection is still on</string>
+    <string name="settings_blur_path">Settings → Security → Blur in the background</string>
     <string name="settings_reminders">Reminders</string>
     <string name="settings_remind_before_due">Remind me before the due date</string>
     <string name="settings_notification_hint">The first time you open it, you\'ll be asked to allow notifications. If you don\'t get them, check your phone\'s "Settings → Apps → Commission Ledger → Notifications" to see if they\'re turned off.</string>

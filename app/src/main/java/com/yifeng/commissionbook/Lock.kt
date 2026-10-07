@@ -47,8 +47,20 @@ object BioLock {
         }
     }
 
-    /** 验一次；成功了叫 onOk，没成功/取消叫 onNo */
-    fun authenticate(activity: FragmentActivity, onOk: () -> Unit, onNo: (String) -> Unit) {
+    /**
+     * 验一次；成功了叫 onOk，没成功/取消叫 onNo。
+     *
+     * [reason] 是弹窗上那句说明。不传 = 用默认的「解锁账本」（进 App / 切回前台那两次）。
+     * 2026-10-08 加：设置页「关保护之前先验身」也要走这个函数，但那时候说「解锁账本」
+     * 就不对了 —— 得说清楚是**为了关掉某个开关**才验的（iOS 那边也是这么做的：
+     * `verifyIdentity(reason: "验证后才能关闭「用 Face ID 保护」")`）。
+     */
+    fun authenticate(
+        activity: FragmentActivity,
+        reason: String? = null,
+        onOk: () -> Unit,
+        onNo: (String) -> Unit,
+    ) {
         val executor = ContextCompat.getMainExecutor(activity)
         val prompt = BiometricPrompt(
             activity, executor,
@@ -68,8 +80,11 @@ object BioLock {
             })
 
         val builder = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(AppCtx.s(R.string.ledger_unlock_ledger))
-            .setSubtitle(AppCtx.s(R.string.ledger_unlock_biometric))
+            .setTitle(reason ?: AppCtx.s(R.string.ledger_unlock_ledger))
+            .setSubtitle(
+                if (reason == null) AppCtx.s(R.string.ledger_unlock_biometric)
+                else AppCtx.s(R.string.ledger_unlock_biometric_short)
+            )
             .setAllowedAuthenticators(allowed())
 
         // 安卓 10 及以下：单独告诉它「认不出也可以用锁屏密码」，不然没指纹的人会被锁在外面
@@ -89,6 +104,21 @@ class Prefs(context: Context) {
     var lockEnabled: Boolean
         get() = sp.getBoolean("lockEnabled", false)
         set(v) = sp.edit().putBoolean("lockEnabled", v).apply()
+
+    /**
+     * 切到后台时模糊（2026-10-08 加，逸风报「背景模糊不能单独关闭」）。
+     *
+     * 安卓这边的「模糊」就是 [applyPrivacyShield] 那条 `FLAG_SECURE` ——
+     * 系统给 App 拍后台快照时会拍成空白（有的 ROM 是糊的），顺手也挡截图。
+     *
+     * ⚠️ 以前它是**绑死在保护开关上**的：开了保护就必糊，关不了。
+     *    现在拆成独立一个键，默认 **true** —— 老用户升级上来没这个键，
+     *    读出来还是 true，行为跟升级前一模一样。
+     *    （「一个概念只留一个存储位」：模糊只有这一个来源，别再冒出第二个。）
+     */
+    var blurInBackground: Boolean
+        get() = sp.getBoolean("blurInBackground", true)
+        set(v) = sp.edit().putBoolean("blurInBackground", v).apply()
 
     var autoBackup: Boolean
         get() = sp.getBoolean("autoBackup", false)
@@ -306,4 +336,19 @@ fun FragmentActivity.applyPrivacyShield(on: Boolean) {
     } else {
         window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
+}
+
+/**
+ * 两道防线合起来算一次（2026-10-08 加）。
+ *
+ * 「保护」管的是**进来要验身**，「切到后台时模糊」管的是**后台卡片别露馅** ——
+ * 以前这两个是一根绳，只能一起开一起关；现在分开存，所以每次改完都得
+ * 用这个函数把 `FLAG_SECURE` 重算一遍。
+ *
+ * 注意：保护关着的时候，模糊也就没意义了（设置页那一行会跟着藏起来），
+ * 但这里仍按两个键相与来算 —— 万一有人先关保护再关模糊，
+ * 顺序换一下结果也不会变。
+ */
+fun FragmentActivity.syncPrivacyShield(prefs: Prefs) {
+    applyPrivacyShield(prefs.lockEnabled && prefs.blurInBackground)
 }

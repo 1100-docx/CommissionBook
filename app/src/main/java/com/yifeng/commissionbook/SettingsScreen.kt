@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.BlurOn
 import androidx.compose.material.icons.outlined.SystemUpdate
 import android.content.Context
 import android.content.Intent
@@ -95,6 +96,8 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     var lockOn by remember { mutableStateOf(prefs.lockEnabled) }
+    // 切到后台时模糊（2026-10-08 拆出来）：以前跟保护绑死，现在自己一个开关
+    var blurOn by remember { mutableStateOf(prefs.blurInBackground) }
     var reminderOn by remember { mutableStateOf(prefs.reminderEnabled) }
     // 提醒时间（2026-10-05 加，3.5.36）：默认 19:00，用户点「提醒时间」那行自己改
     var reminderHour by remember { mutableIntStateOf(prefs.reminderHour) }
@@ -348,7 +351,11 @@ fun SettingsScreen(
                     )
                 }
 
-                // ② 保护
+                // ② 保护 + 后台模糊（2026-10-08 拆成两行）
+                //
+                // 以前这两件事是一根绳：「保护」一开就必糊、关不了。
+                // 逸风报「背景模糊不能单独关闭」+「关闭保护不需要验证」——
+                // 两条 iOS 版早就有了（关保护前先验身、模糊单独一个开关），安卓这边补齐。
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_security))
                     InsetGroup {
@@ -356,21 +363,72 @@ fun SettingsScreen(
                             title = AppCtx.s(R.string.settings_protection),
                             subtitle = AppCtx.s(R.string.settings_lock_desc),
                             icon = Icons.Outlined.Lock,
-                            divider = false,
+                            // 模糊那一行跟着出现时，这里要画分隔线
+                            divider = lockOn,
                             trailing = {
                                 Switch(checked = lockOn, onCheckedChange = { v ->
-                                    if (v && !BioLock.available(context)) {
-                                        android.widget.Toast
+                                    val act = context as? FragmentActivity
+                                    when {
+                                        // 开：这台手机连指纹/锁屏密码都没有 → 开了就把自己锁在外面，先拦
+                                        v && !BioLock.available(context) -> android.widget.Toast
                                             .makeText(context, AppCtx.s(R.string.settings_no_passcode_2), android.widget.Toast.LENGTH_LONG)
                                             .show()
-                                    } else {
-                                        lockOn = v
-                                        prefs.lockEnabled = v
-                                        (context as? FragmentActivity)?.applyPrivacyShield(v)
+
+                                        // 关：先验一次本人 —— 免得手机在别人手上被随手关掉。
+                                        // ⚠️ 没验过就**什么都不做**：开关绑的是 lockOn，
+                                        //    不动它 = 自动弹回原样（就是 iOS 那边 refused 回调干的事）。
+                                        !v -> {
+                                            if (act == null || !BioLock.available(context)) {
+                                                // 没什么可验的（保护本来也不生效）→ 直接放行
+                                                lockOn = false
+                                                prefs.lockEnabled = false
+                                                act?.syncPrivacyShield(prefs)
+                                            } else {
+                                                BioLock.authenticate(
+                                                    activity = act,
+                                                    // 说清楚「这次验身是为了关掉什么」——
+                                                    // 系统弹窗上那句说明（跟 iOS 版一致）
+                                                    reason = AppCtx.s(R.string.settings_lock_verify_reason),
+                                                    onOk = {
+                                                        lockOn = false
+                                                        prefs.lockEnabled = false
+                                                        act.syncPrivacyShield(prefs)
+                                                    },
+                                                    onNo = {
+                                                        android.widget.Toast
+                                                            .makeText(context, AppCtx.s(R.string.settings_lock_verify_failed), android.widget.Toast.LENGTH_LONG)
+                                                            .show()
+                                                    },
+                                                )
+                                            }
+                                        }
+
+                                        // 开：直接开
+                                        else -> {
+                                            lockOn = true
+                                            prefs.lockEnabled = true
+                                            act?.syncPrivacyShield(prefs)
+                                        }
                                     }
                                 })
                             },
                         )
+                        // 模糊：只在保护开着的时候才有意义（保护一关，既不锁也不糊）
+                        if (lockOn) {
+                            GroupRow(
+                                title = AppCtx.s(R.string.settings_blur),
+                                subtitle = AppCtx.s(R.string.settings_blur_desc),
+                                icon = Icons.Outlined.BlurOn,
+                                divider = false,
+                                trailing = {
+                                    Switch(checked = blurOn, onCheckedChange = { v ->
+                                        blurOn = v
+                                        prefs.blurInBackground = v
+                                        (context as? FragmentActivity)?.syncPrivacyShield(prefs)
+                                    })
+                                },
+                            )
+                        }
                     }
                 }
 

@@ -199,6 +199,12 @@ fun helpGroups(mode: AppMode): List<HelpGroup> {
                 AppCtx.s(R.string.settings_protection_desc),
                 AppCtx.s(R.string.settings_protection_path),
             ),
+            // 2026-10-08 加：模糊拆出来单列一行（原来跟保护绑死，帮助页里也该说清楚）
+            HelpItem(
+                AppCtx.s(R.string.settings_blur),
+                AppCtx.s(R.string.settings_blur_desc),
+                AppCtx.s(R.string.settings_blur_path),
+            ),
             HelpItem(
                 AppCtx.s(R.string.settings_deadline_reminder),
                 AppCtx.s(R.string.settings_deadline_reminder_desc),

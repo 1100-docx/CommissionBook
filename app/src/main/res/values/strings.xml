@@ -272,6 +272,8 @@
     <string name="ledger_note_hint">备注（随手记一句）</string>
     <string name="ledger_unlock_ledger">解锁约稿账本</string>
     <string name="ledger_unlock_biometric">用指纹 / 面容 / 密码解锁</string>
+    <string name="ledger_unlock_biometric_short">请验证本人</string>
+    <string name="settings_lock_verify_reason">验证后才能关闭「保护」</string>
     <string name="common_saved">已保存 ✓</string>
     <string name="common_save_failed">保存失败，换个位置再试一次</string>
     <string name="common_backup_unreadable">这个文件读不出来，可能不是本 App 的备份</string>
@@ -410,8 +412,12 @@
     <string name="haptic_medium">中</string>
     <string name="haptic_heavy">重</string>
     <string name="settings_security">安全</string>
-    <string name="settings_lock_desc">打开后进 App 要先按指纹 / 面容 / 密码，切后台回来也会重新锁。</string>
+    <string name="settings_lock_desc">打开后进 App 要先按指纹 / 面容 / 密码，切后台回来也会重新锁。关掉之前要先验一次本人。</string>
     <string name="settings_no_passcode_2">这台手机还没设锁屏密码，先去设置里设一个</string>
+    <string name="settings_blur">切到后台时模糊</string>
+    <string name="settings_blur_desc">挡住后台任务卡片上的金额，顺便也挡截图。</string>
+    <string name="settings_lock_verify_failed">没通过验证，保护仍然开着</string>
+    <string name="settings_blur_path">设置 → 安全 → 切到后台时模糊</string>
     <string name="settings_reminders">提醒</string>
     <string name="settings_remind_before_due">截止日前提醒我</string>
     <string name="settings_notification_hint">第一次打开会问你要不要允许通知。万一没收到，去手机的「设置 → 应用 → 约稿账本 → 通知」里看看是不是关掉了。</string>

@@ -187,7 +187,7 @@ class MainActivity : FragmentActivity() {
         state = AppState(this)
         // 上次是不是崩着退出的？是就补一条记录（原生崩溃抓不到堆栈，但面包屑在）—— 2026-10-07
         CrashLog.checkAbnormalExit(this)
-        applyPrivacyShield(prefs.lockEnabled)
+        applyPrivacyShield(prefs.lockEnabled && prefs.blurInBackground)
         locked.value = prefs.lockEnabled
         // 这一版政策同意过没有？同意过才放行；没同意过 = 停同意页
         agreed.value = prefs.privacyAgreedVersion == POLICY_VERSION
