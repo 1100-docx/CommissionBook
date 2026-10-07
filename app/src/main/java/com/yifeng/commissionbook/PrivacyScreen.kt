@@ -66,7 +66,9 @@ import androidx.compose.ui.unit.sp
  * 存进 [Prefs.privacyAgreedVersion]：**以后政策改了就改这个字符串**，
  * App 下次启动会自动再弹一次同意页（改了什么也没瞒着人）。
  */
-const val POLICY_VERSION = "2026-10-05.4"
+// ⚠️ 2026-10-07 第五版（3.6.0）：加了**相机权限**（二维码传输的扫码那一半）。
+//    老用户下次启动会重读一遍 —— 这正是版本号存在的意义，别偷懒不升。
+const val POLICY_VERSION = "2026-10-07.5"
 
 /** 政策正文：一段标题 + 若干段正文 */
 private data class PolicySection(val heading: String, val body: List<String>)
@@ -208,6 +210,10 @@ private val policyPermissions: List<PolicyPermission> get() = listOf(
     PolicyPermission(AppCtx.s(R.string.settings_biometric_legacy_title), AppCtx.s(R.string.settings_biometric_legacy_desc), AppCtx.s(R.string.settings_biometric_legacy_off)),
     PolicyPermission(AppCtx.s(R.string.settings_notify_title), AppCtx.s(R.string.settings_notify_desc), AppCtx.s(R.string.settings_notify_off)),
     PolicyPermission(AppCtx.s(R.string.settings_vibrate_title), AppCtx.s(R.string.settings_vibrate_desc), AppCtx.s(R.string.settings_vibrate_off)),
+    // 2026-10-07 第五版加：二维码传输要扫码，所以**第一次有了相机权限**。
+    // 摆在这一节末尾（前面几条都是老面孔），并在说明里写死「只在扫码时用」——
+    // 这句话必须对得上代码：除了 QrTransfer.kt 那一处，全工程没有任何地方碰相机。
+    PolicyPermission(AppCtx.s(R.string.settings_camera_title), AppCtx.s(R.string.settings_camera_desc), AppCtx.s(R.string.settings_camera_off)),
     // 2026-10-03 第三版加：参考图用的系统选择器。**「不申请」也是一种要报备的事** ——
     // 权限表里明写着一条「相册 / 存储：不申请」，比只在正文里提一句更让人放心。
     PolicyPermission(AppCtx.s(R.string.settings_photos_title), AppCtx.s(R.string.settings_photos_desc), AppCtx.s(R.string.settings_photos_off)),

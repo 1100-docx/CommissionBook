@@ -18,13 +18,20 @@ import android.os.VibratorManager
  *    这里改成**直接调 Vibrator**：VIBRATE 权限早就声明了，只要震子能转就震得动，
  *    跟系统那个开关没关系。
  *
- * 三档怎么实现：优先用**振幅可控**的 one-shot（真的能区分轻重），
+ * 四档怎么实现（2026-10-07 从「三档 + 一个开关」扩成四档）：
+ *    优先用**振幅可控**的 one-shot（真的能区分轻重），
  * 硬件不支持振幅就退回系统的三种预设（点一下 / 点 / 重按）。
  */
 
 /** 触感档位。存的是 key，不是显示名 —— 以后改叫法不会把存值读坏（跟 AppAppearance 一个规矩）。 */
 enum class HapticLevel(val key: String, val labelRes: Int) {
 
+    // ⚠️ OFF 必须排第一个：这个顺序 = 设置页那四颗胶囊的顺序。
+    //    2026-10-07 逸风原话：「建议双端振动都做四个档，关/轻/中/重」——
+    //    所以「关」并成第一档，原来那个独立开关撤掉（双端一致）。
+    //    ⚠️ key 是**存进 SharedPreferences 的值**，写成 "off" 这种英文、别用显示名，
+    //       以后改叫法不会把老用户的设置读坏（老值 "medium" 照样认得）。
+    OFF("off", R.string.haptic_off),
     LIGHT("light", R.string.haptic_light),
     MEDIUM("medium", R.string.haptic_medium),
     HEAVY("heavy", R.string.haptic_heavy);
@@ -35,6 +42,7 @@ enum class HapticLevel(val key: String, val labelRes: Int) {
     /** 时长（毫秒）：轻档短促，重档稍长 —— 手感差别一半靠时长 */
     val durationMs: Long
         get() = when (this) {
+            OFF -> 0L
             LIGHT -> 10L
             MEDIUM -> 18L
             HEAVY -> 26L
@@ -43,6 +51,7 @@ enum class HapticLevel(val key: String, val labelRes: Int) {
     /** 振幅（1~255）—— 另一半靠这个 */
     val amplitude: Int
         get() = when (this) {
+            OFF -> 0
             LIGHT -> 70
             MEDIUM -> 150
             HEAVY -> 255
@@ -51,6 +60,7 @@ enum class HapticLevel(val key: String, val labelRes: Int) {
     /** 震子不支持振幅控制时的退路：系统预设（API 29+ 才有） */
     val predefined: Int
         get() = when (this) {
+            OFF -> VibrationEffect.EFFECT_TICK
             LIGHT -> VibrationEffect.EFFECT_TICK
             MEDIUM -> VibrationEffect.EFFECT_CLICK
             HEAVY -> VibrationEffect.EFFECT_HEAVY_CLICK
@@ -95,6 +105,10 @@ object Haptics {
      *    触感这种东西**再怎么样也不能把界面搞崩**，震不动就算了。
      */
     fun tick(): Boolean = runCatching {
+        // 「关」档：什么都不做，但要 **return true** ——
+        // 返回 false 的话调用方会退回 Compose 那条老路当兜底，那不就又震上了吗。
+        if (level == HapticLevel.OFF) return true
+
         // ⚠️ 60ms 内重复调用直接当成功返回、不再震（2026-10-07 加）。
         //    起因：全局触感（MainActivity.dispatchTouchEvent）和按钮自己的
         //    lightTick() 会**同时**落在同一根手指上，只差几毫秒 ——

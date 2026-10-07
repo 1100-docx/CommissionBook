@@ -1,8 +1,8 @@
 {
-  "versionCode": 64,
-  "versionName": "3.5.40",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.40.apk",
-  "size": 2239024,
-  "sha256": "cf651d680745a33291874b917f6390354934fca8159f1137c2d445b75cdf9243",
-  "notes": "· 重做了震动：以前点哪儿都「没感觉」，现在整个界面每一次点击都有一记轻震\n· 设置里能调，四档：关 / 轻 / 中 / 重\n· 跟 iOS 版对齐：都是整个窗口每一次点击都有反馈\n· 数据一条没动"
+  "versionCode": 65,
+  "versionName": "3.6.0",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.6.0.apk",
+  "size": 2387148,
+  "sha256": "fb6540f36ff708bde1a8781f63c256df31421c6db6faa8ece10aa6b725b72a77",
+  "notes": "· 新功能：二维码传输（设置 → 备份与恢复 → 二维码传输）\n· 旧手机出码、新手机扫一下，数据就搬过去了，不用再传文件\n· 数据不大时，全部内容就在那张码里，连网都不用\n· 数据大（带着参考图）时，两台手机连同一个 Wi-Fi 就行\n· 顺手把触感改成四档：关 / 轻 / 中 / 重\n· 数据一条没动"
 }

@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
@@ -75,6 +76,11 @@ fun SettingsScreen(
     prefs: Prefs,
     onExport: (String) -> Unit,
     onImport: () -> Unit,
+    // 二维码传输（2026-10-07 加，见 QrTransfer.kt）：
+    //   onQrScan  = 让 Activity 去开相机扫码（相机权限、取景界面都在那边）
+    //   onQrImport = 扫到的内容已经解成备份文本了，交给 Activity 导进去
+    onQrScan: () -> Unit,
+    onQrImport: (String) -> Unit,
     onShare: (String, String) -> Unit,
     onOpenPrivacy: () -> Unit,
     onOpenFeedback: () -> Unit,
@@ -90,6 +96,10 @@ fun SettingsScreen(
     var reminderHour by remember { mutableIntStateOf(prefs.reminderHour) }
     var reminderMinute by remember { mutableIntStateOf(prefs.reminderMinute) }
     var showTimePicker by remember { mutableStateOf(false) }
+    // 二维码传输（2026-10-07 加）：先弹「新手机还是旧手机」，
+    // 选了「旧手机」才把码算出来放进 sheetText（见 QrShowSheet 里那段 ⚠️）
+    var qrRole by remember { mutableStateOf(false) }
+    var qrSheetText by remember { mutableStateOf<String?>(null) }
     var showLangSheet by remember { mutableStateOf(false) }
     // 选完语言后的「要现在重启吗」确认框（2026-10-03 加）
     //
@@ -247,7 +257,9 @@ fun SettingsScreen(
                 //    这里只是把档位开关摆出来，实现在那边。
                 //
                 // 排列跟上面「深浅色」那行完全一致：图标 + 标题说明在左，
-                // 三颗胶囊靠右、同一行、垂直居中。
+                // ⚠️ 2026-10-07 改成**四颗**胶囊（关 / 轻 / 中 / 重）——
+                //    四个字都是单字，一行放得下；`HapticLevel.entries` 直接循环，
+                //    以后再加档不用动这里（顺序就是 enum 的顺序）。
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_haptic))
                     InsetGroup {
@@ -478,10 +490,43 @@ fun SettingsScreen(
                             title = AppCtx.s(R.string.settings_restore_from_file),
                             subtitle = AppCtx.s(R.string.settings_restore_ios_note),
                             icon = Icons.Outlined.Restore,
-                            divider = false,
                             onClick = onImport,
                         )
+                        // 二维码传输（2026-10-07 加）—— 逸风要的「旧手机出码、新手机扫码」。
+                        // 摆在这一节的最后一行：前面三条是「跟文件打交道」，这条是「跟手机打交道」。
+                        GroupRow(
+                            title = AppCtx.s(R.string.qr_entry),
+                            subtitle = AppCtx.s(R.string.qr_entry_desc),
+                            icon = Icons.Outlined.QrCode,
+                            divider = false,
+                            onClick = { qrRole = true },
+                        )
                     }
+                }
+
+                // 二维码传输用的那两个窗（2026-10-07 加）。
+                // ⚠️ 它们俩都是**窗口级**的（Dialog / BottomSheet 自己浮在最上面），
+                //    所以摆在哪里都行，别费劲去调位置。
+                if (qrRole) {
+                    QrRoleDialog(
+                        onNew = {
+                            qrRole = false
+                            onQrScan()
+                        },
+                        onOld = {
+                            qrRole = false
+                            // ⚠️ 现算：这里算出来的就是「码里要装的东西」，
+                            //    带着参考图，可能好几 MB —— 只在用户真点「旧手机」时才做。
+                            qrSheetText = state.toJsonString()
+                        },
+                        onDismiss = { qrRole = false },
+                    )
+                }
+                qrSheetText?.let { text ->
+                    QrShowSheet(
+                        backupText = text,
+                        onClose = { qrSheetText = null },
+                    )
                 }
 
                 // ③.5 小工具（2026-09-30 第三批）

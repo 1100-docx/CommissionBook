@@ -72,7 +72,9 @@ class AppState(private val context: Context) {
         hapticLevel = l
         prefs.hapticLevel = l.key
         Haptics.level = l
-        Haptics.tick()
+        // ⚠️ 选「关」的那一下**不能震**：刚点完「关」还震一下，等于当面骗人。
+        //    （选回轻/中/重时照旧震，好让你当场听见自己选的那一档有多重。）
+        if (l != HapticLevel.OFF) Haptics.tick()
     }
 
     /**
