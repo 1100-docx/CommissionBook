@@ -134,14 +134,33 @@ object Updater {
      *     加了时间戳 = 每次都是全新 URL → 镜像缓存失效，只能回源拿最新的。
      *     ⚠️ APK 那边**不加**：安装包缓存起来反而好（快、省流量），
      *        而且文件名带版本号（CommissionBook_3.5.7.apk），新版本是新文件名，不会串。
+     *
+     * ⚠️ 2026-10-08 补一笔：**时间戳只治得了 raw.githubusercontent 自己那层，治不了镜像**。
+     *    gh-proxy.com 实测不把 query 当缓存键 —— 加了 `?t=` 照样给你几天前的清单。
+     *    真正把这事兜住的是下面 [fetch] 里的「所有源都问一遍、取号最大」。
      */
-    fun fetch(): Release? {
+    fun fetch(currentCode: Int = 0): Release? {
         val stamp = System.currentTimeMillis()
+        // ⚠️⚠️ 2026-10-08 改：以前是「**谁先答得出来就用谁**」，读到第一个能解析的就 `return`。
+        //    这天栽了：`gh-proxy.com` 把清单缓存住了（还写着 3.7.3），
+        //    而它排在第一 —— 于是它先答了个**陈旧的**、解析又完全合法，
+        //    函数直接返回，后面三个源根本没被问过。
+        //    结果就是「明明发了新版，所有人都被告知已是最新」，而且**光看代码是好的**。
+        //    （头顶那段注释原本以为 `?t=时间戳` 能治镜像缓存 —— 实测对 gh-proxy.com **无效**，
+        //     它不把 query 当缓存键的一部分。）
+        //
+        //    现在的逻辑：**不问到最后一个源不罢休**（除非已经拿到一个比本机新的）。
+        //      · 拿到比本机新的 → 后面不用问了，早退，省时间；
+        //      · 全都不比本机新 → 全问一遍，取**号最大的那个**，陈旧缓存自然被压过去。
+        var best: Release? = null
         for (base in MIRRORS) {
             val text = readText("$base$MANIFEST?t=$stamp") ?: continue
-            parse(text)?.let { return it }
+            val r = parse(text) ?: continue
+            val cur = best
+            if (cur == null || r.versionCode > cur.versionCode) best = r
+            if ((best?.versionCode ?: 0) > currentCode) break
         }
-        return null
+        return best
     }
 
     private fun readText(url: String): String? = try {
@@ -360,7 +379,8 @@ suspend fun doCheck(
 ): UpdateStatus {
     onStatus(UpdateStatus.Checking)
 
-    val r = withContext(Dispatchers.IO) { Updater.fetch() }
+    // 把本机版本号一起喂进去 —— fetch 里靠它决定「拿到比本机新的就早退」
+    val r = withContext(Dispatchers.IO) { Updater.fetch(Updater.currentCode(context)) }
 
     // 不管成没成，都记一笔时间 —— 否则网络不通时每次冷启动都要白等 6 秒超时
     prefs.lastUpdateCheckAt = System.currentTimeMillis()
