@@ -115,6 +115,38 @@ class Prefs(context: Context) {
         get() = sp.getInt("reminderMinute", 0)
         set(v) = sp.edit().putInt("reminderMinute", v).apply()
 
+    // —— 参考图水印（2026-10-07 加）——
+    //
+    // ⚠️ **一个概念只留一个存储位**：开关 / 内容 / 颜色 / 不透明度 各占一个键，
+    //    别再冒出第二个「要不要加水印」的东西 —— 触感那次就栽过
+    //    （老开关 + 新档位两个来源互相打架，「关」了还震）。设置页读写的永远只有这几个键。
+
+    /** 水印开关 */
+    var wmEnabled: Boolean
+        get() = sp.getBoolean("wmEnabled", false)
+        set(v) = sp.edit().putBoolean("wmEnabled", v).apply()
+
+    /**
+     * 水印内容。
+     * ⚠️ 默认**空字符串**（2026-10-07 逸风要求：「默认提示文字为请输入内容」）——
+     *    界面上那个「请输入内容」是输入框的**提示语**，不是预填值。内容空着 = 不加印。
+     */
+    var wmText: String
+        get() = sp.getString("wmText", "") ?: ""
+        set(v) = sp.edit().putString("wmText", v).apply()
+
+    /** 水印颜色（ARGB）。默认白 */
+    var wmColor: Int
+        get() = sp.getInt("wmColor", Watermark.DEFAULT_COLOR)
+        set(v) = sp.edit().putInt("wmColor", v).apply()
+
+    /** 水印不透明度（百分数，[Watermark.MIN_PERCENT]–[Watermark.MAX_PERCENT]） */
+    var wmPercent: Int
+        get() = sp.getInt("wmPercent", Watermark.DEFAULT_PERCENT)
+        set(v) = sp.edit()
+            .putInt("wmPercent", v.coerceIn(Watermark.MIN_PERCENT, Watermark.MAX_PERCENT))
+            .apply()
+
     /**
      * 隐私政策同意 —— 存的是**同意时那一版政策**的版本号（见 [POLICY_VERSION]）。
      *

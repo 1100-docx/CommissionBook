@@ -1,5 +1,6 @@
 package com.yifeng.commissionbook
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +36,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ImageNotSupported
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +54,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -198,6 +203,11 @@ fun PhotoViewer(
     startIndex: Int,
     pathFor: (String) -> String,
     onDismiss: () -> Unit,
+    /**
+     * 这一单的水印（2026-10-07 加）。
+     * null = 不加印。**看图时盖一层、分享时烧进去，两处用同一套画法**（见 [Watermark]）。
+     */
+    watermark: WatermarkStyle? = null,
 ) {
     if (items.isEmpty()) return
     val pager = rememberPagerState(
@@ -224,12 +234,53 @@ fun PhotoViewer(
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     val bmp = remember(items[page].name) { Photos.thumbnail(pathFor(items[page].name), 2200) }
                     if (bmp != null) {
-                        Image(
-                            bitmap = bmp.asImageBitmap(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize().padding(8.dp),
-                        )
+                        // ⚠️ 水印得**正好盖在照片上**，所以不能直接铺满这一整块黑底 ——
+                        //    先按 Fit 算出照片真实的显示尺寸，再在这个尺寸上盖一层。
+                        //    （铺满整块的话，竖图和横图上水印的疏密会跟导出那张对不上。）
+                        BoxWithConstraints(
+                            Modifier.fillMaxSize().padding(8.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            val density = LocalDensity.current
+                            val availW = with(density) { maxWidth.toPx() }
+                            val availH = with(density) { maxHeight.toPx() }
+                            val scale = minOf(availW / bmp.width, availH / bmp.height)
+                            val dw = (bmp.width * scale).toInt().coerceAtLeast(1)
+                            val dh = (bmp.height * scale).toInt().coerceAtLeast(1)
+
+                            Box(
+                                Modifier.size(
+                                    with(density) { dw.toDp() },
+                                    with(density) { dh.toDp() },
+                                )
+                            ) {
+                                Image(
+                                    bitmap = bmp.asImageBitmap(),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                if (watermark != null) {
+                                    // 水印层**固定按 1000 宽**渲一张（省内存），再拉伸铺满这块 ——
+                                    // 排布是按「短边的比例」算的，缩放之后跟原图那张一模一样，
+                                    // 所以这块小屏预览跟分享出去那张是同一个密度。
+                                    val layer = remember(items[page].name, watermark, dw, dh) {
+                                        Watermark.overlay(
+                                            w = 1000,
+                                            h = (1000f * dh / dw).toInt().coerceAtLeast(1),
+                                            style = watermark,
+                                        )
+                                    }
+                                    if (layer != null) {
+                                        Image(
+                                            bitmap = layer.asImageBitmap(),
+                                            contentDescription = null,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     } else {
                         Text(
                             AppCtx.s(R.string.photos_missing),
@@ -288,6 +339,53 @@ fun PhotoViewer(
                         )
                     }
 
+                    // 分享这张图（2026-10-07 加）。
+                    // ⚠️ 水印一开，**发出去的就是带水印那张** —— 这才是水印的用处所在：
+                    //    不然图根本出不去，水印只能在这台手机上自己看。
+                    val ctx = LocalContext.current
+                    Row(
+                        Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.White.copy(alpha = 0.14f))
+                            .clickable {
+                                val photo = items[pager.currentPage]
+                                // ⚠️ 分享要用**大图**：屏幕上那张是 2200 的缩略图，
+                                //    发出去得重新取一张（上限 4096），再往上烧水印。
+                                val full = Photos.thumbnail(pathFor(photo.name), 4096)
+                                if (full == null) {
+                                    toastNow(ctx, AppCtx.s(R.string.photos_missing))
+                                } else {
+                                    val out = watermark?.let { Watermark.stamp(full, it) } ?: full
+                                    val name = photo.name.substringBeforeLast('.') + ".png"
+                                    val intent = sharePng(ctx, out, name)
+                                    if (intent == null) {
+                                        toastNow(ctx, AppCtx.s(R.string.common_share_failed_2))
+                                    } else {
+                                        ctx.startActivity(
+                                            Intent.createChooser(intent, AppCtx.s(R.string.wm_share_photo))
+                                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
+                                    }
+                                }
+                            }
+                            .padding(horizontal = 14.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Outlined.Share,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(15.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            AppCtx.s(R.string.wm_share_photo),
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+
                 }
             }
         }
@@ -321,4 +419,36 @@ fun PhotoHint(text: String) {
         lineHeight = 16.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+/**
+ * 水印小样（2026-10-07 加）：一块灰底当"照片"，上面盖一层真水印。
+ *
+ * ⚠️ 用的是 **[Watermark.overlay]** —— 跟看图页、分享出去那张**同一个函数**。
+ *    所以这块小样长什么样，发出去的就长什么样（别为了"好看"在这儿另画一套）。
+ * 底色调成中性灰是有意的：白色水印、黑色水印在这块底上都看得出来。
+ */
+@Composable
+fun WmPreviewCard(text: String, colorArgb: Int, percent: Int) {
+    val style = Watermark.styleOf(text, colorArgb, percent)
+    val density = LocalDensity.current
+    val wPx = with(density) { 320.dp.toPx() }.toInt().coerceAtLeast(1)
+    val hPx = with(density) { 130.dp.toPx() }.toInt().coerceAtLeast(1)
+    val layer = remember(wPx, hPx, style) { Watermark.overlay(wPx, hPx, style) }
+
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(130.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF8A93A0))
+    ) {
+        if (layer != null) {
+            Image(
+                bitmap = layer.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
 }

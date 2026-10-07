@@ -139,9 +139,36 @@ data class Commission(
      * **存量数据一条都不动**。
      */
     var photos: List<Photo> = emptyList(),
+
+    /**
+     * 参考图水印（2026-10-07 加，逸风定的方案 A：**每条自己一套**）。
+     *
+     * 表单里那个开关（就在「参考图」下面，跟「截止日期」一个样式）管的就是这一组：
+     * 开关 / 内容 / 颜色 / 不透明度，**跟着这一单走**，想给这单换句话就单独改。
+     *
+     * ⚠️ 老数据里没有这几个键 → 一律当「关」（[wmOn] = false）：
+     *    存量条目不会因为升级突然冒出水印来。
+     * ⚠️ iOS 版读这份 JSON 时认的是同名键（`wm` / `wmText` / `wmColor` / `wmPercent`），
+     *    两边改名要一起改，否则互导之后水印会丢。
+     */
+    var wmOn: Boolean = false,
+    var wmText: String = "",
+    var wmColorArgb: Int = Watermark.DEFAULT_COLOR,
+    var wmPercent: Int = Watermark.DEFAULT_PERCENT,
 ) {
     /** 还欠多少 */
     val unpaid: Double get() = (total - deposit).coerceAtLeast(0.0)
+
+    /**
+     * 这一单要用的水印（开关没开、或者内容空着 → null = 不加印）。
+     * 看图页和分享都问它要，接口只有一个，省得两边判断条件写得不一样。
+     */
+    val watermark: WatermarkStyle?
+        get() = if (Watermark.active(wmOn, wmText)) {
+            Watermark.styleOf(wmText, wmColorArgb, wmPercent)
+        } else {
+            null
+        }
 
     /** 还剩几天（负数 = 超期） */
     fun daysLeft(nowMillis: Long = System.currentTimeMillis()): Int? {
@@ -227,6 +254,14 @@ object Json {
                 }
                 o.put("photos", ph)
             }
+            // 参考图水印（2026-10-07 加）。只在**开了或填过内容**的时候才写这四个键 ——
+            // 没碰过的条目一个字节都不多，老版本读这份文件也不受影响（它不认识这些键，忽略）。
+            if (c.wmOn || c.wmText.isNotBlank()) {
+                o.put("wm", c.wmOn)
+                o.put("wmText", c.wmText)
+                o.put("wmColor", c.wmColorArgb)
+                o.put("wmPercent", c.wmPercent)
+            }
             arr.put(o)
         }
         return arr
@@ -274,6 +309,12 @@ object Json {
                     // 老数据没这个键 → buyer。iOS 版读这份文件时会忽略它，不影响互通
                     mode = o.optString("mode").ifBlank { AppMode.BUYER.key },
                     photos = decodePhotos(o.optJSONArray("photos"), onPhoto),
+                    // 参考图水印（2026-10-07 加）。老数据没有这几个键 → 全默认（关、空、白、30%），
+                    // 所以升级上来不会突然多出水印。iOS 版读的是同名键，两边一起改。
+                    wmOn = o.optBoolean("wm", false),
+                    wmText = o.optString("wmText"),
+                    wmColorArgb = o.optInt("wmColor", Watermark.DEFAULT_COLOR),
+                    wmPercent = o.optInt("wmPercent", Watermark.DEFAULT_PERCENT),
                 )
             )
         }

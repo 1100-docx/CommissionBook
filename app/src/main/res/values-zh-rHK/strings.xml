@@ -545,4 +545,15 @@
 
     <string name="common_yes">是</string>
     <string name="common_no">否</string>
+
+    <!-- 参考图水印（2026-10-07 加，方案 A：每条自己一套） -->
+    <string name="wm_toggle">加參考圖水印</string>
+    <string name="wm_text_label">水印內容</string>
+    <string name="wm_text_hint">請輸入內容</string>
+    <string name="wm_color_label">水印顏色</string>
+    <string name="wm_color_title">揀隻色</string>
+    <string name="wm_alpha_label">不透明度</string>
+    <string name="wm_hint">水印只加喺「睇大圖」同「分享出去」嗰張上，原圖一直係乾淨嘅 —— 改內容、顏色、濃淡，所有圖即刻跟住變。</string>
+    <string name="wm_empty_hint">仲未填內容，呢張圖唔會加水印</string>
+    <string name="wm_share_photo">分享呢張圖</string>
 </resources>

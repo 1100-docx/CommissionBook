@@ -543,4 +543,15 @@
 
     <string name="common_yes">是</string>
     <string name="common_no">否</string>
+
+    <!-- 参考图水印（2026-10-07 加，方案 A：每条自己一套） -->
+    <string name="wm_toggle">给参考图加水印</string>
+    <string name="wm_text_label">水印内容</string>
+    <string name="wm_text_hint">请输入内容</string>
+    <string name="wm_color_label">水印颜色</string>
+    <string name="wm_color_title">挑个颜色</string>
+    <string name="wm_alpha_label">不透明度</string>
+    <string name="wm_hint">水印只加在「看大图」和「分享出去」的那张上，原图一直是干净的 —— 改内容、颜色、浓淡，所有图立刻跟着变。</string>
+    <string name="wm_empty_hint">还没填内容，这张图不会加水印</string>
+    <string name="wm_share_photo">分享这张图</string>
 </resources>

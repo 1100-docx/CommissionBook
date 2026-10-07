@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -76,6 +77,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -655,6 +657,8 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
             onSave = { state.upsert(it); creating = false },
             onAddPhoto = { state.addPhoto(it) },
             photoPath = { state.photoFile(it).absolutePath },
+            // 新单子的水印起手值 = **最近一条填过水印的单子**（水印是每条一套，但不必每单重填一遍）
+            watermarkSeed = state.modeItems.lastOrNull { it.wmText.isNotBlank() },
         )
     }
 
@@ -1191,6 +1195,15 @@ fun EditSheet(
     onAddPhoto: (android.net.Uri) -> String? = { null },
     /** 文件名 → 磁盘绝对路径（给缩略图解码用） */
     photoPath: (String) -> String = { "" },
+    /**
+     * 新单子的水印「起手值」（2026-10-07 加，方案 A）。
+     *
+     * 水印是**每条自己一套**，但让用户每建一单都重填一遍「筱晞 + 颜色」太累，
+     * 所以新建时用**最近一条填过水印的单子**当模板（由调用方传进来）。
+     * 传 null = 全默认（关、内容空、白、30%）。老单子（没有这几个字段）一律当「关」。
+
+     */
+    watermarkSeed: Commission? = null,
 ) {
 
     var artist by remember { mutableStateOf(original?.artist ?: "") }
@@ -1215,6 +1228,16 @@ fun EditSheet(
     //    那些孤儿图会在下一次存盘时被 [AppState.persist] 顺手清掉。
     var photos by remember { mutableStateOf(original?.photos ?: emptyList()) }
     var viewerAt by remember { mutableStateOf<Int?>(null) }
+
+    // 参考图水印（2026-10-07 加，方案 A：**每条自己一套**）。
+    // 新单子取「最近填过水印的那一条」当起手值（见 watermarkSeed 的注释），
+    // 老单子没有这几个字段 → 全默认 = 关，升级上来不会突然冒水印。
+    val wmSeed = original ?: watermarkSeed
+    var wmOn by remember { mutableStateOf(wmSeed?.wmOn ?: false) }
+    var wmText by remember { mutableStateOf(wmSeed?.wmText ?: "") }
+    var wmColor by remember { mutableStateOf(wmSeed?.wmColorArgb ?: Watermark.DEFAULT_COLOR) }
+    var wmPercent by remember { mutableStateOf(wmSeed?.wmPercent ?: Watermark.DEFAULT_PERCENT) }
+    var showColorPicker by remember { mutableStateOf(false) }
     var picking by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -1374,6 +1397,82 @@ fun EditSheet(
                 )
             }
 
+            // 参考图水印（2026-10-07 加，方案 A：每条自己一套）。
+            //
+            // 样式照着「截止日期」那一行来：**一行开关，开了才展开下面的设置**。
+            // ⚠️ 摆在「参考图」正下方而不是设置页：水印是**跟图走**的，
+            //    加图那一下顺手决定加不加，最顺；设置页那个位置留给"全局长相"的话
+            //    会跟「每条一套」打架（他 2026-10-07 拍板要的就是每条一套）。
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Switch(checked = wmOn, onCheckedChange = { wmOn = it })
+                Text(AppCtx.s(R.string.wm_toggle), fontSize = 14.sp)
+            }
+            if (wmOn) {
+                OutlinedTextField(
+                    wmText, { wmText = it },
+                    // ⚠️ 空着就是空着 —— 这只是**提示语**（他明确要求「默认提示文字为请输入内容」），
+                    //    不是预填内容。内容空着 = 不加印（下面会提示一句）。
+                    placeholder = { Text(AppCtx.s(R.string.wm_text_hint)) },
+                    label = { Text(AppCtx.s(R.string.wm_text_label)) },
+                    singleLine = true,
+                    shape = fieldShape,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                // 颜色：点一行弹取色器（安卓没有系统取色器 → 自绘的那个，见 ColorPickerDialog）
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(fieldShape)
+                        .clickable { showColorPicker = true }
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(AppCtx.s(R.string.wm_color_label), fontSize = 14.sp)
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        Watermark.toHex(wmColor),
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Box(
+                        Modifier
+                            .size(22.dp)
+                            .clip(CircleShape)
+                            .background(Color(wmColor))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                    )
+                }
+
+                // 不透明度：滑块 + 右边把数值写出来（逸风：「滑块或者数值」→ 两个都给，
+                // 拖着看效果、也能一眼读到具体是百分之几）
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(AppCtx.s(R.string.wm_alpha_label), fontSize = 14.sp)
+                    Spacer(Modifier.width(10.dp))
+                    Slider(
+                        value = wmPercent.toFloat(),
+                        onValueChange = { wmPercent = it.roundToInt() },
+                        valueRange = Watermark.MIN_PERCENT.toFloat()..Watermark.MAX_PERCENT.toFloat(),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "$wmPercent%",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.width(42.dp),
+                    )
+                }
+
+                // 小样：灰底上盖一层真水印（跟看图页、分享出去那套是同一个函数）
+                WmPreviewCard(text = wmText.trim(), colorArgb = wmColor, percent = wmPercent)
+                PhotoHint(
+                    if (wmText.isBlank()) AppCtx.s(R.string.wm_empty_hint)
+                    else AppCtx.s(R.string.wm_hint)
+                )
+            }
+
             Spacer(Modifier.height(2.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text(AppCtx.s(R.string.common_cancel), fontSize = 15.sp) }
@@ -1391,6 +1490,11 @@ fun EditSheet(
                             // 新单归当前模式；编辑老单时保持它原来的归属
                             mode = original?.mode ?: mode.key,
                             photos = photos,
+                            // 参考图水印（2026-10-07）：这一单自己带一套
+                            wmOn = wmOn,
+                            wmText = wmText.trim(),
+                            wmColorArgb = wmColor,
+                            wmPercent = wmPercent,
                         )
                         onSave(c)
                     },
@@ -1409,7 +1513,24 @@ fun EditSheet(
             startIndex = start,
             pathFor = photoPath,
             onDismiss = { viewerAt = null },
+            // 这一单的水印（开关没开 / 内容空着 → null，看图页就什么都不盖）
+            watermark = if (Watermark.active(wmOn, wmText)) {
+                Watermark.styleOf(wmText.trim(), wmColor, wmPercent)
+            } else {
+                null
+            },
+        )
+    }
 
+    // 取色器（2026-10-07 加）。安卓没有系统取色器，这是自绘的那个，见 ColorPickerDialog。
+    if (showColorPicker) {
+        ColorPickerDialog(
+            initialArgb = wmColor,
+            onPick = {
+                wmColor = it
+                showColorPicker = false
+            },
+            onDismiss = { showColorPicker = false },
         )
     }
 

@@ -12,7 +12,7 @@ android {
         applicationId = "com.yifeng.commissionbook"
         minSdk = 26
         targetSdk = 36
-        versionCode = 74
+        versionCode = 75
         versionName = "3.6.5"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。

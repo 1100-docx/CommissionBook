@@ -550,4 +550,15 @@ System: Android %4$s (API %5$s)
 
     <string name="common_yes">Yes</string>
     <string name="common_no">No</string>
+
+    <!-- 参考图水印（2026-10-07 加，方案 A：每条自己一套） -->
+    <string name="wm_toggle">Watermark reference images</string>
+    <string name="wm_text_label">Watermark text</string>
+    <string name="wm_text_hint">Enter text</string>
+    <string name="wm_color_label">Watermark colour</string>
+    <string name="wm_color_title">Pick a colour</string>
+    <string name="wm_alpha_label">Opacity</string>
+    <string name="wm_hint">The watermark is only added to the image you view or share — the original file stays clean. Change the text, colour or opacity and every image follows instantly.</string>
+    <string name="wm_empty_hint">No text yet — this image won\'t be watermarked</string>
+    <string name="wm_share_photo">Share this image</string>
 </resources>

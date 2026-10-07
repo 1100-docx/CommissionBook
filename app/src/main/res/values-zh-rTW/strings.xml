@@ -544,4 +544,15 @@
 
     <string name="common_yes">是</string>
     <string name="common_no">否</string>
+
+    <!-- 参考图水印（2026-10-07 加，方案 A：每条自己一套） -->
+    <string name="wm_toggle">加參考圖浮水印</string>
+    <string name="wm_text_label">浮水印內容</string>
+    <string name="wm_text_hint">請輸入內容</string>
+    <string name="wm_color_label">浮水印顏色</string>
+    <string name="wm_color_title">挑個顏色</string>
+    <string name="wm_alpha_label">不透明度</string>
+    <string name="wm_hint">浮水印只加在「看大圖」和「分享出去」的那張上，原圖一直是乾淨的 —— 改內容、顏色、濃淡，所有圖立刻跟著變。</string>
+    <string name="wm_empty_hint">還沒填內容，這張圖不會加浮水印</string>
+    <string name="wm_share_photo">分享這張圖</string>
 </resources>
