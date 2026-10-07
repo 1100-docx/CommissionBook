@@ -29,6 +29,32 @@ export ANDROID_HOME="$HOME/Library/Android/sdk"
 echo "① 清掉可能存在的 iCloud 冲突副本"
 find . -name "* [0-9].*" -not -path "./.git/*" -delete 2>/dev/null || true
 
+# ⚠️ 2026-10-07 加的护栏，**别删** —— 这天栽了一个真闪退，代价是白折腾大半天：
+#
+#   `.reversed()` / `.getFirst()` / `.getLast()` / `.addFirst()` / `.addLast()` /
+#   `.removeFirst()` / `.removeLast()` —— 这几个名字从 **Java 21** 起在 Java 集合
+#   （List / Set / Map / Deque）上是**成员方法**（SequencedCollection 那套）。
+#   Kotlin 里**成员优先于扩展**，所以在 `SortedSet` 之类 Java 类型上一叫，
+#   绑到的不是 Kotlin 的扩展，而是新版 libcore 的成员。
+#
+#   而 `compileSdk = 36`（Android 16）的 libcore 已经是 **OpenJDK 21 底子** →
+#   编译**看得见、编得过**；用户机（Android 9 / API 28、鸿蒙 2.0）**运行时没有** →
+#   `java.lang.NoSuchMethodError: No interface method reversed()Ljava/util/SortedSet;`
+#   → 一进「年度报告」就闪退。
+#
+#   真想倒序：用 Kotlin 独有名字 `asReversed()` / `sortedDescending()`；
+#   ⚠️ 别想着 `toList().reversed()` —— `List.reversed()` 同样是 Java 21 成员，**一样崩**。
+echo "①·5 扫 Java 21 才有的集合方法（编译期 API 泄漏）"
+SRC=app/src/main/java
+HITS=$(grep -rnE "\.(reversed|getFirst|getLast|addFirst|addLast|removeFirst|removeLast)\(" "$SRC" 2>/dev/null \
+        | grep -vE "^[^:]+:[0-9]+:[[:space:]]*(//|\*)" || true)
+if [ -n "$HITS" ]; then
+  echo "❌ 用到 Java 21 才有的集合方法了 —— 老手机会 NoSuchMethodError 闪退："
+  echo "$HITS"
+  echo "   改法：倒序用 Kotlin 的 asReversed() / sortedDescending()（换个名字就不绑新版 API）"
+  exit 1
+fi
+
 echo "② 编译"
 # ⚠️ Kotlin 的编译错误前缀是 `e: `（不是 `error:`），grep 里必须带上，
 #    否则「编译失败」这四个字看得见、真正的原因看不见。
@@ -57,3 +83,17 @@ fi
 
 echo "④ 成品：${WANT_NAME}（code ${WANT_CODE}）"
 ls -l "$APK"
+
+# ⚠️ 2026-10-07 加：**对着产物再扫一遍**（不是对着源码）。
+#    为什么两道都要：源码那道（①·5）防的是「以后再写出来」，
+#    这道防的是「库里带进来 / R8 里面还留着」——
+#    真凶那次就是源码里看着人畜无害的一行 `.reversed()`，
+#    只有拆开 dex 的方法引用表才看得见它绑到了 Java 21 的成员上。
+echo "⑤ 扫产物 dex：确认没有 Java 21 才有的集合方法"
+if python3 tools/dex_methods.py "$APK" | grep -q "❌"; then
+  python3 tools/dex_methods.py "$APK" | grep -A2 "❌"
+  echo "!! 产物里还留着新版 API 调用 —— 老手机会 NoSuchMethodError，这包别发"
+  exit 1
+fi
+python3 tools/dex_methods.py "$APK" | sed -n '2p'
+echo "   ✅ 干净（compat 版另跑一次：python3 tools/dex_methods.py app/build/outputs/apk/compat/app-compat.apk）"

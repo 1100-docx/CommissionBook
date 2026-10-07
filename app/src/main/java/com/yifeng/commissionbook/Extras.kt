@@ -817,11 +817,31 @@ data class YearReport(
 
 fun availableYears(items: List<Commission>): List<Int> {
     val cur = Calendar.getInstance().get(Calendar.YEAR)
+    // ⚠️⚠️ 2026-10-07 修的**真凶**，别再写回去：
+    //
+    //   原来是 `.toSortedSet()` + `.reversed()`。看着人畜无害，实际是**编译期 API 泄漏**：
+    //   `toSortedSet()` 的静态类型是 `java.util.SortedSet`，而 Kotlin 的**成员优先于扩展**，
+    //   所以 `.reversed()` 没走 Kotlin 的 `Iterable.reversed()` 扩展，
+    //   而是解析成了 **Java 21 的 `SortedSet.reversed()`**（SequencedCollection 那套）。
+    //
+    //   为什么编译过得了：`compileSdk = 36`（Android 16）的 libcore 已经是 OpenJDK 21 底子，
+    //   方法**看得见**。为什么用户机上崩：鸿蒙 / Android 9（API 28）的 core-oj.jar 里没这方法
+    //   → `java.lang.NoSuchMethodError: No interface method reversed()Ljava/util/SortedSet;`
+    //   → 一进年度报告就闪退（她发来的堆栈第一行就是它）。
+    //
+    //   教训：**`.reversed()` / `.getFirst()` / `.getLast()` / `.addFirst()` / `.removeLast()`
+    //   这五个名字在 Java 21 起都是「成员方法」**，在 Java 集合（List / Set / Map / Deque）上
+    //   一叫就可能绑到新版 API 上。要么改用 Kotlin 独有的名字（`asReversed` / `sortedDescending`），
+    //   要么先 `toList()` 落到 Kotlin 类型上 —— 但注意 `List.reversed()` 同样是 Java 21 成员，
+    //   **`toList().reversed()` 一样会崩**，必须用 `asReversed()` 或 `sortedDescending()`。
+    //
+    //   现在改成 MutableSet + Kotlin 的 `sortedDescending()`：全程不碰 SortedSet 类型，
+    //   编译出来的就是 `Collections.sort` 那套老 API，API 26 起都能跑。
     val ys = items.map {
         Calendar.getInstance().apply { timeInMillis = it.dateMillis }.get(Calendar.YEAR)
-    }.toSortedSet()
+    }.toMutableSet()
     ys.add(cur)
-    return ys.reversed().toList()
+    return ys.sortedDescending()
 }
 
 /** 全部从现成字段算 —— 不新增任何数据 */
