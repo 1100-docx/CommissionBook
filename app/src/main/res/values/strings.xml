@@ -396,6 +396,12 @@
     <string name="settings_appearance">外观</string>
     <string name="settings_theme">深浅色</string>
     <string name="settings_theme_desc">「跟随系统」= 跟手机走；浅色 / 暗色 = 固定不变。</string>
+    <string name="settings_haptic">触感</string>
+    <string name="settings_haptic_title">震动强度</string>
+    <string name="settings_haptic_desc">点按时震一下，三档可调。</string>
+    <string name="haptic_light">轻</string>
+    <string name="haptic_medium">中</string>
+    <string name="haptic_heavy">重</string>
     <string name="settings_security">安全</string>
     <string name="settings_lock_desc">打开后进 App 要先按指纹 / 面容 / 密码，切后台回来也会重新锁。</string>
     <string name="settings_no_passcode_2">这台手机还没设锁屏密码，先去设置里设一个</string>

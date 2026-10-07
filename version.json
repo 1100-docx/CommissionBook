@@ -1,8 +1,8 @@
 {
-  "versionCode": 62,
-  "versionName": "3.5.38",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.38.apk",
-  "size": 2238108,
-  "sha256": "fe01036f1d9cbf0780af22004402cac0e66d58521fe2b8b5c2274d352aa33f3b",
-  "notes": "· 五种语言（简 / 繁 / 港 / 英）都跟上了\n· 一些小修小补\n· 数据一条没动"
+  "versionCode": 63,
+  "versionName": "3.5.39",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.39.apk",
+  "size": 2239024,
+  "sha256": "2aae8b8e68f2a17eda66cebea5c05ad8636c7f6aa45afe6138a45aa773001297",
+  "notes": "· 加了震动反馈：点按钮、切开关、点进度都会轻轻震一下\n· 之前安卓这边其实是「哑」的（系统那条触感通道被 ROM 掐了），现在改成自己直接震，震得动了\n· 震动强度可选：轻 / 中 / 重 —— 设置 → 外观 →「震动强度」\n· 不想震也行：设置里有「震动」总开关，关掉就完全静音\n· 数据一条没动"
 }

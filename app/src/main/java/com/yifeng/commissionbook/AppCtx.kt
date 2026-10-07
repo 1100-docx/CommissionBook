@@ -61,4 +61,13 @@ object AppCtx {
      */
     fun s(@StringRes resId: Int, vararg args: Any): String =
         app?.getString(resId, *args) ?: ""
+
+    /**
+     * 拿原始 context（2026-10-07 加，触感那边要用系统服务）。
+     *
+     * ⚠️ 这是个**故意留的窄口子**：只给那种「拿不到 context 就干不了事」的地方用
+     *    （现在只有 [Haptics] 取 Vibrator）。别拿它去读文件、搞界面 ——
+     *    要字符串走 [s]，要应用上下文走别处。
+     */
+    fun context(): Context? = app
 }

@@ -54,6 +54,28 @@ class AppState(private val context: Context) {
     }
 
     /**
+     * 触感档位（2026-10-07 加，见 [HapticLevel] / [Haptics]）。
+     *
+     * ⚠️ 这里改的是**全局内存值** `Haptics.level` —— 所有点击反馈都读它，
+     *    不逐个页面传参数。设置页拨一下当场生效，不用重启。
+     */
+    var hapticLevel by mutableStateOf(HapticLevel.from(prefs.hapticLevel))
+        private set
+
+    init {
+        // 启动时把存下来的档位灌给全局触感，否则永远是默认的中档，设置白改
+        Haptics.level = hapticLevel
+    }
+
+    /** 换档 + 当场震一下：不然选完不知道刚才那下是不是变重了 */
+    fun switchHaptic(l: HapticLevel) {
+        hapticLevel = l
+        prefs.hapticLevel = l.key
+        Haptics.level = l
+        Haptics.tick()
+    }
+
+    /**
      * 首启那一问问过没有（2026-09-30 加）。
      * Compose 状态 —— 选完立刻让弹窗自己消失，不用手动关。
      */

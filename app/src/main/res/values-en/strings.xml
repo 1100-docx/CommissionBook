@@ -405,6 +405,12 @@ System: Android %4$s (API %5$s)
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme">Light / Dark</string>
     <string name="settings_theme_desc">System follows your phone\'s theme; Light or Dark stays fixed.</string>
+    <string name="settings_haptic">Haptics</string>
+    <string name="settings_haptic_title">Vibration</string>
+    <string name="settings_haptic_desc">A short buzz on every tap — three levels.</string>
+    <string name="haptic_light">Light</string>
+    <string name="haptic_medium">Medium</string>
+    <string name="haptic_heavy">Heavy</string>
     <string name="settings_security">Security</string>
     <string name="settings_lock_desc">When on, you\'ll need fingerprint / face / passcode to open the app, and it re-locks when you return from the background.</string>
     <string name="settings_no_passcode_2">This phone has no lock screen passcode yet — set one in Settings first</string>

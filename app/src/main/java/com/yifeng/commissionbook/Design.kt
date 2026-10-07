@@ -77,9 +77,17 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun isDarkUi(): Boolean = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-/** 轻轻一下触感（不是哒哒震手，就是「按到了」的那一下）—— iOS 的 Taptic 那味儿 */
+/** 轻轻一下触感（不是哒哒震手，就是「按到了」的那一下）—— iOS 的 Taptic 那味儿
+ *
+ *  ⚠️ 2026-10-07 改：先走自己的 [Haptics]（直接调 Vibrator，分轻中重三档），
+ *     震不动才退回 Compose 那条老路。原因见 Haptics.kt 顶部：老路的效果
+ *     受厂商 ROM 的「系统触感反馈」开关摆布，ColorOS 上直接等于没有。
+ *     参数 `haptic` 保留 —— 只在兜底那一步用得上，调用点一个都不用改。
+ */
 fun lightTick(haptic: HapticFeedback) {
-    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    if (!Haptics.tick()) {
+        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    }
 }
 
 /** 页面底色：顶上抹一层很淡的冰蓝，往下化开 */

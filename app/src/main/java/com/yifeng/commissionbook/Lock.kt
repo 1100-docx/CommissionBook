@@ -144,6 +144,17 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putString("appearance", v).apply()
 
     /**
+     * 触感档位：轻 / 中 / 重（2026-10-07 加，见 [HapticLevel]）。
+     *
+     * 老用户升级上来没这个键 → 读出默认值 MEDIUM，跟以前那一下「轻点」手感最接近。
+     * 注意：旧的 `lightTick` 受系统触感开关摆布，所以对某些人来说这一版
+     * 体感是「从没有变成有」—— 不是他记错了。
+     */
+    var hapticLevel: String
+        get() = sp.getString("hapticLevel", HapticLevel.MEDIUM.key) ?: HapticLevel.MEDIUM.key
+        set(v) = sp.edit().putString("hapticLevel", v).apply()
+
+    /**
      * 启动时自动检查更新（2026-10-03 加，**只有安卓版有**这个功能）。
      *
      * 默认**开** —— 这个 App 是发给朋友用的，没法上应用商店，

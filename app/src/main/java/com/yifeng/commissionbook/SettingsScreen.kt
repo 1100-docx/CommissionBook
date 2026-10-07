@@ -39,6 +39,7 @@ import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -228,6 +229,40 @@ fun SettingsScreen(
                                     AppAppearance.entries.forEach { a ->
                                         SlimChip(a.label, state.appearance == a) {
                                             state.switchAppearance(a)
+                                        }
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+
+                // ①.7 触感（2026-10-07 加）
+                //
+                // 逸风原话：「我发现 Android 版软件没有震动欸，加上震动，
+                // 同样是轻中重三档调节」。
+                //
+                // ⚠️ 「没震动」的真凶不是没写，是原来那条路（Compose 的
+                //    HapticFeedbackType）在 ColorOS 上等于没有 —— 详见 Haptics.kt。
+                //    这里只是把档位开关摆出来，实现在那边。
+                //
+                // 排列跟上面「深浅色」那行完全一致：图标 + 标题说明在左，
+                // 三颗胶囊靠右、同一行、垂直居中。
+                Column {
+                    SectionLabel(AppCtx.s(R.string.settings_haptic))
+                    InsetGroup {
+                        GroupRow(
+                            title = AppCtx.s(R.string.settings_haptic_title),
+                            subtitle = AppCtx.s(R.string.settings_haptic_desc),
+                            icon = Icons.Outlined.Vibration,
+                            divider = false,
+                            trailing = {
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    HapticLevel.entries.forEach { l ->
+                                        SlimChip(l.label, state.hapticLevel == l) {
+                                            // 换档那一瞬间自己就震一下（见 switchHaptic），
+                                            // 所以「选中」这件事不用再额外震。
+                                            state.switchHaptic(l)
                                         }
                                     }
                                 }
