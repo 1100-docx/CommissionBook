@@ -1,8 +1,8 @@
 {
-  "versionCode": 63,
-  "versionName": "3.5.39",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.39.apk",
+  "versionCode": 64,
+  "versionName": "3.5.40",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.5.40.apk",
   "size": 2239024,
-  "sha256": "2aae8b8e68f2a17eda66cebea5c05ad8636c7f6aa45afe6138a45aa773001297",
+  "sha256": "cf651d680745a33291874b917f6390354934fca8159f1137c2d445b75cdf9243",
   "notes": "· 重做了震动：以前点哪儿都「没感觉」，现在整个界面每一次点击都有一记轻震\n· 设置里能调，四档：关 / 轻 / 中 / 重\n· 跟 iOS 版对齐：都是整个窗口每一次点击都有反馈\n· 数据一条没动"
 }
