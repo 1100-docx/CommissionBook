@@ -63,12 +63,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalConfiguration
-import kotlinx.coroutines.launch
 
 /**
  * 参考图那几块界面（2026-10-03 加）。
@@ -225,18 +222,14 @@ fun PhotoViewer(
         pageCount = { items.size },
     )
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
-    // 关的时候先让 sheet 自己滑下去、动画走完再摘掉 —— 直接 onDismiss() 是「啪」一下硬切。
-    val close: () -> Unit = {
-        scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
-    }
 
     // ⚠️ 2026-10-07 大改：原来是「全屏 Dialog + 自己搭顶栏」，逸风真机报
-    //    「分享按钮又跟三大金刚键重合了」。他的提法：**点缩略图弹 Sheet，里面是大图，
-    //    顶上 ✕ 在左、对号在右**。改成 ModalBottomSheet 白捡三样：
+    //    「分享按钮又跟三大金刚键重合了」。他的提法：**点缩略图弹 Sheet，里面是大图**。
+    //    改成 ModalBottomSheet 白捡三样：
     //      ① 底部让位（`contentWindowInsets`）由 sheet 自己算，三大金刚键那档事不用管了；
-    //      ② 顶上是系统那套圆角 + 把手，天然原生；
+    //      ② 顶上是系统那套圆角 + 托柄，天然原生；
     //      ③ 不用再折腾 `decorFitsSystemWindows` / Dialog 窗口读不到 insets 那些坑。
+    //    ⚠️ 关掉的方式就是「往下拖托柄 / 点旁边黑边」，所以**顶上不摆 ✕**（见下面注释）。
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -248,23 +241,15 @@ fun PhotoViewer(
         val screenH = LocalConfiguration.current.screenHeightDp.dp
         Column(Modifier.fillMaxWidth().height(screenH * 0.86f)) {
 
-            // 顶栏：左上角一颗 ✕、页码居中。
-            // ⚠️ 2026-10-07：本来左右各一颗（✕ 在左、✓ 在右），逸风问「作用一样吗，一样就删掉一个」——
-            //    确实都是 close，所以只留左边这颗 ✕。
-            //    右边那个 `Spacer(size = 48.dp)` 是**占位**，跟左边那颗 IconButton 对称，页码才真居中；
-            //    想换成只留右边那颗对号：把 ✕ 那颗删了、占位挪到左边、图标换 `Icons.Outlined.Check`。
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            // 顶上只留页码，居中一行。
+            // ⚠️ 2026-10-07 逸风：「把 Android 版的叉号去掉吧，毕竟有小托柄了」——
+            //    对着呢：ModalBottomSheet 顶上那把**系统托柄**本身就是标准出口
+            //    （往下拖 = 关掉，点旁边黑边也关），再挂一颗 ✕ 是同一件事做两遍。
+            //    （iOS 那边没有托柄，左上角那颗 ✕ 还得留着。）
+            Box(
+                Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                IconButton(onClick = close) {
-                    Icon(
-                        Icons.Outlined.Close,
-                        contentDescription = AppCtx.s(R.string.common_cancel),
-                        tint = Color.White,
-                    )
-                }
-                Spacer(Modifier.weight(1f))
                 if (items.size > 1) {
                     Text(
                         "${pager.currentPage + 1} / ${items.size}",
@@ -273,8 +258,6 @@ fun PhotoViewer(
                         fontWeight = FontWeight.Medium,
                     )
                 }
-                Spacer(Modifier.weight(1f))
-                Spacer(Modifier.size(48.dp))
             }
 
             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
