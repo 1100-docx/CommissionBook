@@ -253,6 +253,11 @@ System: Android %4$s (API %5$s)
     <string name="common_delete_2">Delete</string>
     <string name="common_never_mind">Never Mind</string>
     <string name="common_share_failed">Share failed, try another way</string>
+    <string name="crash_title">It crashed last time</string>
+    <string name="crash_body">Send me the crash record? It only contains the crash reason, your device model and system version — none of your ledger data.</string>
+    <string name="crash_send">Send</string>
+    <string name="crash_mail">Send by email</string>
+    <string name="crash_later">Not now</string>
     <string name="common_more">More</string>
     <string name="ledger_unarchive">Unarchive</string>
     <string name="common_archive">Archive</string>

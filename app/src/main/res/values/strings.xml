@@ -244,6 +244,11 @@
     <string name="common_delete_2">删除</string>
     <string name="common_never_mind">算了</string>
     <string name="common_share_failed">分享失败，换个方式再试</string>
+    <string name="crash_title">上次崩了一次</string>
+    <string name="crash_body">要不要把崩溃记录发给我？里面只有崩溃原因、机型和系统版本，没有你的账本内容。</string>
+    <string name="crash_send">发出去</string>
+    <string name="crash_mail">发到邮箱</string>
+    <string name="crash_later">先不用</string>
     <string name="common_more">更多</string>
     <string name="ledger_unarchive">取消归档</string>
     <string name="common_archive">归档</string>

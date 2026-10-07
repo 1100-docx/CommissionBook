@@ -244,6 +244,11 @@
     <string name="common_delete_2">刪除</string>
     <string name="common_never_mind">算了</string>
     <string name="common_share_failed">分享失敗，換個方式再試</string>
+    <string name="crash_title">上次當機了一次</string>
+    <string name="crash_body">要不要把當機記錄寄給我？裡面只有當機原因、機型和系統版本，沒有你的帳本內容。</string>
+    <string name="crash_send">寄出去</string>
+    <string name="crash_mail">寄到信箱</string>
+    <string name="crash_later">先不用</string>
     <string name="common_more">更多</string>
     <string name="ledger_unarchive">取消歸檔</string>
     <string name="common_archive">歸檔</string>

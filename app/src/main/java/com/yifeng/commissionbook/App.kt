@@ -31,5 +31,8 @@ class App : Application() {
         super.onCreate()
         // 语言偏好也在这里读：通知渠道名是本地化字符串，冷启动时必须是对的语种。
         AppCtx.init(this, Prefs(this).appLanguage)
+        // 崩溃记录（2026-10-07 加）：越早装越好，装完这一行之后任何崩溃都能留下线索。
+        // ⚠️ 它**只写本地文件、不联网、不要权限**（见 CrashLog 的三条铁规矩）。
+        CrashLog.install(this)
     }
 }

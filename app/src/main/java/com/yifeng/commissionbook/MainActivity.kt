@@ -52,7 +52,9 @@ import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.PieChart
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -182,6 +184,8 @@ class MainActivity : FragmentActivity() {
         //    它的资源不跟着 Activity 走，必须在这里也包一层（见 AppCtx 的注释）。
         AppCtx.init(this, prefs.appLanguage)
         state = AppState(this)
+        // 上次是不是崩着退出的？是就补一条记录（原生崩溃抓不到堆栈，但面包屑在）—— 2026-10-07
+        CrashLog.checkAbnormalExit(this)
         applyPrivacyShield(prefs.lockEnabled)
         locked.value = prefs.lockEnabled
         // 这一版政策同意过没有？同意过才放行；没同意过 = 停同意页
@@ -340,6 +344,72 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
+                // 崩溃记录（2026-10-07 加）：上次崩过 → 弹一句问要不要发给我。
+                //
+                // ⚠️ 规矩：**必须用户自己点「发出去」才发**，绝不偷偷上报。
+                //    放在首启两层之后（模式问完、引导看完），不跟它们抢。
+                if (agreed.value && !locked.value && state.modeChosen && state.guideShown) {
+                    var crashAsk by remember { mutableStateOf<Pair<java.io.File, String>?>(null) }
+                    LaunchedEffect(Unit) { crashAsk = CrashLog.pending(this@MainActivity) }
+                    crashAsk?.let { (file, text) ->
+                        AlertDialog(
+                            onDismissRequest = { },
+                            title = { Text(AppCtx.s(R.string.crash_title)) },
+                            text = {
+                                Text(
+                                    AppCtx.s(R.string.crash_body),
+                                    fontSize = 13.5.sp,
+                                    lineHeight = 20.sp,
+                                )
+                            },
+                            confirmButton = {
+                                Row {
+                                    // 「发出去」= 系统分享面板（微信 / QQ 都行）
+                                    TextButton(onClick = {
+                                        CrashLog.markSeen(this@MainActivity, file)
+                                        crashAsk = null
+                                        val intent = shareText(this@MainActivity, text)
+                                        if (intent == null) {
+                                            toast(AppCtx.s(R.string.common_share_failed))
+                                        } else {
+                                            startActivity(
+                                                Intent.createChooser(intent, AppCtx.s(R.string.crash_title))
+                                            )
+                                        }
+                                    }) { Text(AppCtx.s(R.string.crash_send)) }
+
+                                    // 「发到邮箱」= 直接起邮件 App（逸风 2026-10-07 要的）
+                                    TextButton(onClick = {
+                                        val body = text
+                                        CrashLog.markSeen(this@MainActivity, file)
+                                        crashAsk = null
+                                        val started = runCatching {
+                                            startActivity(CrashLog.mailIntent(body))
+                                        }.isSuccess
+                                        if (!started) {
+                                            // 手机没装邮件 App → 兜底系统分享，别让人卡在这儿
+                                            val i = shareText(this@MainActivity, body)
+                                            if (i == null) {
+                                                toast(AppCtx.s(R.string.common_share_failed))
+                                            } else {
+                                                startActivity(
+                                                    Intent.createChooser(i, AppCtx.s(R.string.crash_title))
+                                                )
+                                            }
+                                        }
+                                    }) { Text(AppCtx.s(R.string.crash_mail)) }
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = {
+                                    CrashLog.markSeen(this@MainActivity, file)
+                                    crashAsk = null
+                                }) { Text(AppCtx.s(R.string.crash_later)) }
+                            },
+                        )
+                    }
+                }
+
             // 启动时静默检查一次更新（2026-10-03 加，**只有安卓版有**）
             //
             // 「静默」= 只在**真的发现新版本**时才冒出来。检查中、已是最新、
@@ -366,8 +436,16 @@ class MainActivity : FragmentActivity() {
         if (agreed.value && locked.value) unlock()
     }
 
+    override fun onStart() {
+        super.onStart()
+        // 会话心跳（2026-10-07 加）：前台时置标记，onStop 清掉。
+        // 下次启动发现标记还在 = 上次是崩着退出的 —— 这是「原生崩溃抓不到堆栈」的兜底线索。
+        CrashLog.onForeground(this)
+    }
+
     override fun onStop() {
         super.onStop()
+        CrashLog.onBackground(this)
         // 切后台 = 重新上锁；只是去选个文件的就不锁，免得回来又弹一次
         if (!expectingFileResult && prefs.lockEnabled) locked.value = true
     }
@@ -486,6 +564,20 @@ private fun RootScreen(
     var showCalculator by remember { mutableStateOf(false) }
     // 2026-10-06（只有安卓有）：支持作者页，同样盖一层
     var showSponsor by remember { mutableStateOf(false) }
+
+    // 面包屑（2026-10-07 加）：崩之前最后停在哪个页面 —— 这一行往往是崩溃日志里最有用的一条。
+    // ⚠️ 只记「页面名」，不碰任何账本内容。
+    val crumbCtx = LocalContext.current
+    val crumbNow = when {
+        showReport -> "年度报告"
+        showCalculator -> "报价计算器"
+        showFeedback -> "反馈"
+        showHelp -> "帮助"
+        showSponsor -> "支持作者"
+        showPrivacy -> "隐私政策"
+        else -> "主界面 · ${tabs[pager.currentPage].name}"
+    }
+    LaunchedEffect(crumbNow) { CrashLog.breadcrumb(crumbCtx, crumbNow) }
     // 2026-10-01：帮助页（同样盖一层）—— 状态在 MainActivity 那边（首启引导要够得着它）
 
     Box(Modifier.fillMaxSize()) {
