@@ -12,9 +12,8 @@ android {
         applicationId = "com.yifeng.commissionbook"
         minSdk = 26
         targetSdk = 36
-        // 2026-10-07：二维码传输落地，逸风定「这算一次大版本更新」→ 3.6.0
-        versionCode = 65
-        versionName = "3.6.0"
+        versionCode = 67
+        versionName = "3.6.1"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
@@ -76,13 +75,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
-
-    // 二维码传输（2026-10-07 加，见 QrTransfer.kt）
-    //   core     = 造二维码 + 把像素解回字符串（纯算法，不碰相机）
-    //   embedded = 现成的扫码界面：相机预览、取景框、权限申请都画好了，
-    //              比自己拿 CameraX 拼快得多，也少一堆坑。
-    implementation("com.google.zxing:core:3.5.3")
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

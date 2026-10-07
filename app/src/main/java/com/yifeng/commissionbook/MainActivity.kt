@@ -10,8 +10,6 @@ import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanOptions
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -117,41 +115,17 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    /**
-     * 扫码（2026-10-07 加，二维码传输）。
-     *
-     * ⚠️ 相机权限不用我们管：zxing 那个 CaptureActivity 自己会要（它就是这么设计的）。
-     *    我们要做的只是别忘了在 Manifest 里声明 CAMERA —— 不声明的话它连问都不问。
-     */
-    private val scanQr = registerForActivityResult(ScanContract()) { result ->
-        expectingFileResult = false
-        val text = result.contents ?: return@registerForActivityResult
-        when (val r = QrTransfer.unpack(text)) {
-            is QrTransfer.Result.Ok -> importBackupText(r.text)
-            QrTransfer.Result.NotReachable -> toast(AppCtx.s(R.string.qr_fail_wifi))
-            QrTransfer.Result.BadData -> toast(AppCtx.s(R.string.qr_fail_bad))
-            QrTransfer.Result.NotOurs -> toast(AppCtx.s(R.string.qr_fail_not_ours))
-        }
-    }
-
     private val openDoc = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         expectingFileResult = false
         if (uri == null) return@registerForActivityResult
-        Backup.readFrom(this, uri)?.let { importBackupText(it) }
-    }
-
-    /**
-     * 把一份备份文本导进 App —— 选文件恢复和扫码传输**走的是同一条路**
-     * （2026-10-07 提出来，原来这段直接写在 openDoc 里）。
-     *
-     * ⚠️ 2026-10-03：恢复时要把备份里的参考图也写回本机（备份带图，见 Backup.encode）。
-     *    图要**先落盘再 replaceAll** —— 反过来的话，replaceAll 里那次「清孤儿图」
-     *    会把刚恢复进来的图当成没人要的，当场删掉。
-     */
-    private fun importBackupText(text: String) {
-        val payload = Backup.decode(text) { name, bytes -> state.writePhotoBytes(name, bytes) }
+        // 2026-10-03：恢复时把备份里的参考图也写回本机（备份带图，见 Backup.encode）。
+        // ⚠️ 图要**先落盘再 replaceAll** —— 反过来的话，replaceAll 里那次「清孤儿图」
+        //    会把刚恢复进来的图当成没人要的，当场删掉。
+        val payload = Backup.readFrom(this, uri)?.let { text ->
+            Backup.decode(text) { name, bytes -> state.writePhotoBytes(name, bytes) }
+        }
         if (payload == null) {
             toast(AppCtx.s(R.string.common_backup_unreadable))
         } else {
@@ -293,17 +267,6 @@ class MainActivity : FragmentActivity() {
                                 expectingFileResult = true
                                 openDoc.launch(arrayOf("application/json", "text/plain", "*/*"))
                             },
-                            onQrScan = {
-                                expectingFileResult = true
-                                scanQr.launch(
-                                    ScanOptions()
-                                        .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                                        .setPrompt(AppCtx.s(R.string.qr_scan_prompt))
-                                        .setBeepEnabled(false)
-                                        .setOrientationLocked(false)
-                                )
-                            },
-                            onQrImport = { text -> importBackupText(text) },
                             onShare = { text, name ->
                                 val intent = Backup.share(this, name, text)
                                 if (intent == null) toast(AppCtx.s(R.string.common_share_failed_2)) else startActivity(intent)
@@ -474,8 +437,6 @@ private fun RootScreen(
     onShowHelp: (Boolean) -> Unit,
     onExport: (String) -> Unit,
     onImport: () -> Unit,
-    onQrScan: () -> Unit,
-    onQrImport: (String) -> Unit,
     onShare: (String, String) -> Unit,
     onSharePng: (android.graphics.Bitmap) -> Unit,
     onCopied: (String) -> Unit,
@@ -532,8 +493,6 @@ private fun RootScreen(
                         prefs = prefs,
                         onExport = onExport,
                         onImport = onImport,
-                        onQrScan = onQrScan,
-                        onQrImport = onQrImport,
                         onShare = onShare,
                         onOpenPrivacy = { showPrivacy = true },
                         onOpenFeedback = { showFeedback = true },

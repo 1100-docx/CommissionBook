@@ -4,12 +4,6 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- 相机（2026-10-07 加，二维码传输）：**只用来扫二维码**，扫完就走 ——
-         不拍照、不存照片、不上传。权限本身由 zxing 的扫码界面在用时现场申请，
-         但这里必须先声明，不然它连问都不会问。 -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <!-- 没相机的设备照样能装：只有扫码这一个功能需要它，其余照用 -->
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <!-- 2026-10-05 加：截止日提醒要**准点**响（19:00）。
          `setAndAllowWhileIdle` 是「不精确闹钟」，系统给的窗口是 **±1 小时**

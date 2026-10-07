@@ -399,7 +399,6 @@
     <string name="settings_haptic">觸感</string>
     <string name="settings_haptic_title">震動強度</string>
     <string name="settings_haptic_desc">點按時震一下，關 / 輕 / 中 / 重四檔可調。</string>
-    <string name="haptic_off">關</string>
     <string name="haptic_light">輕</string>
     <string name="haptic_medium">中</string>
     <string name="haptic_heavy">重</string>
@@ -496,7 +495,7 @@
     <string name="privacy_net_visible">· 但如實說：請求本身會讓對面看到你的 IP、請求了哪個檔案、什麼時間，還有請求標頭裡自報家門的 App 名字（CommissionBook-Android）—— 這是任何一次聯網都躲不掉的，本 App 改不了，也不替對方做保證。</string>
     <string name="privacy_net_mirror">· 還有一層：大陸直連 GitHub 常常不通，所以檢查更新會優先走公共加速鏡像（gh-proxy.com 這類公益站），請求也經過它們。它們是第三方，不是本 App 的伺服器。介意的話，把「設定 → 更新 → 啟動時自動檢查更新」關掉，App 就一次請求都不發。</string>
     <string name="settings_network_title">網路存取</string>
-    <string name="settings_network_desc">「檢查更新」用：只讀版本號，不上傳任何資料；二維碼傳輸時只在同一個 Wi-Fi 內、跟對面那支手機通訊</string>
+    <string name="settings_network_desc">「檢查更新」用：只讀版本號，不上傳任何資料</string>
     <string name="settings_network_off">關掉自動檢查後，App 不再主動聯網</string>
     <string name="settings_install_title">安裝未知應用程式</string>
     <string name="settings_install_desc">裝新版本時用：開啟系統安裝畫面，裝不裝由你按</string>
@@ -540,26 +539,5 @@
     <string name="privacy_support_body">App 內「支持作者」那一頁顯示的收款碼是靜態圖片，僅供自願支持使用。本 App 沒有任何內購或付費功能，不取得、不儲存、也不上傳任何付款資訊；支持與否、支持多少，都不影響你能用到的功能。</string>
 
 
-
-
-    <!-- 二维码传输（2026-10-07 加，见 QrTransfer.kt） -->
-    <string name="qr_entry">二維碼傳輸</string>
-    <string name="qr_entry_desc">舊手機出碼，新手機掃一下 —— 不出網，也不經伺服器。</string>
-    <string name="qr_role_title">這支手機是？</string>
-    <string name="qr_role_desc">新手機負責掃，舊手機負責出碼。</string>
-    <string name="qr_role_new">新手機（掃碼）</string>
-    <string name="qr_role_old">舊手機（出碼）</string>
-    <string name="qr_show_title">用新手機掃這張碼</string>
-    <string name="qr_show_desc">設定 → 備份與還原 → 二維碼傳輸 → 新手機（掃碼）</string>
-    <string name="qr_show_failed">沒造出碼：兩支手機先連上同一個 Wi-Fi 再試。</string>
-    <string name="qr_show_cant_draw">二維碼畫不出來，改用「分享備份」吧。</string>
-    <string name="qr_show_inline_hint">資料不大，這張碼裡就裝著全部內容 —— 不用連網。</string>
-    <string name="qr_show_lan_hint">資料較大（含參考圖），兩支手機請連同一個 Wi-Fi。</string>
-    <string name="qr_scan_prompt">對準舊手機上的二維碼</string>
-    <string name="qr_fail_wifi">連不上舊手機 —— 請確認兩支手機連的是同一個 Wi-Fi</string>
-    <string name="qr_fail_bad">碼掃到了，但裡面的資料讀不出來</string>
-    <string name="qr_fail_not_ours">這不是約稿帳本的碼</string>
-    <string name="settings_camera_title">相機</string>
-    <string name="settings_camera_desc">只在「二維碼傳輸 → 新手機（掃碼）」時用，掃完即走</string>
-    <string name="settings_camera_off">不拍照、不存照片、不上傳</string>
+    <string name="haptic_off">關</string>
 </resources>

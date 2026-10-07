@@ -1,8 +1,8 @@
 {
-  "versionCode": 65,
-  "versionName": "3.6.0",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.6.0.apk",
-  "size": 2387148,
-  "sha256": "fb6540f36ff708bde1a8781f63c256df31421c6db6faa8ece10aa6b725b72a77",
-  "notes": "· 新功能：二维码传输（设置 → 备份与恢复 → 二维码传输）\n· 旧手机出码、新手机扫一下，数据就搬过去了，不用再传文件\n· 数据不大时，全部内容就在那张码里，连网都不用\n· 数据大（带着参考图）时，两台手机连同一个 Wi-Fi 就行\n· 顺手把触感改成四档：关 / 轻 / 中 / 重\n· 数据一条没动"
+  "versionCode": 67,
+  "versionName": "3.6.1",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.6.1.apk",
+  "size": 2239196,
+  "sha256": "d7ed886aa9c13048f40bd5d4e5e540ab70a05d98cd1c7878eabdf7661c292099",
+  "notes": "· 撤掉了「二维码传输」——评估之后决定不做（它要给 App 加相机权限，代价比省下的那几步大）\n· 触感保留四档：关 / 轻 / 中 / 重\n· 权限表回到原来的样子，不申请相机\n· 数据一条没动"
 }
