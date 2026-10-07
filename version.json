@@ -1,8 +1,8 @@
 {
-  "versionCode": 67,
-  "versionName": "3.6.1",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.6.1.apk",
-  "size": 2239196,
-  "sha256": "d7ed886aa9c13048f40bd5d4e5e540ab70a05d98cd1c7878eabdf7661c292099",
-  "notes": "· 撤掉了「二维码传输」——评估之后决定不做（它要给 App 加相机权限，代价比省下的那几步大）\n· 触感保留四档：关 / 轻 / 中 / 重\n· 权限表回到原来的样子，不申请相机\n· 数据一条没动"
+  "versionCode": 68,
+  "versionName": "3.6.2",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.6.2.apk",
+  "size": 2242784,
+  "sha256": "8d6f36671de3b337a68181d171a8f0ff50cb87c1746ae9e87acd954f297be03c",
+  "notes": "· 新功能：导出 Excel 报表（设置 → 备份与恢复 → 导出 Excel 报表）\n· 导出一份 .xlsx，表里有画师、内容、总价、已付、未付、状态、日期、备注\n· 底下自动带四行合计（总价 / 已付 / 未付 / 条数），用 Excel 打开能自己算\n· 备注和内容里的特殊字符都处理过了，不会把表格撑坏\n· 顺便：本机不装 Excel 也能看，WPS、手机上的表格 App 都打得开\n· 数据一条没动"
 }

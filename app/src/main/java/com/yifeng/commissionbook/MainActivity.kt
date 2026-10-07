@@ -115,6 +115,32 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    /**
+     * 导出 Excel 报表（2026-10-07 加）。
+     *
+     * ⚠️ 走系统这个「存到哪」的界面（SAF），所以**不用任何存储权限** ——
+     *    跟导出 JSON 备份是同一条路。
+     * ⚠️ 字节先攒在 [pendingXlsx] 里：那个界面回来才知道用户选了哪个位置，
+     *    中间这段时间得有人拿着数据。
+     */
+    private var pendingXlsx: ByteArray? = null
+
+    private val createXlsx = registerForActivityResult(
+        ActivityResultContracts.CreateDocument(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    ) { uri: Uri? ->
+        expectingFileResult = false
+        val bytes = pendingXlsx
+        pendingXlsx = null
+        if (uri == null || bytes == null) return@registerForActivityResult
+        val ok = runCatching {
+            contentResolver.openOutputStream(uri, "wt")?.use { it.write(bytes) }
+            true
+        }.getOrDefault(false)
+        toast(if (ok) AppCtx.s(R.string.common_saved) else AppCtx.s(R.string.common_save_failed))
+    }
+
     private val openDoc = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -262,6 +288,11 @@ class MainActivity : FragmentActivity() {
                                 pendingText = text
                                 expectingFileResult = true
                                 createDoc.launch(Backup.fileName(manual = true))
+                            },
+                            onExportReport = {
+                                pendingXlsx = Report.buildXlsx(state.modeItems)
+                                expectingFileResult = true
+                                createXlsx.launch(Report.fileName())
                             },
                             onImport = {
                                 expectingFileResult = true
@@ -436,6 +467,7 @@ private fun RootScreen(
     showHelp: Boolean,
     onShowHelp: (Boolean) -> Unit,
     onExport: (String) -> Unit,
+    onExportReport: () -> Unit,
     onImport: () -> Unit,
     onShare: (String, String) -> Unit,
     onSharePng: (android.graphics.Bitmap) -> Unit,
@@ -492,6 +524,7 @@ private fun RootScreen(
                         state = state,
                         prefs = prefs,
                         onExport = onExport,
+                        onExportReport = onExportReport,
                         onImport = onImport,
                         onShare = onShare,
                         onOpenPrivacy = { showPrivacy = true },

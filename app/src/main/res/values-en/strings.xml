@@ -546,4 +546,27 @@ System: Android %4$s (API %5$s)
 
 
     <string name="haptic_off">Off</string>
+
+    <!-- 导出 Excel 报表（2026-10-07 加，见 Report.kt） -->
+    <string name="report_entry">Export Excel Report</string>
+    <string name="report_entry_desc">Exports an .xlsx you can open in Excel, WPS or Numbers</string>
+    <string name="report_file_prefix">CommissionBook-Report</string>
+    <string name="report_sheet_name">CommissionBook</string>
+    <string name="report_col_index">No.</string>
+    <string name="report_col_artist">Artist / Client</string>
+    <string name="report_col_title">Details</string>
+    <string name="report_col_total">Total</string>
+    <string name="report_col_paid">Paid</string>
+    <string name="report_col_unpaid">Unpaid</string>
+    <string name="report_col_status">Status</string>
+    <string name="report_col_date">Order Date</string>
+    <string name="report_col_deadline">Due Date</string>
+    <string name="report_col_archived">Archived</string>
+    <string name="report_col_note">Notes</string>
+    <string name="report_sum_count">Entries</string>
+    <string name="report_sum_total">Total Amount</string>
+    <string name="report_sum_paid">Total Paid</string>
+    <string name="report_sum_unpaid">Total Unpaid</string>
+    <string name="common_yes">Yes</string>
+    <string name="common_no">No</string>
 </resources>

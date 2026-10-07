@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Vibration
@@ -74,6 +75,10 @@ fun SettingsScreen(
     state: AppState,
     prefs: Prefs,
     onExport: (String) -> Unit,
+    // 导出 Excel 报表（2026-10-07 加，见 Report.kt）：
+    //   不传文本、也不传字节 —— 报表内容由 Activity 那边现算现拿（它够得着 AppState）。
+    //   这里只负责「用户点了这一行」。
+    onExportReport: () -> Unit,
     onImport: () -> Unit,
     onShare: (String, String) -> Unit,
     onOpenPrivacy: () -> Unit,
@@ -473,6 +478,15 @@ fun SettingsScreen(
                             icon = Icons.Outlined.Share,
                             // 2026-10-05 改：不再直接弹分享面板，先过一道隐私提醒
                             onClick = { askShare = true },
+                        )
+                        // 导出 Excel 报表（2026-10-07 加）。
+                        // 摆在这儿：上面三条是「备份 / 分享备份 / 恢复备份」这一组，
+                        // 报表是**另一种用途**（不是备份，是拿去用/给别人看），所以紧跟着备份那几行、别混进去。
+                        GroupRow(
+                            title = AppCtx.s(R.string.report_entry),
+                            subtitle = AppCtx.s(R.string.report_entry_desc),
+                            icon = Icons.Outlined.TableChart,
+                            onClick = onExportReport,
                         )
                         GroupRow(
                             title = AppCtx.s(R.string.settings_restore_from_file),

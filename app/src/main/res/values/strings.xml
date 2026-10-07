@@ -539,4 +539,27 @@
 
 
     <string name="haptic_off">关</string>
+
+    <!-- 导出 Excel 报表（2026-10-07 加，见 Report.kt） -->
+    <string name="report_entry">导出 Excel 报表</string>
+    <string name="report_entry_desc">导成 .xlsx，用 Excel / WPS / 表格软件打开</string>
+    <string name="report_file_prefix">约稿账本报表</string>
+    <string name="report_sheet_name">约稿账本</string>
+    <string name="report_col_index">序号</string>
+    <string name="report_col_artist">画师 / 客户</string>
+    <string name="report_col_title">内容</string>
+    <string name="report_col_total">总价</string>
+    <string name="report_col_paid">已付</string>
+    <string name="report_col_unpaid">未付</string>
+    <string name="report_col_status">状态</string>
+    <string name="report_col_date">下单日期</string>
+    <string name="report_col_deadline">截止日期</string>
+    <string name="report_col_archived">已归档</string>
+    <string name="report_col_note">备注</string>
+    <string name="report_sum_count">合计条数</string>
+    <string name="report_sum_total">总价合计</string>
+    <string name="report_sum_paid">已付合计</string>
+    <string name="report_sum_unpaid">未付合计</string>
+    <string name="common_yes">是</string>
+    <string name="common_no">否</string>
 </resources>
