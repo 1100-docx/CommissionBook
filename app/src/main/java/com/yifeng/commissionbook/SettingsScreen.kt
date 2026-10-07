@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Autorenew
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.SystemUpdate
 import android.content.Context
 import android.content.Intent
@@ -84,6 +85,12 @@ fun SettingsScreen(
     onOpenCalculator: () -> Unit,
     onOpenHelp: () -> Unit,
     onOpenSponsor: () -> Unit,
+    // 崩溃记录（2026-10-07 加）：崩过之后自己弹的那张单子还在，但**设置里也得有个入口** ——
+    // 逸风报「iOS 版设置里没有发送崩溃日志功能」，安卓这边一起补。
+    // 为什么必须在设置里能翻到：陌生用户崩了没法重装、也没法等下一次闪退，
+    // 得让她能自己翻出来发我。`crashCount` = 本机存着几条（0 时右边什么都不显示）。
+    crashCount: Int = 0,
+    onOpenCrashLog: () -> Unit = {},
 ) {
     val context = LocalContext.current
 
@@ -620,6 +627,15 @@ fun SettingsScreen(
                             subtitle = AppCtx.s(R.string.settings_feedback_desc),
                             icon = Icons.Outlined.Email,
                             onClick = onOpenFeedback,
+                        )
+                        // 崩溃记录（2026-10-07 加）：本机存着的崩溃记录，手动翻 / 手动发。
+                        // 右边那个数字**有记录才显示**（没记录不摆 0，不给红点压力）。
+                        GroupRow(
+                            title = AppCtx.s(R.string.crash_log_title),
+                            subtitle = AppCtx.s(R.string.crash_log_desc),
+                            icon = Icons.Outlined.BugReport,
+                            trailing = { if (crashCount > 0) InfoValue("$crashCount") },
+                            onClick = onOpenCrashLog,
                         )
                         GroupRow(title = AppCtx.s(R.string.common_count), subtitle = AppCtx.s(R.string.common_current_mode_all), trailing = { InfoValue(AppCtx.s(R.string.common_count_of_total, state.modeItems.size, state.items.size)) })
                         GroupRow(title = AppCtx.s(R.string.common_archived), trailing = { InfoValue("${state.modeItems.count { it.archived }} 条") })

@@ -322,15 +322,16 @@
     <string name="help_sample_white">示例 · 白毛</string>
     <string name="help_sample_chibi">Q 版头像（这是示例，可以删）</string>
     <string name="help_delivered_progress">已交付的卡片进度条是一整条绿</string>
-    <string name="privacy_last_updated">最后更新：2026 年 9 月 29 日</string>
+    <string name="privacy_last_updated">最后更新：2026 年 10 月 7 日</string>
     <string name="privacy_applicable_version">适用版本：安卓版 2.4（versionCode 12）及以后</string>
     <string name="privacy_intro">这个 App 不需要注册、不收集你的任何信息。你记的约稿数据只存在自己这台手机里；唯一的联网动作是「检查更新」—— 只读一个版本号，不上传任何内容。</string>
     <string name="privacy_section1_title">一、我们不收集任何信息</string>
     <string name="privacy_no_account">· 没有账号系统，不需要手机号、邮箱、实名认证</string>
     <string name="privacy_no_device_id">· 不采集设备标识（IMEI、Android ID、MAC 地址等）</string>
-    <string name="privacy_no_behavior">· 不采集使用行为、崩溃日志、位置信息</string>
+    <string name="privacy_no_behavior">· 不采集使用行为、位置信息</string>
     <string name="privacy_no_ads">· 没有广告，没有第三方统计 / 分析 SDK</string>
     <string name="privacy_no_server">· 没有服务器 —— 我们这边根本不存在一份你的数据</string>
+    <string name="privacy_no_crash">· 崩溃记录（2026-10-07 新加）：App 万一崩了，它会往这台手机里写一条记录（崩溃原因、机型、系统版本、最后停在哪个页面）—— 只写本机，不自动发送、不联网、不要任何额外权限。想发给作者的时候，你自己去「设置 → 关于 → 崩溃记录」点「发到邮箱」。里面没有你的账本内容：画师名、金额、稿件名一概不碰。</string>
     <string name="privacy_no_internet_permission">先把联网这件事说清楚：这一版加了「检查更新」，所以申请了「网络访问」（INTERNET）权限 —— 这是它唯一的用途。</string>
     <string name="privacy_permission_detail">它不会上传任何东西：检查更新只是下载一个几行字的版本号文件，请求里不带设备号、不带你的约稿内容、没有埋点统计。你在「设置 → 应用 → 约稿账本 → 权限」里看到的那个网络权限，就是这一件事用的。</string>
     <string name="privacy_data_storage_title">二、你录入的数据存在哪</string>
@@ -512,7 +513,7 @@
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">最后更新：2026 年 10 月 5 日（第四版 —— 加了「支持作者」那一页的说明：收款码是静态图片，App 没有任何内购或付费功能）</string>
+    <string name="privacy_policy_updated">最后更新：2026 年 10 月 7 日（第五版 —— 加了「崩溃记录」：只写在本机、不自动发送，用户自己点才发）</string>
     <string name="privacy_policy_scope">适用版本：安卓版 %1$s（versionCode %2$d）及以后</string>
     <string name="notify_default_title">一单约稿</string>
 
@@ -562,4 +563,19 @@
     <string name="wm_hint">水印只加在「看大图」和「分享出去」的那张上，原图一直是干净的 —— 改内容、颜色、浓淡，所有图立刻跟着变。</string>
     <string name="wm_empty_hint">还没填内容，这张图不会加水印</string>
     <string name="wm_share_photo">分享这张图</string>
+
+    <!-- 崩溃记录（2026-10-07 加）：设置 → 关于 的手动入口 -->
+    <string name="crash_log_title">崩溃记录</string>
+    <string name="crash_log_desc">只存在本机，你不点就不发</string>
+    <string name="crash_empty_title">还没有崩溃记录</string>
+    <string name="crash_empty_desc">App 正常用着就不会有。真崩过一次，这里会出现一条。</string>
+    <string name="crash_field_last_on">最后停在</string>
+    <string name="crash_kind_abnormal">异常退出（没有堆栈）</string>
+    <string name="crash_detail">详细内容</string>
+    <string name="crash_collapse">收起</string>
+    <string name="crash_clear_all">清空全部记录</string>
+    <string name="crash_clear_ask">清空后这些记录就找不回来了，确定吗？</string>
+    <string name="crash_clear_body">只是删掉本机这几个文本文件，账本数据一点都不动。</string>
+    <string name="crash_clear_ok">清空</string>
+    <string name="crash_note">崩溃记录只写在这台手机上 —— App 不联网、不要任何权限。里面没有你的账本内容：画师名、金额、稿件名一概不碰。只有你自己点「发到邮箱」，它才会离开这台手机。</string>
 </resources>

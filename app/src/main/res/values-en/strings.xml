@@ -331,15 +331,16 @@ System: Android %4$s (API %5$s)
     <string name="help_sample_white">Example · White Hair</string>
     <string name="help_sample_chibi">Chibi Avatar (this is an example, you can delete it)</string>
     <string name="help_delivered_progress">Delivered cards show a full green progress bar</string>
-    <string name="privacy_last_updated">Last updated: September 29, 2026</string>
+    <string name="privacy_last_updated">Last updated: 7 October 2026</string>
     <string name="privacy_applicable_version">Applies to: Android 2.4 (versionCode 12) and later</string>
     <string name="privacy_intro">This app requires no registration and collects none of your information. Your commission data stays on your own phone. Its only network activity is checking for updates, which reads a version number and uploads nothing.</string>
     <string name="privacy_section1_title">1. We Collect Nothing</string>
     <string name="privacy_no_account">· No account system — no phone number, email, or ID verification needed</string>
     <string name="privacy_no_device_id">· No device identifiers collected (IMEI, Android ID, MAC address, etc.)</string>
-    <string name="privacy_no_behavior">· No usage behavior, crash logs, or location data collected</string>
+    <string name="privacy_no_behavior">· No usage behavior or location data collected</string>
     <string name="privacy_no_ads">· No ads, no third-party analytics / tracking SDKs</string>
     <string name="privacy_no_server">· No servers — a copy of your data simply doesn\'t exist on our side</string>
+    <string name="privacy_no_crash">· Crash records (added 2026-10-07): if the app ever crashes, it writes one record to this phone only (crash reason, device model, system version, which screen you were last on) — stored locally, never sent automatically, no network access, no extra permissions. To send it to the author, open Settings → About → Crash log and tap "Send by email" yourself. It contains none of your ledger data: no artist names, amounts or commission titles.</string>
     <string name="privacy_no_internet_permission">Let us be clear about networking first: this version added update checks, so it requests the INTERNET permission — that is its only use.</string>
     <string name="privacy_permission_detail">It uploads nothing: checking for updates only downloads a tiny version file, with no device ID, no commission content and no analytics. The network permission you see under Settings → Apps → Commission Ledger → Permissions exists for that one purpose.</string>
     <string name="privacy_data_storage_title">2. Where Your Data Is Stored</string>
@@ -520,7 +521,7 @@ System: Android %4$s (API %5$s)
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">Last updated: 5 October 2026 (revision 4 - a note about the Support the author page was added: the payment code is a static image, and the app has no in-app purchases or paid features)</string>
+    <string name="privacy_policy_updated">Last updated: 7 October 2026 (revision 5 - crash records were added: stored on this phone only, never sent automatically, only sent if you tap it yourself)</string>
     <string name="privacy_policy_scope">Applies to: Android %1$s (versionCode %2$d) and later</string>
     <string name="notify_default_title">Untitled commission</string>
 
@@ -569,4 +570,19 @@ System: Android %4$s (API %5$s)
     <string name="wm_hint">The watermark is only added to the image you view or share — the original file stays clean. Change the text, colour or opacity and every image follows instantly.</string>
     <string name="wm_empty_hint">No text yet — this image won\'t be watermarked</string>
     <string name="wm_share_photo">Share this image</string>
+
+    <!-- 崩溃记录（2026-10-07 加）：设置 → 关于 的手动入口 -->
+    <string name="crash_log_title">Crash log</string>
+    <string name="crash_log_desc">On this phone only — nothing is sent unless you send it</string>
+    <string name="crash_empty_title">No crash records</string>
+    <string name="crash_empty_desc">Nothing appears here while the app runs normally. If it ever crashes, one entry shows up.</string>
+    <string name="crash_field_last_on">Last on</string>
+    <string name="crash_kind_abnormal">Abnormal exit (no stack trace)</string>
+    <string name="crash_detail">Details</string>
+    <string name="crash_collapse">Collapse</string>
+    <string name="crash_clear_all">Clear all records</string>
+    <string name="crash_clear_ask">These records can\'t be recovered once cleared. Sure?</string>
+    <string name="crash_clear_body">This only deletes these text files on this phone. Your ledger data is untouched.</string>
+    <string name="crash_clear_ok">Clear</string>
+    <string name="crash_note">Crash records are written to this phone only — the app has no network access and needs no permissions. They contain none of your ledger data: no artist names, amounts or commission titles. They leave your phone only when you tap "Send by email" yourself.</string>
 </resources>

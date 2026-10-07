@@ -124,6 +124,63 @@ object CrashLog {
         p.edit().putStringSet("seen", seen).apply()
     }
 
+    /**
+     * 一条记录（2026-10-07 加）。
+     *
+     * 之前的 `pending()` 只吐「文件 + 一整段文字」，够弹单子用；
+     * 但要摆成一屏给人看，就得把里头那几行拆开 —— 时间、类型、最后停在哪各占一行，
+     * 堆栈折起来藏好（上来就铺一整屏堆栈会吓人）。
+     */
+    class Record internal constructor(val file: File, val text: String) {
+
+        /** 「时间：2026-10-07 14:12:33」；信号那份没写这行，退回用文件时间 */
+        val time: String = line("时间").ifBlank { tsFmt.format(Date(file.lastModified())) }
+
+        /** 「类型：Java 异常」→「Java 异常」（空串时界面自己兜底一句本地化文案） */
+        val kind: String = line("类型")
+
+        /** 「最后停在：年度报告」→「年度报告」；没记到就给空串，界面不显示这行 */
+        val lastOn: String = line("最后停在").let { if (it == "（没记到）") "" else it }
+
+        /** 给人看的那段正文 —— 头几行（机型/系统/指纹）已经在卡片上单列了，这里跳过 */
+        val detail: String = text.lineSequence()
+            .filterNot { s -> HEAD_KEYS.any { s.startsWith("$it：") } }
+            .joinToString("\n")
+            .trim()
+            .ifBlank { text }
+
+        /** 取「键：值」里的「值」。取不到给空串 —— 老记录格式不完全一样，不能崩 */
+        private fun line(key: String): String = text.lineSequence()
+            .firstOrNull { it.startsWith("$key：") }
+            ?.substringAfter("：")?.trim()
+            ?: ""
+
+        private companion object {
+            val tsFmt = SimpleDateFormat("MM-dd HH:mm", Locale.CHINA)
+            val HEAD_KEYS = listOf("时间", "App", "类型", "包", "版本", "机型", "系统", "品牌 / 硬件", "系统显示版本", "指纹", "语言", "最后停在")
+        }
+    }
+
+    /**
+     * 设置页「崩溃记录」那一行用：本机存着的记录**全摆出来**（新的在前）。
+     *
+     * 跟 `pending()` 的区别：那个只挑「还没给用户看过的」，用来决定弹不弹单子；
+     * 这个是给用户自己翻的 —— 想发哪条发哪条，不用等它崩完自己弹。
+     */
+    fun allRecords(c: Context): List<Record> {
+        prune(c)
+        return dir(c).listFiles { it -> it.isFile && it.name.endsWith(".txt") }
+            ?.sortedByDescending { it.lastModified() }
+            ?.mapNotNull { f -> runCatching { f.readText() }.getOrNull()?.let { Record(f, it) } }
+            ?: emptyList()
+    }
+
+    /** 用户自己点「清空全部记录」时调。**只删本机这几个文本文件**，别的什么都不碰 */
+    fun clearAll(c: Context) {
+        runCatching { dir(c).listFiles()?.forEach { it.delete() } }
+        sp(c).edit().remove("seen").apply()
+    }
+
     // ---------- 内容 ----------
 
     private fun head(c: Context, kind: String): String = buildString {

@@ -66,7 +66,7 @@ import androidx.compose.ui.unit.sp
  * 存进 [Prefs.privacyAgreedVersion]：**以后政策改了就改这个字符串**，
  * App 下次启动会自动再弹一次同意页（改了什么也没瞒着人）。
  */
-const val POLICY_VERSION = "2026-10-05.4"
+const val POLICY_VERSION = "2026-10-07.5"
 
 /** 政策正文：一段标题 + 若干段正文 */
 private data class PolicySection(val heading: String, val body: List<String>)
@@ -118,6 +118,10 @@ private val policySections: List<PolicySection> get() = listOf(
             AppCtx.s(R.string.privacy_no_behavior),
             AppCtx.s(R.string.privacy_no_ads),
             AppCtx.s(R.string.privacy_no_server),
+            // 2026-10-07 加：原来那句「不采集崩溃日志」在这天变成**不准确**了 ——
+            // 加了崩溃记录，确实会往本机写一条。声明不能拿旧话混过去，
+            // 所以老老实实单开一条，写清「写在哪、会不会发、里面有什么」。iOS 那边同改。
+            AppCtx.s(R.string.privacy_no_crash),
             AppCtx.s(R.string.privacy_no_internet_permission),
             AppCtx.s(R.string.privacy_permission_detail),
             // 2026-10-03 加：这一版起有联网了（检查更新），单独列出来讲清楚 ——

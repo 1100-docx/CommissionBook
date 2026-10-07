@@ -322,15 +322,16 @@
     <string name="help_sample_white">示例 · 白毛</string>
     <string name="help_sample_chibi">Q 版頭像（這是示例，可以刪）</string>
     <string name="help_delivered_progress">已交付的卡片進度條是一整條綠</string>
-    <string name="privacy_last_updated">最後更新：2026 年 9 月 29 日</string>
+    <string name="privacy_last_updated">最後更新：2026 年 10 月 7 日</string>
     <string name="privacy_applicable_version">適用版本：安卓版 2.4（versionCode 12）及以後</string>
     <string name="privacy_intro">這個 App 不需要註冊、不收集你的任何資訊。你記的約稿資料只存在你自己這臺手機裡；唯一的聯網動作是「檢查更新」—— 只讀一個版本號，不上傳任何內容。</string>
     <string name="privacy_section1_title">一、我們不收集任何資訊</string>
     <string name="privacy_no_account">· 沒有賬號系統，不需要手機號、郵箱、實名認證</string>
     <string name="privacy_no_device_id">· 不採集裝置標識（IMEI、Android ID、MAC 地址等）</string>
-    <string name="privacy_no_behavior">· 不採集使用行為、崩潰日誌、位置資訊</string>
+    <string name="privacy_no_behavior">· 不採集使用行為、位置資訊</string>
     <string name="privacy_no_ads">· 沒有廣告，沒有第三方統計 / 分析 SDK</string>
     <string name="privacy_no_server">· 沒有伺服器 —— 我們這邊根本不存在一份你的資料</string>
+    <string name="privacy_no_crash">· 當機記錄（2026-10-07 新加）：App 萬一當掉，它會往這台手機裡寫一筆記錄（當機原因、機型、系統版本、最後停在哪一頁）—— 只寫本機，不會自動送出、不連網、不需要任何額外權限。想寄給作者的時候，你自己去「設定 → 關於 → 當機記錄」點「寄到信箱」。裡面沒有你的帳本內容：畫師名、金額、稿件名一概不碰。</string>
     <string name="privacy_no_internet_permission">先把聯網這件事說清楚：這一版加了「檢查更新」，所以申請了「網路存取」（INTERNET）權限 —— 這是它唯一的用途。</string>
     <string name="privacy_permission_detail">它不會上傳任何東西：檢查更新只是下載一個幾行字的版本號檔案，請求裡不帶裝置編號、不帶你的約稿內容、沒有埋點統計。你在「設定 → 應用程式 → 約稿賬本 → 權限」裡看到的那個網路權限，就是這一件事用的。</string>
     <string name="privacy_data_storage_title">二、你錄入的資料存在哪</string>
@@ -514,7 +515,7 @@
 
     <!-- 2026-10-03 加：这几条原来写死在代码里，没进语言包 ——
          切英文时隐私政策会蹦出两行中文、提醒会蹦出「一单约稿」。 -->
-    <string name="privacy_policy_updated">最後更新：2026 年 10 月 5 日（第四版 —— 加了「支持作者」那一頁的說明：收款碼是靜態圖片，App 沒有任何內購或付費功能）</string>
+    <string name="privacy_policy_updated">最後更新：2026 年 10 月 7 日（第五版 —— 加了「當機記錄」：只寫在本機、不會自動送出，使用者自己點才會送）</string>
     <string name="privacy_policy_scope">適用版本：安卓版 %1$s（versionCode %2$d）及以後</string>
     <string name="notify_default_title">一單約稿</string>
 
@@ -563,4 +564,19 @@
     <string name="wm_hint">浮水印只加在「看大圖」和「分享出去」的那張上，原圖一直是乾淨的 —— 改內容、顏色、濃淡，所有圖立刻跟著變。</string>
     <string name="wm_empty_hint">還沒填內容，這張圖不會加浮水印</string>
     <string name="wm_share_photo">分享這張圖</string>
+
+    <!-- 崩溃记录（2026-10-07 加）：设置 → 关于 的手动入口 -->
+    <string name="crash_log_title">當機記錄</string>
+    <string name="crash_log_desc">只存在本機，你不點就不會送出</string>
+    <string name="crash_empty_title">還沒有當機記錄</string>
+    <string name="crash_empty_desc">App 正常運作就不會有。真的當機過一次，這裡會出現一筆。</string>
+    <string name="crash_field_last_on">最後停在</string>
+    <string name="crash_kind_abnormal">異常結束（沒有堆疊）</string>
+    <string name="crash_detail">詳細內容</string>
+    <string name="crash_collapse">收合</string>
+    <string name="crash_clear_all">清除全部記錄</string>
+    <string name="crash_clear_ask">清除後這些記錄就找不回來了，確定嗎？</string>
+    <string name="crash_clear_body">只是刪掉本機這幾個文字檔，帳本資料一點都不會動。</string>
+    <string name="crash_clear_ok">清除</string>
+    <string name="crash_note">當機記錄只寫在這台手機上 —— App 不連網、不需要任何權限。裡面沒有你的帳本內容：畫師名、金額、稿件名一概不碰。只有你自己點「寄到信箱」，它才會離開這台手機。</string>
 </resources>

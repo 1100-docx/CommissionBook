@@ -62,6 +62,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -564,6 +565,12 @@ private fun RootScreen(
     var showCalculator by remember { mutableStateOf(false) }
     // 2026-10-06（只有安卓有）：支持作者页，同样盖一层
     var showSponsor by remember { mutableStateOf(false) }
+    // 2026-10-07：崩溃记录页（同样盖一层，跟隐私政策 / 反馈页一套出场方式）
+    var showCrashLog by remember { mutableStateOf(false) }
+    // 本机存着几条崩溃记录 —— 设置页那一行右边显示个数。
+    // ⚠️ 每次关掉崩溃记录页都要重数（用户可能在里头点了「清空全部记录」），
+    //    真正的重数逻辑在下面拿到 context 之后（这里先只声明状态）。
+    var crashCount by remember { mutableIntStateOf(0) }
 
     // 面包屑（2026-10-07 加）：崩之前最后停在哪个页面 —— 这一行往往是崩溃日志里最有用的一条。
     // ⚠️ 只记「页面名」，不碰任何账本内容。
@@ -574,10 +581,18 @@ private fun RootScreen(
         showFeedback -> "反馈"
         showHelp -> "帮助"
         showSponsor -> "支持作者"
+        showCrashLog -> "崩溃记录"
         showPrivacy -> "隐私政策"
         else -> "主界面 · ${tabs[pager.currentPage].name}"
     }
     LaunchedEffect(crumbNow) { CrashLog.breadcrumb(crumbCtx, crumbNow) }
+
+    // 崩溃记录条数：进/出崩溃记录页都重数一遍（清了空就变 0），设置页那行右边跟着走。
+    // ⚠️ 用 `crumbCtx` 而不是 `this@MainActivity` —— 这块 ui 代码不在 Activity 类体内，
+    //    写 `this@MainActivity` 编译器报「Unresolved label」（刚踩过）。
+    LaunchedEffect(showCrashLog) {
+        if (!showCrashLog) crashCount = CrashLog.allRecords(crumbCtx).size
+    }
     // 2026-10-01：帮助页（同样盖一层）—— 状态在 MainActivity 那边（首启引导要够得着它）
 
     Box(Modifier.fillMaxSize()) {
@@ -624,6 +639,8 @@ private fun RootScreen(
                             onShowHelp(true)
                         },
                         onOpenSponsor = { showSponsor = true },
+                        crashCount = crashCount,
+                        onOpenCrashLog = { showCrashLog = true },
                     )
                 }
             }
@@ -645,6 +662,15 @@ private fun RootScreen(
             exit = fadeOut(tween(150)),
         ) {
             FeedbackScreen(onBack = { showFeedback = false })
+        }
+
+        // 崩溃记录页（2026-10-07 加）：同一套出场方式，别三个页面三种动静
+        AnimatedVisibility(
+            visible = showCrashLog,
+            enter = fadeIn(tween(200)) + slideInVertically(tween(260)) { it / 14 },
+            exit = fadeOut(tween(150)),
+        ) {
+            CrashLogScreen(onBack = { showCrashLog = false })
         }
 
         // ① 年度报告（2026-09-30 第三批）：同一套出场方式
