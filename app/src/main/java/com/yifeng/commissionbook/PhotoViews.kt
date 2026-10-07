@@ -62,8 +62,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalConfiguration
+import kotlinx.coroutines.launch
 
 /**
  * 参考图那几块界面（2026-10-03 加）。
@@ -71,7 +77,7 @@ import androidx.compose.ui.window.DialogProperties
  * 三样东西：
  *  - [PhotoThumb]  一张缩略小方块（解码是**按需缩**的，不直接把几 MB 的原图塞进内存）
  *  - [PhotoStrip]  表单里那一排「缩略图 + 加图钮」
- *  - [PhotoViewer] 点开看大图（整屏、左右翻，跟系统相册一个手感）
+ *  - [PhotoViewer] 点缩略图弹 Sheet 看大图（左右翻，顶栏 ✕ 在左 / ✓ 在右）
  *
  * ⚠️ 缩略图**每次重组都重解一遍**是有意为之：一条单最多 6 张、每张解一次几毫秒，
  *    比在这儿维护一个位图缓存简单得多，也不会因为缓存没清干净把内存吃满。
@@ -192,11 +198,16 @@ fun PhotoStrip(
 }
 
 /**
- * 整屏看大图：左右翻页 + 底下「2 / 5」+ 那颗「加说明 / 改说明」+ 左上角 ✕
+ * 看大图（2026-10-07 改成 Sheet）。
  *
- * 说明就在这儿写（2026-10-04 加）—— 缩略图太小放不下输入框，
- * 而且写说明的时候眼睛正看着这张图，放这儿最顺。跟 iOS 端同一套交互。
+ * 点缩略图 → 底下弹起这张 Sheet：里头是大图、能左右翻，顶栏 ✕ 在左、页码居中、✓ 在右。
+ * 跟 iOS 那边同一套（iOS 走系统 sheet + 原生 toolbar 两颗按钮）。
+ *
+ * ⚠️ 以前是个**全屏 Dialog**，顶上那颗 ✕、底下页码、还有那颗分享都得自己搭，
+ *    结果按钮一次次顶到系统导航栏上（逸风连报两次）。换成 ModalBottomSheet 之后
+ *    底部让位、圆角、动画全归系统管，自己不再碰 inset。
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhotoViewer(
     items: List<Photo>,
@@ -214,22 +225,61 @@ fun PhotoViewer(
         initialPage = startIndex.coerceIn(0, items.size - 1),
         pageCount = { items.size },
     )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    // 关的时候先让 sheet 自己滑下去、动画走完再摘掉 —— 直接 onDismiss() 是「啪」一下硬切。
+    val close: () -> Unit = {
+        scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
+    }
 
-    // ⚠️ `decorFitsSystemWindows = false` 是 2026-10-05 为「加说明跟三大金刚键重合」加的：
-    //    这是个 Dialog（**另一个窗口**）。默认那个窗口自己 fit 系统栏，于是窗口里读到的
-    //    `WindowInsets.navigationBars` 是 0 —— 底下加多少 padding 都没用（逸风报「问题依旧」
-    //    就是这个原因，改 padding 改不动）。
-    //    关掉这个 fit，窗口真·边到边，insets 才会如实报进来，
-    //    下面那行 `windowInsetsPadding(WindowInsets.navigationBars)` 才生效。
-    //    ⚠️ 代价：顶上那颗 ✕ 也会跟着钻到状态栏底下，所以它那边补了 statusBars（见下）。
-    Dialog(
+    // ⚠️ 2026-10-07 大改：原来是「全屏 Dialog + 自己搭顶栏」，逸风真机报
+    //    「分享按钮又跟三大金刚键重合了」。他的提法：**点缩略图弹 Sheet，里面是大图，
+    //    顶上 ✕ 在左、对号在右**。改成 ModalBottomSheet 白捡三样：
+    //      ① 底部让位（`contentWindowInsets`）由 sheet 自己算，三大金刚键那档事不用管了；
+    //      ② 顶上是系统那套圆角 + 把手，天然原生；
+    //      ③ 不用再折腾 `decorFitsSystemWindows` / Dialog 窗口读不到 insets 那些坑。
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
-        ),
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = Color.Black,
+        contentColor = Color.White,
     ) {
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
+        // ⚠️ 高度写死：不写的话 sheet 会「图片多高它就多高」，左右翻页时上下乱跳。
+        val screenH = LocalConfiguration.current.screenHeightDp.dp
+        Column(Modifier.fillMaxWidth().height(screenH * 0.86f)) {
+
+            // 顶栏：✕ 在左、页码居中、✓ 在右（跟 iOS 那边一颗一颗对上）
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = close) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = AppCtx.s(R.string.common_cancel),
+                        tint = Color.White,
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                if (items.size > 1) {
+                    Text(
+                        "${pager.currentPage + 1} / ${items.size}",
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = close) {
+                    Icon(
+                        Icons.Outlined.Check,
+                        contentDescription = AppCtx.s(R.string.common_done),
+                        tint = Color.White,
+                    )
+                }
+            }
+
             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     val bmp = remember(items[page].name) { Photos.thumbnail(pathFor(items[page].name), 2200) }
@@ -290,105 +340,8 @@ fun PhotoViewer(
                     }
                 }
             }
-            Box(
-                Modifier
-                    .align(Alignment.TopStart)
-                    // 窗口边到边之后顶栏不再自动让位，这颗 ✕ 得自己躲状态栏 ——
-                    // 跟底部那摞躲导航栏是一对，别只修一边。
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(12.dp)
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.16f))
-                    .clickable { onDismiss() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Outlined.Close,
-                    contentDescription = AppCtx.s(R.string.common_cancel),
-                    tint = Color.White,
-                    modifier = Modifier.size(19.dp),
-                )
-            }
-
-            // 底部那一摞：说明（有才显示）→ 页码 → 「加说明 / 改说明」
-            Column(
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    // ⚠️ 必须让开系统导航栏 —— 安卓 15 起内容被强制画到系统栏底下（边到边），
-                    //    系统自带的底栏会自己躲，这一摞是自己搭的，不躲就顶到三大金刚键上。
-                    //    逸风 2026-10-05 真机报「图片备注按钮太靠下，会跟三大金刚键重合」——
-                    //    就是漏了这一行（1.7 那次主底栏栽过同一个坑，见 MainActivity 的注释）。
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-
-                if (items.size > 1) {
-                    Text(
-                        "${pager.currentPage + 1} / ${items.size}",
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(Color.White.copy(alpha = 0.14f))
-                            .padding(horizontal = 12.dp, vertical = 5.dp),
-                    )
-                }
-
-            }
-
-            // 分享这张图（2026-10-07 加，当天从底部挪到右上角）。
-            // ⚠️ 一开始它跟页码一起蹲在底部那一摞里，逸风真机报「又跟三大金刚键重合了」——
-            //    底部那块地方已经在「加说明」上栽过一次（见上面 navigationBars 那段），
-            //    别再往那儿塞东西。挪到顶上跟 ✕ 对面：上面只有状态栏，
-            //    跟 ✕ 一个写法（statusBars + 12dp + 36dp 圆），谁来都压不着。
-            // ⚠️ 水印一开，**发出去的就是带水印那张** —— 这才是水印的用处所在：
-            //    不然图根本出不去，水印只能在这台手机上自己看。
-            val ctx = LocalContext.current
-            Box(
-                Modifier
-                    .align(Alignment.TopEnd)
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(12.dp)
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.16f))
-                    .clickable {
-                        val photo = items[pager.currentPage]
-                        // ⚠️ 分享要用**大图**：屏幕上那张是 2200 的缩略图，
-                        //    发出去得重新取一张（上限 4096），再往上烧水印。
-                        val full = Photos.thumbnail(pathFor(photo.name), 4096)
-                        if (full == null) {
-                            toastNow(ctx, AppCtx.s(R.string.photos_missing))
-                        } else {
-                            val out = watermark?.let { Watermark.stamp(full, it) } ?: full
-                            val name = photo.name.substringBeforeLast('.') + ".png"
-                            val intent = sharePng(ctx, out, name)
-                            if (intent == null) {
-                                toastNow(ctx, AppCtx.s(R.string.common_share_failed_2))
-                            } else {
-                                ctx.startActivity(
-                                    Intent.createChooser(intent, AppCtx.s(R.string.wm_share_photo))
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                )
-                            }
-                        }
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Outlined.Share,
-                    contentDescription = AppCtx.s(R.string.wm_share_photo),
-                    tint = Color.White,
-                    modifier = Modifier.size(19.dp),
-                )
-            }
         }
     }
-
 }
 
 /** 卡片上那枚小角标：一张图 + 张数。没图就什么都不画（布局一点不动） */
