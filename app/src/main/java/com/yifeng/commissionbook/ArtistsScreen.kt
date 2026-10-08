@@ -1,5 +1,7 @@
 package com.yifeng.commissionbook
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,6 +75,21 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
         .sortedByDescending { it.list.size }
 
     var editing by remember { mutableStateOf<ArtistGroup?>(null) }
+    // 改名字（2026-10-08 加）：跟备注分开一个弹窗 —— 两个输入框塞一个框里会看不清
+    var renaming by remember { mutableStateOf<ArtistGroup?>(null) }
+    var renameText by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    // 换头像（2026-10-08 加）：走系统「挑一张图」——
+    // ⚠️ **不要相册权限**：ACTION_GET_CONTENT（安卓 13+ 会直接给系统的照片选择器）
+    //    只把你亲手挑中的那一张交给我们，跟参考图那条路一个道理。
+    val pickAvatar = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        val g = editing
+        if (uri != null && g != null) {
+            Avatars.setFromUri(context, it0(g.name), uri)
+        }
+    }
+
     val listState = rememberLazyListState()
 
     ScreenSurface(modifier) {
@@ -101,14 +119,41 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
 
     editing?.let { g ->
         var text by remember(g.name) { mutableStateOf(state.notes[it0(g.name)] ?: "") }
+        val hasAvatar = Avatars.base64For(it0(g.name)) != null
         AlertDialog(
             onDismissRequest = { editing = null },
             shape = RoundedCornerShape(24.dp),
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    AvatarBubble(g.name, size = 34.dp)
-                    Spacer(Modifier.width(10.dp))
-                    Text(g.name, fontWeight = FontWeight.Bold)
+                    // 头像（2026-10-08）：这里就是设头像的地方 —— 画大一点，改完当场看得清
+                    AvatarBubble(g.name, size = 58.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(g.name, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(2.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(
+                                onClick = { pickAvatar.launch("image/*") },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                modifier = Modifier.height(32.dp),
+                            ) { Text(AppCtx.s(R.string.avatar_change), fontSize = 13.sp) }
+
+                            // 没设过就不显示「移除」—— 一个点了没反应的按钮比没有更烦
+                            if (hasAvatar) {
+                                TextButton(
+                                    onClick = { Avatars.remove(it0(g.name)) },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(32.dp),
+                                ) {
+                                    Text(
+                                        AppCtx.s(R.string.avatar_remove),
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             },
             text = {
@@ -126,6 +171,18 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    Spacer(Modifier.height(4.dp))
+                    // 改名字：名字是这一页的「身份证」（约稿、备注、头像全按它挂），
+                    // 所以放进这个人的编辑框里，跟备注挨着
+                    TextButton(
+                        onClick = {
+                            renameText = g.name
+                            renaming = g
+                            editing = null
+                        },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        modifier = Modifier.height(36.dp),
+                    ) { Text(AppCtx.s(R.string.avatar_rename), fontSize = 13.sp) }
                 }
             },
             confirmButton = {
@@ -135,6 +192,43 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 }) { Text(AppCtx.s(R.string.common_save), fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = { TextButton(onClick = { editing = null }) { Text(AppCtx.s(R.string.common_cancel)) } },
+        )
+    }
+
+    // 改名字（2026-10-08 加）：跟 iOS 版同语义 ——
+    // 这个人名下**所有**条目一起改（两个模式都算），备注和头像跟着搬。
+    renaming?.let { g ->
+        AlertDialog(
+            onDismissRequest = { renaming = null },
+            shape = RoundedCornerShape(24.dp),
+            title = { Text(AppCtx.s(R.string.avatar_rename), fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = renameText,
+                        onValueChange = { renameText = it },
+                        placeholder = { Text(AppCtx.s(R.string.avatar_new_name)) },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        AppCtx.s(R.string.avatar_rename_note),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = renameText.isNotBlank(),
+                    onClick = {
+                        state.renameArtist(it0(g.name), renameText)
+                        renaming = null
+                    },
+                ) { Text(AppCtx.s(R.string.avatar_rename), fontWeight = FontWeight.SemiBold) }
+            },
+            dismissButton = { TextButton(onClick = { renaming = null }) { Text(AppCtx.s(R.string.common_cancel)) } },
         )
     }
 }

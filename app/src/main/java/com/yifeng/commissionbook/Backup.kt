@@ -12,13 +12,30 @@ import java.util.Date
 import java.util.Locale
 
 /**
+ * 一份备份解析出来的三样东西。
+ *
+ * ⚠️ [avatars] 是**可空**的，这不是多余 —— 跟别的字段不一样：
+ *    「备份里没有 artistAvatars」和「备份里 artistAvatars 是空的」
+ *    是两件不同的事。老备份属于前者 —— 那种时候恢复**不该动**本机现有的头像。
+ */
+data class BackupData(
+    val items: List<Commission>,
+    val notes: Map<String, String>,
+    val avatars: Map<String, String>?,
+)
+
+/**
  * 备份 / 恢复。
  *
  * ⚠️ **格式跟 iOS 版完全一致**，同一份 JSON 两边都能读：
  * ```json
- * { "commissions": [ ... ], "artistNotes": { "画师A": "微信 xxx" } }
+ * { "commissions": [ ... ], "artistNotes": { "画师A": "微信 xxx" },
+ *   "artistAvatars": { "画师A": "<base64 的 JPEG>" } }
  * ```
  * 所以 iOS 的备份能导进安卓，安卓的也能导回 iOS。
+ *
+ * `artistAvatars` 是 2026-10-08 加的（头像）—— 一本都没设就不写这个键，
+ * 老备份长什么样、新备份还长什么样。
  */
 object Backup {
 
@@ -31,15 +48,24 @@ object Backup {
      *
      * @param photoBytes 能给出一张图的原始字节；给不出（或者图片文件已经没了）
      *                   就只写文件名，不会让整份备份导不出来。
+     * @param avatars 名字 → base64 的头像（2026-10-08 加）。空着就**连键都不写**。
      */
     fun encode(
         items: List<Commission>,
         notes: Map<String, String>,
         photoBytes: ((String) -> ByteArray?)? = null,
+        avatars: Map<String, String> = emptyMap(),
     ): String {
         val root = JSONObject()
         root.put("commissions", Json.encodeCommissions(items, photoBytes))
         root.put("artistNotes", Json.encodeNotes(notes))
+        if (avatars.isNotEmpty()) {
+            // 跟 [Json.encodeNotes] 一个写法：一个个 put，不用 `JSONObject(Map)` 那个构造器
+            // （它的泛型签名在 Kotlin 这边不太听话，容易报一堆无谓的告警）
+            val o = JSONObject()
+            for ((k, v) in avatars) o.put(k, v)
+            root.put("artistAvatars", o)
+        }
         return root.toString(2)
     }
 
@@ -52,12 +78,22 @@ object Backup {
     fun decode(
         text: String,
         onPhoto: ((String, ByteArray) -> Unit)? = null,
-    ): Pair<List<Commission>, Map<String, String>>? = runCatching {
+    ): BackupData? = runCatching {
         val root = JSONObject(text)
         val arr = root.optJSONArray("commissions") ?: JSONArray()
         val items = Json.decodeCommissions(arr, onPhoto)
         val notes = Json.decodeNotes(root.optJSONObject("artistNotes"))
-        items to notes
+        // ⚠️ `optJSONObject` 对「没有这个键」和「键是 null」都给 null ——
+        //    正好就是我们要的「老备份」语义；真有一本空的那也等于没设，一样处理。
+        val avatars = root.optJSONObject("artistAvatars")?.let { o ->
+            val m = mutableMapOf<String, String>()
+            for (k in o.keys()) {
+                val v = o.optString(k)
+                if (v.isNotBlank()) m[k] = v
+            }
+            m
+        }
+        BackupData(items, notes, avatars)
     }.getOrNull()
 
     /** 备份文件名：约稿账本-2026-09-29-0250-手动.json */

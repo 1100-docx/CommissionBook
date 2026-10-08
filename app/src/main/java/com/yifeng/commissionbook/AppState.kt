@@ -221,15 +221,57 @@ class AppState(private val context: Context) {
         persist()
     }
 
+    /**
+     * 改名字（2026-10-08 加，跟 iOS 版同语义）。
+     *
+     * 把这个人名下**所有**条目一起改名（**两个模式都算** —— 名字是身份证，
+     * 备注和头像本来就跨模式共用一份；只改当前模式那几条的话，
+     * 另一个模式里同名条目会「人还在、头像没了」，看着像丢了东西）。
+     * 备注和头像跟着搬；新名字上**已经有**的不覆盖。
+     *
+     * @return 改了几条（0 = 名字没变 / 空名字，调用方据此提示）
+     */
+    fun renameArtist(from: String, to: String): Int {
+        val a = if (from.isBlank()) Terms.otherBlank(appMode) else from
+        val b = to.trim()
+        if (b.isEmpty() || b == a) return 0
+
+        var n = 0
+        items = items.map { c ->
+            if (c.artist == a) {
+                n++
+                c.copy(artist = b)
+            } else c
+        }
+
+        // 备注：新名字上已经有就不覆盖（那是他自己写的）
+        val moved = notes[a]
+        val next = notes.toMutableMap()
+        if (!moved.isNullOrBlank() && next[b].isNullOrBlank()) next[b] = moved
+        next.remove(a)
+        notes = next
+
+        Avatars.rename(a, b)
+        persist()
+        return n
+    }
+
     /** 恢复备份：整批换掉 */
-    fun replaceAll(newItems: List<Commission>, newNotes: Map<String, String>) {
+    fun replaceAll(newItems: List<Commission>, newNotes: Map<String, String>, newAvatars: Map<String, String>? = null) {
         items = newItems
         notes = newNotes
+        // ⚠️ 头像 **备份里有才灌**：老备份根本没有这个键，
+        //    写成 `?: emptyMap()` 一股脑灌进去，恢复一份旧备份就会把现在的头像全清掉。
+        if (newAvatars != null) Avatars.importBase64(newAvatars)
         persist()
     }
 
-    /** 全部数据打成一个 JSON 字符串（备份用，跟 iOS 版同一个格式）。⚠️ 带图，见 [Backup.encode] */
-    fun toJsonString(): String = Backup.encode(items, notes, photoBytes = { store.readPhoto(it) })
+    /** 全部数据打成一个 JSON 字符串（备份用，跟 iOS 版同一个格式）。⚠️ 带图、带头像，见 [Backup.encode] */
+    fun toJsonString(): String = Backup.encode(
+        items, notes,
+        photoBytes = { store.readPhoto(it) },
+        avatars = Avatars.exportBase64(),
+    )
 
     // MARK: - 屏幕上要用的几个数
 

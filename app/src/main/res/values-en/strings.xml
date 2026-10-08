@@ -283,6 +283,11 @@ System: Android %4$s (API %5$s)
     <string name="ledger_unlock_biometric">Unlock with Fingerprint / Face / Passcode</string>
     <string name="ledger_unlock_biometric_short">Verify it\'s you</string>
     <string name="settings_lock_verify_reason">Verify to turn off Protection</string>
+    <string name="avatar_change">Change avatar</string>
+    <string name="avatar_remove">Remove avatar</string>
+    <string name="avatar_rename">Rename</string>
+    <string name="avatar_new_name">New name</string>
+    <string name="avatar_rename_note">Their commissions, note and avatar will all move across.</string>
     <string name="common_saved">Saved ✓</string>
     <string name="common_save_failed">Save failed. Try another location.</string>
     <string name="common_backup_unreadable">Can\'t read this file. It may not be a backup from this app.</string>

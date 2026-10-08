@@ -274,6 +274,11 @@
     <string name="ledger_unlock_biometric">用指紋 / 面容 / 密碼解鎖</string>
     <string name="ledger_unlock_biometric_short">請驗證本人</string>
     <string name="settings_lock_verify_reason">驗證後才能關閉「保護」</string>
+    <string name="avatar_change">換個頭像</string>
+    <string name="avatar_remove">移除頭像</string>
+    <string name="avatar_rename">改名字</string>
+    <string name="avatar_new_name">新名字</string>
+    <string name="avatar_rename_note">原本嘅約稿、備註同頭像都會跟住過去。</string>
     <string name="common_saved">已保存 ✓</string>
     <string name="common_save_failed">保存失敗，換個位置再試一次</string>
     <string name="common_backup_unreadable">這個文件讀不出來，可能不是本 App 的備份</string>

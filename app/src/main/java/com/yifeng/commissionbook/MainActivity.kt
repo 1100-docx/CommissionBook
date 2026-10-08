@@ -145,8 +145,8 @@ class MainActivity : FragmentActivity() {
         if (payload == null) {
             toast(AppCtx.s(R.string.common_backup_unreadable))
         } else {
-            state.replaceAll(payload.first, payload.second)
-            toast(AppCtx.s(R.string.common_restored_count, payload.first.size))
+            state.replaceAll(payload.items, payload.notes, payload.avatars)
+            toast(AppCtx.s(R.string.common_restored_count, payload.items.size))
         }
     }
 
@@ -184,6 +184,10 @@ class MainActivity : FragmentActivity() {
         // ⚠️ 语言要一起喂进去：AppCtx 存的是 applicationContext，
         //    它的资源不跟着 Activity 走，必须在这里也包一层（见 AppCtx 的注释）。
         AppCtx.init(this, prefs.appLanguage)
+        // 头像（2026-10-08 加）：偏好里那本「名字 → base64」先读进内存，
+        // 界面上所有 [AvatarBubble] 都读它。**必须在 setContent 之前** ——
+        // 第一帧就要画头像，晚一步列表会先闪一下「首字圆」再变图。
+        Avatars.init(this)
         state = AppState(this)
         // 上次是不是崩着退出的？是就补一条记录（原生崩溃抓不到堆栈，但面包屑在）—— 2026-10-07
         CrashLog.checkAbnormalExit(this)

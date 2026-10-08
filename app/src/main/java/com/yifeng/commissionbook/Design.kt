@@ -51,6 +51,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -662,26 +664,49 @@ private val AVATAR_COLORS = listOf(
 )
 
 /**
- * 名字首字 + 渐变小圆 —— 同一个名字永远同一个颜色（按名字哈希取），
+ * 头像。
+ *
+ * 设过就出**那张图**（2026-10-08 加，跟 iOS 版同一套），没设就是
+ * 「名字首字 + 渐变小圆」—— 同一个名字永远同一个颜色（按名字哈希取），
  * 所以「星野」每次都是那个色，看久了能认人。
+ *
+ * ⚠️ 这一处是**全 App 唯一**画头像的地方：账本列表、画师页、统计页排行都调它。
+ *    所以改这里 = 三处一起变，不用一处处通知。
  */
 @Composable
 fun AvatarBubble(name: String, size: Dp = 44.dp) {
-    val h = (name.hashCode().toLong() and 0x7FFFFFFFL).toInt()
-    val (a, b) = AVATAR_COLORS[h % AVATAR_COLORS.size]
-    Box(
-        Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(Brush.linearGradient(listOf(a, b))),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            name.trim().take(1).ifBlank { "?" },
-            color = Color.White,
-            fontSize = (size.value / 2.5f).sp,
-            fontWeight = FontWeight.Bold,
+    // 读的是 Compose 的 state map —— 谁在别的页面设了头像，这里自动重画
+    val b64 = Avatars.base64For(name)
+    // 解码放在 remember 里（键是那段 base64）：同一张图只解一次，
+    // 也不会在「画界面」的过程中去改状态（那会触发 Compose 的越界写警告）
+    val img = remember(b64) { b64?.let { Avatars.decode(it) } }
+
+    if (img != null) {
+        Image(
+            bitmap = img,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape),
         )
+    } else {
+        val h = (name.hashCode().toLong() and 0x7FFFFFFFL).toInt()
+        val (a, b) = AVATAR_COLORS[h % AVATAR_COLORS.size]
+        Box(
+            Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(Brush.linearGradient(listOf(a, b))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                name.trim().take(1).ifBlank { "?" },
+                color = Color.White,
+                fontSize = (size.value / 2.5f).sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 
