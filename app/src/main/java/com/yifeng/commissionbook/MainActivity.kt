@@ -131,17 +131,89 @@ class MainActivity : FragmentActivity() {
     // 逸风原话「算了，撤掉这个功能，双端」。原来那套 createXlsx / Report / XlsxWriter
     // 已经删掉（在 git 历史里），捡回来的清单见 tools/已撤掉-导出Excel报表-2026-10-07.md。
 
+    /**
+     * 二维码传输出的岔子（2026-10-08 加）。
+     *
+     * ⚠️ 这里**故意不用 toast**：逸风定的规矩是「不在同一个 Wi-Fi 就弹窗提示」——
+     *    这种事用户得停下来照着改（去连 Wi-Fi、去重新出码），一闪而过的小提示没用。
+     */
+    private val qrProblem = mutableStateOf<QrProblem?>(null)
+
+    /** 正在传输（2026-10-09 加）：拉数据那段在后台线程跑，这期间得让用户看见「在动」 */
+    private val qrBusy = mutableStateOf(false)
+
+    /**
+     * 扫码（2026-10-08 加，二维码传输）。
+     *
+     * 用的是我们自己画的那个取景页 [QrScanActivity]（照逸风发的参考图做的），
+     * 不是 zxing 自带的那个界面 —— 相机权限、取景、解码、连续扫描都在那边。
+     *
+     * ⚠️⚠️ **2026-10-09 的血泪教训：这个回调里绝对不能直接联网。**
+     *    它跑在**主线程**上（`registerForActivityResult` 回调就是在主线程）。
+     *    3.9.3 那版我在这儿直接调了 [QrTransfer.unpack]（里面是阻塞式 socket），
+     *    结果是这样的：码其实扫到了，可是主线程一卡住，
+     *    **连「从取景页退回设置页」这个动作都完不成** —— 逸风看到的就是
+     *    「对着二维码一直没反应，像是扫不了码」。
+     *    所以现在：**起一根独立线程去连、去拉，拉完再 `runOnUiThread` 回主线程处理。**
+     *    以后要往里加任何新步骤，先问自己一句「这步会不会阻塞」，会，就放这根线程里。
+     */
+    private val scanQr = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { r ->
+        expectingFileResult = false
+        if (r.resultCode != RESULT_OK) return@registerForActivityResult
+        // "SCAN_RESULT" 是 zxing 的约定键名，与 QrScanActivity.deliver 里那个对应
+        val scanned = r.data?.getStringExtra("SCAN_RESULT") ?: return@registerForActivityResult
+
+        qrBusy.value = true
+        Thread {
+            // 这行是阻塞的（要连对面、还要把整份备份读回来），所以才挪到这儿
+            val qr = QrTransfer.unpack(scanned)
+            runOnUiThread {
+                qrBusy.value = false
+                handleQrResult(qr)
+            }
+        }.also { it.isDaemon = true }.start()
+    }
+
+    /** 扫码结果的善后 —— **已经回到主线程了**，这里只管弹窗 / 导入 */
+    private fun handleQrResult(qr: QrTransfer.Result) {
+        when (qr) {
+            is QrTransfer.Result.Ok -> importBackupText(qr.text)
+            QrTransfer.Result.NotReachable -> qrProblem.value = QrProblem(
+                titleRes = R.string.qr_wifi_title,
+                bodyRes = R.string.qr_wifi_desc,
+                extra = QrTransfer.lastFailureReason,
+            )
+            QrTransfer.Result.Used -> qrProblem.value =
+                QrProblem(R.string.qr_entry, R.string.qr_show_used)
+            QrTransfer.Result.Stale -> qrProblem.value =
+                QrProblem(R.string.qr_bad_title, R.string.qr_bad_desc)
+            QrTransfer.Result.BadData -> qrProblem.value =
+                QrProblem(R.string.qr_bad_title, R.string.qr_bad_desc)
+            QrTransfer.Result.NotOurs -> qrProblem.value =
+                QrProblem(R.string.qr_entry, R.string.qr_not_ours)
+        }
+    }
+
     private val openDoc = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         expectingFileResult = false
         if (uri == null) return@registerForActivityResult
-        // 2026-10-03：恢复时把备份里的参考图也写回本机（备份带图，见 Backup.encode）。
-        // ⚠️ 图要**先落盘再 replaceAll** —— 反过来的话，replaceAll 里那次「清孤儿图」
-        //    会把刚恢复进来的图当成没人要的，当场删掉。
-        val payload = Backup.readFrom(this, uri)?.let { text ->
-            Backup.decode(text) { name, bytes -> state.writePhotoBytes(name, bytes) }
-        }
+        Backup.readFrom(this, uri)?.let { importBackupText(it) }
+    }
+
+    /**
+     * 把一份备份文本导进 App —— **选文件恢复和扫码传输走的是同一条路**
+     * （2026-10-08 从原来 openDoc 里提出来，两边共用）。
+     *
+     * ⚠️ 2026-10-03：恢复时要把备份里的参考图也写回本机（备份带图，见 Backup.encode）。
+     *    图要**先落盘再 replaceAll** —— 反过来的话，replaceAll 里那次「清孤儿图」
+     *    会把刚恢复进来的图当成没人要的，当场删掉。
+     */
+    private fun importBackupText(text: String) {
+        val payload = Backup.decode(text) { name, bytes -> state.writePhotoBytes(name, bytes) }
         if (payload == null) {
             toast(AppCtx.s(R.string.common_backup_unreadable))
         } else {
@@ -292,6 +364,21 @@ class MainActivity : FragmentActivity() {
                                 expectingFileResult = true
                                 openDoc.launch(arrayOf("application/json", "text/plain", "*/*"))
                             },
+                            // 二维码传输（2026-10-08 加）—— 逸风要的「局域网扫码传输」。
+                            //   「新手机（扫码）」走这里：开我们自绘的取景页。
+                            //   扫到之后的连网、拉数据、分类报错都在 scanQr 那个回调里。
+                            onQrScan = {
+                                expectingFileResult = true
+                                scanQr.launch(
+                                    android.content.Intent(this, QrScanActivity::class.java)
+                                )
+                            },
+                            // 目前没有「直接给文本」的路（内联码那条已经砍了），
+                            // 留着这个口子是为了以后加别的来源不用再改签名。
+                            onQrImport = { text -> importBackupText(text) },
+                            qrProblem = qrProblem.value,
+                            onQrProblemDismiss = { qrProblem.value = null },
+                            qrBusy = qrBusy.value,
                             onShare = { text, name ->
                                 val intent = Backup.share(this, name, text)
                                 if (intent == null) toast(AppCtx.s(R.string.common_share_failed_2)) else startActivity(intent)
@@ -536,6 +623,25 @@ private enum class Tab(val labelRes: Int) {
     val label: String get() = AppCtx.s(labelRes)
 }
 
+/**
+ * 二维码传输出的岔子（2026-10-08 加）。
+ *
+ * ⚠️ 存的是**资源 ID 不是字符串**：这个类是普通的（非 @Composable），
+ *    在里头调 `AppCtx.s(...)` 会把当时的语言钉死；取串留到画弹窗那一刻再取。
+ */
+private class QrProblem(
+    @androidx.annotation.StringRes val titleRes: Int,
+    @androidx.annotation.StringRes val bodyRes: Int,
+    /**
+     * 附带的**技术原话**（可能为空）—— 排查用，就是那句「为什么连不上」。
+     *
+     * 2026-10-08 晚加：这一轮「安卓明文 HTTP 被系统拦掉」的 bug，症状是
+     * 「不在同一个 Wi-Fi」，跟真不在同一个网**长得一模一样**，靠猜浪费了两轮。
+     * 把原始报错摆出来，下次谁的问题一眼可见。
+     */
+    val extra: String? = null,
+)
+
 @Composable
 private fun RootScreen(
     state: AppState,
@@ -547,6 +653,16 @@ private fun RootScreen(
     onShowHelp: (Boolean) -> Unit,
     onExport: (String) -> Unit,
     onImport: () -> Unit,
+    // 二维码传输（2026-10-08 加，见 QrTransfer.kt）：
+    //   onQrScan   = 让 Activity 去开相机扫码（权限、取景页都在那边）
+    //   onQrImport = 扫码结果**已经在别处解好了**（有些路是直接给的文本）
+    //   qrProblem  = 非空就弹窗（不在同一个 Wi-Fi / 码过期 / 只能一次…）
+    onQrScan: () -> Unit,
+    onQrImport: (String) -> Unit,
+    qrProblem: QrProblem?,
+    onQrProblemDismiss: () -> Unit,
+    /// 二维码传输：正在拉数据（后台线程在跑，这期间显示一个「正在传输」）
+    qrBusy: Boolean,
     onShare: (String, String) -> Unit,
     onSharePng: (android.graphics.Bitmap) -> Unit,
     /** 老机兼容版：年度报告发纯文字那条路（见 YearReportScreen） */
@@ -591,6 +707,44 @@ private fun RootScreen(
     }
     LaunchedEffect(crumbNow) { CrashLog.breadcrumb(crumbCtx, crumbNow) }
 
+    // 二维码传输的岔子（2026-10-08 加）：不在同一个 Wi-Fi / 码已过期 / 已经扫过一次 …
+    // ⚠️ 逸风定的：这类事**要弹窗**，不能是一闪而过的小提示 —— 用户得停下来照着改。
+    qrProblem?.let { p ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = onQrProblemDismiss,
+            title = { Text(AppCtx.s(p.titleRes)) },
+            text = {
+                androidx.compose.foundation.layout.Column {
+                    Text(AppCtx.s(p.bodyRes))
+                    // 技术原话单独一行、小字灰 —— 见 QrProblem.extra 那段注释
+                    p.extra?.let {
+                        Text(
+                            it,
+                            style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = onQrProblemDismiss) {
+                    Text(AppCtx.s(R.string.common_got_it))
+                }
+            },
+        )
+    }
+
+    // 正在传输（2026-10-09 加）：拉数据在后台线程跑（见 MainActivity.scanQr 那段教训），
+    // 这期间得让界面**当场就有动静** —— 上一版就是因为什么都不显示，
+    // 让人以为扫码坏了。不可取消：就几秒的事，按掉反而更慌。
+    if (qrBusy) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { },
+            confirmButton = { },
+            title = { Text(AppCtx.s(R.string.qr_transferring)) },
+        )
+    }
+
     // 崩溃记录条数：进/出崩溃记录页都重数一遍（清了空就变 0），设置页那行右边跟着走。
     // ⚠️ 用 `crumbCtx` 而不是 `this@MainActivity` —— 这块 ui 代码不在 Activity 类体内，
     //    写 `this@MainActivity` 编译器报「Unresolved label」（刚踩过）。
@@ -633,6 +787,8 @@ private fun RootScreen(
                         prefs = prefs,
                         onExport = onExport,
                         onImport = onImport,
+                        onQrScan = onQrScan,
+                        onQrImport = onQrImport,
                         onShare = onShare,
                         onOpenPrivacy = { showPrivacy = true },
                         onOpenFeedback = { showFeedback = true },

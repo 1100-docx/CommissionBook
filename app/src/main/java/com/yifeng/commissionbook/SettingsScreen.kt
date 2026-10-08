@@ -40,6 +40,7 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.TableChart
+import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Vibration
@@ -80,6 +81,11 @@ fun SettingsScreen(
     // 导出 Excel 报表（2026-10-07 加，**同日撤掉**）—— 原来这儿有个 onExportReport 回调，
     // 撤功能时一起删了。捡回来的清单见 tools/已撤掉-导出Excel报表-2026-10-07.md。
     onImport: () -> Unit,
+    // 二维码传输（2026-10-08 加，见 QrTransfer.kt）：
+    //   onQrScan   = 让 Activity 去开相机扫码（权限、取景页都在那边）
+    //   onQrImport = 扫到的内容已经解成备份文本了，交给 Activity 导进去
+    onQrScan: () -> Unit,
+    onQrImport: (String) -> Unit,
     onShare: (String, String) -> Unit,
     onOpenPrivacy: () -> Unit,
     onOpenFeedback: () -> Unit,
@@ -120,6 +126,11 @@ fun SettingsScreen(
     // 老机兼容版：点了灰掉的「更新」那两行 → 弹这句说明（2026-10-07 加）
     var showUpdateLocked by remember { mutableStateOf(false) }
     var askShare by remember { mutableStateOf(false) }
+
+    // 二维码传输（2026-10-08 加）：先弹「新手机还是旧手机」，
+    // 选了「旧手机」才把要发的那份算出来放进 qrSheetText（见 QrShowSheet 里那段 ⚠️）。
+    var qrRole by remember { mutableStateOf(false) }
+    var qrSheetText by remember { mutableStateOf<String?>(null) }
     // null = 不显示那个框
     var updateStatus by remember { mutableStateOf<UpdateStatus?>(null) }
     val updateScope = rememberCoroutineScope()
@@ -549,8 +560,43 @@ fun SettingsScreen(
                             title = AppCtx.s(R.string.settings_restore_from_file),
                             subtitle = AppCtx.s(R.string.settings_restore_ios_note),
                             icon = Icons.Outlined.Restore,
-                            divider = false,
                             onClick = onImport,
+                        )
+                        // 二维码传输（2026-10-08 加，见 QrTransfer.kt）——
+                        // 逸风要的「局域网扫码传输」。摆在这一节最后一行：
+                        // 前面三条都是「跟文件打交道」，这条是「跟另一台手机打交道」。
+                        GroupRow(
+                            title = AppCtx.s(R.string.qr_entry),
+                            subtitle = AppCtx.s(R.string.qr_entry_desc),
+                            icon = Icons.Outlined.QrCode,
+                            divider = false,
+                            onClick = { qrRole = true },
+                        )
+                    }
+
+                    // 二维码传输用的那两个窗（2026-10-08 加）。
+                    // ⚠️ 它俩都是**窗口级**的（Dialog / BottomSheet 自己浮在最上面），
+                    //    所以摆在哪里都行，别费劲去调位置。
+                    if (qrRole) {
+                        QrRoleDialog(
+                            onNew = {
+                                qrRole = false
+                                onQrScan()
+                            },
+                            onOld = {
+                                qrRole = false
+                                // ⚠️ 现算：这里算出来的就是「码背后要发出去的那份东西」，
+                                //    带着参考图可能好几 MB —— 只在用户真点「旧手机」时才做。
+                                qrSheetText = state.toJsonString()
+                            },
+                            onDismiss = { qrRole = false },
+                        )
+                    }
+                    // 出码那张走 **Sheet 弹出来**（逸风 2026-10-08 明确）—— 不占满屏。
+                    qrSheetText?.let { text ->
+                        QrShowSheet(
+                            backupText = text,
+                            onClose = { qrSheetText = null },
                         )
                     }
                 }

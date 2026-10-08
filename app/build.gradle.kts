@@ -12,8 +12,18 @@ android {
         applicationId = "com.yifeng.commissionbook"
         minSdk = 26
         targetSdk = 36
-        versionCode = 86
-        versionName = "3.8.0"
+        // 2026-10-08：二维码传输（局域网扫码，见 QrTransfer.kt / QrScanActivity.kt）。
+        // 逸风定的「这算一次大版本」——它第一次给 App 带来**相机权限**，
+        // 隐私政策也跟着升到第六版，所以是大版本。
+        // 3.9.1：当天第二版 —— 出码 Sheet 改**弹全屏**、底下那行去掉红字。
+        // 3.9.3：当天第四版 —— 真凶抓到：安卓 targetSdk 36 **默认禁止明文 HTTP**，
+        //        而拉备份用的是 HttpURLConnection → 请求还没出手机就被系统拦掉，
+        //        还伪装成「不在同一个 Wi-Fi」（iOS 扫安卓通、反方向不通就是这个原因）。
+        //        改成裸 TCP socket 手拼 GET，不碰明文策略；失败原因也一并带到弹窗里。
+        // 3.9.4：修「扫了没反应」—— 3.9.3 把联网拉数据写在**主线程**上了，
+        //        主线程一卡，连「从取景页退回来」都完不成。改成后台线程 + 「正在传输…」提示。
+        versionCode = 91
+        versionName = "3.9.4"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
@@ -96,6 +106,14 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
+
+    // 二维码传输（2026-10-08 加，见 QrTransfer.kt / QrScanActivity.kt）
+    //   core     = 造二维码（出码那端）+ 从一张图片里解二维码（扫码页的「相册」那颗）
+    //   embedded = 相机预览、对焦、连续解码、相机权限申请全包了；
+    //              我们的取景页只是**换掉它的布局**（见 QrScanActivity），
+    //              比自己拉 CameraX 重写一遍快得多，也少一堆型号坑。
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

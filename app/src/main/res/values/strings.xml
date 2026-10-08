@@ -589,4 +589,39 @@
     <string name="crash_clear_body">只是删掉本机这几个文本文件，账本数据一点都不动。</string>
     <string name="crash_clear_ok">清空</string>
     <string name="crash_note">崩溃记录只写在这台手机上 —— App 不联网、不要任何权限。里面没有你的账本内容：画师名、金额、稿件名一概不碰。只有你自己点「发到邮箱」，它才会离开这台手机。</string>
+    <!-- 二维码传输（2026-10-08 加，见 QrTransfer.kt / QrScanActivity.kt）。
+         这一版**只走局域网**（没有内联码那条路了），而且这张码
+         **5 分钟失效、只能扫一次** —— 截屏发给别人也用不了（见 qr_show_lan_hint）。 -->
+    <string name="qr_entry">二维码传输</string>
+    <string name="qr_entry_desc">旧手机出码、新手机扫一下 —— 只在同一个 Wi-Fi 内走，不出网、不经服务器。</string>
+    <string name="qr_role_title">这台手机是？</string>
+    <string name="qr_role_desc">新手机负责扫，旧手机负责出码。</string>
+    <string name="qr_role_new">新手机（扫码）</string>
+    <string name="qr_role_old">旧手机（出码）</string>
+    <string name="qr_show_title">用新手机扫这张码</string>
+    <string name="qr_show_desc">设置 → 备份与恢复 → 二维码传输 → 新手机（扫码）</string>
+    <string name="qr_show_failed">没造出码：两台手机先连上同一个 Wi-Fi 再试。</string>
+    <string name="qr_show_cant_draw">二维码画不出来，改用「分享备份」吧。</string>
+    <string name="qr_show_lan_hint">两台手机请连同一个 Wi-Fi。这张码 %1$s 后失效，而且只能扫一次 —— 别截屏发出去。</string>
+    <string name="qr_show_left">还剩 %1$s</string>
+    <string name="qr_show_expired">这张码已经失效了，关掉重新开一张。</string>
+    <string name="qr_show_used">已经扫过了，这一张不能再用。</string>
+    <string name="qr_scan_hint_main">扫对面那台手机的二维码</string>
+    <string name="qr_scan_hint_sub">两台手机要连同一个 Wi-Fi</string>
+    <string name="qr_scan_torch">轻触照亮</string>
+    <string name="qr_scan_torch_off">轻触关灯</string>
+    <string name="qr_scan_back">返回</string>
+    <string name="qr_scan_flip">切换前后摄像头</string>
+    <string name="qr_scan_flip_none">这台机器只有一个摄像头</string>
+    <string name="qr_scan_gallery">从相册选二维码图片</string>
+    <string name="qr_scan_gallery_fail">这张图里没找到二维码</string>
+    <string name="qr_wifi_title">不在同一个 Wi-Fi</string>
+    <string name="qr_wifi_desc">没连上出码那台手机。请把两部手机连到同一个 Wi-Fi，再扫一次。</string>
+    <string name="qr_bad_title">这份备份读不出来</string>
+    <string name="qr_bad_desc">码扫到了、也拉过来了，但内容解不开。可能传输中途断了，再扫一次试试。</string>
+    <string name="qr_not_ours">这不是约稿账本的码</string>
+    <string name="qr_transferring">正在传输…</string>
+    <string name="settings_camera_title">相机</string>
+    <string name="settings_camera_desc">只在「二维码传输 → 新手机（扫码）」时用，扫完即走</string>
+    <string name="settings_camera_off">不拍照、不存照片、不上传</string>
 </resources>

@@ -590,4 +590,38 @@
     <string name="crash_clear_body">只是刪掉本機這幾個文字檔，帳本資料一點都不會動。</string>
     <string name="crash_clear_ok">清除</string>
     <string name="crash_note">當機記錄只寫在這台手機上 —— App 不連網、不需要任何權限。裡面沒有你的帳本內容：畫師名、金額、稿件名一概不碰。只有你自己點「寄到信箱」，它才會離開這台手機。</string>
+    <!-- 二維碼傳輸（2026-10-08 加）。這一版**只走區域網路**（沒有內聯碼那條路了），
+         而且這張碼**5 分鐘失效、只能掃一次** —— 截圖傳給別人也不能用。 -->
+    <string name="qr_entry">二維碼傳輸</string>
+    <string name="qr_entry_desc">舊手機出碼、新手機掃一下 —— 只在同一個 Wi-Fi 內走，不出網、不經伺服器。</string>
+    <string name="qr_role_title">這台手機是？</string>
+    <string name="qr_role_desc">新手機負責掃，舊手機負責出碼。</string>
+    <string name="qr_role_new">新手機（掃碼）</string>
+    <string name="qr_role_old">舊手機（出碼）</string>
+    <string name="qr_show_title">用新手機掃這張碼</string>
+    <string name="qr_show_desc">設定 → 備份與還原 → 二維碼傳輸 → 新手機（掃碼）</string>
+    <string name="qr_show_failed">沒造出碼：兩台手機先連上同一個 Wi-Fi 再試。</string>
+    <string name="qr_show_cant_draw">二維碼畫不出來，改用「分享備份」吧。</string>
+    <string name="qr_show_lan_hint">兩台手機請連同一個 Wi-Fi。這張碼 %1$s 後失效，而且只能掃一次 —— 別截圖傳出去。</string>
+    <string name="qr_show_left">還剩 %1$s</string>
+    <string name="qr_show_expired">這張碼已經失效了，關掉重新開一張。</string>
+    <string name="qr_show_used">已經掃過了，這一張不能再用。</string>
+    <string name="qr_scan_hint_main">掃對面那台手機的二維碼</string>
+    <string name="qr_scan_hint_sub">兩台手機要連同一個 Wi-Fi</string>
+    <string name="qr_scan_torch">輕觸照亮</string>
+    <string name="qr_scan_torch_off">輕觸關燈</string>
+    <string name="qr_scan_back">返回</string>
+    <string name="qr_scan_flip">切換前後鏡頭</string>
+    <string name="qr_scan_flip_none">這台機器只有一個鏡頭</string>
+    <string name="qr_scan_gallery">從相簿選二維碼圖片</string>
+    <string name="qr_scan_gallery_fail">這張圖裡沒找到二維碼</string>
+    <string name="qr_wifi_title">不在同一個 Wi-Fi</string>
+    <string name="qr_wifi_desc">沒連上出碼那台手機。請把兩部手機連到同一個 Wi-Fi，再掃一次。</string>
+    <string name="qr_bad_title">這份備份讀不出來</string>
+    <string name="qr_bad_desc">碼掃到了、也拉過來了，但內容解不開。可能傳輸中途斷了，再掃一次試試。</string>
+    <string name="qr_not_ours">這不是約稿帳本的碼</string>
+    <string name="qr_transferring">正在傳輸…</string>
+    <string name="settings_camera_title">相機</string>
+    <string name="settings_camera_desc">只在「二維碼傳輸 → 新手機（掃碼）」時用，掃完即走</string>
+    <string name="settings_camera_off">不拍照、不存照片、不上傳</string>
 </resources>

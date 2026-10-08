@@ -591,4 +591,38 @@
     <string name="crash_clear_body">只係刪本機呢幾個文字檔，帳本資料一點都唔會郁。</string>
     <string name="crash_clear_ok">清</string>
     <string name="crash_note">崩潰記錄只寫喺呢部手機度 —— App 唔聯網、唔要任何權限。入面冇你嘅帳本內容：畫師名、金額、稿件名一概唔會掂。只有你自己撳「發到郵箱」，佢先會離開呢部手機。</string>
+    <!-- 二維碼傳輸（2026-10-08 加）。呢一版**淨係走區域網絡**（冇內聯碼嗰條路喇），
+         而且呢張碼**5 分鐘失效、只可以掃一次** —— 截圖傳俾人都用唔到。 -->
+    <string name="qr_entry">二維碼傳輸</string>
+    <string name="qr_entry_desc">舊手機出碼、新手機掃一下 —— 淨係同一個 Wi-Fi 內先走到，唔出網、唔經伺服器。</string>
+    <string name="qr_role_title">呢部手機係？</string>
+    <string name="qr_role_desc">新手機負責掃，舊手機負責出碼。</string>
+    <string name="qr_role_new">新手機（掃碼）</string>
+    <string name="qr_role_old">舊手機（出碼）</string>
+    <string name="qr_show_title">用新手機掃呢張碼</string>
+    <string name="qr_show_desc">設定 → 備份與還原 → 二維碼傳輸 → 新手機（掃碼）</string>
+    <string name="qr_show_failed">整唔到碼：兩部手機先連上同一個 Wi-Fi 再試。</string>
+    <string name="qr_show_cant_draw">二維碼畫唔出，改用「分享備份」啦。</string>
+    <string name="qr_show_lan_hint">兩部手機請連同一個 Wi-Fi。呢張碼 %1$s 之後失效，而且只可以掃一次 —— 唔好截圖傳出去。</string>
+    <string name="qr_show_left">仲有 %1$s</string>
+    <string name="qr_show_expired">呢張碼已經失效咗，閂咗佢再開過一張。</string>
+    <string name="qr_show_used">已經掃過喇，呢一張唔可以再用。</string>
+    <string name="qr_scan_hint_main">掃對面嗰部手機嘅二維碼</string>
+    <string name="qr_scan_hint_sub">兩部手機要連同一個 Wi-Fi</string>
+    <string name="qr_scan_torch">輕觸照亮</string>
+    <string name="qr_scan_torch_off">輕觸關燈</string>
+    <string name="qr_scan_back">返回</string>
+    <string name="qr_scan_flip">切換前後鏡頭</string>
+    <string name="qr_scan_flip_none">呢部機淨係得一個鏡頭</string>
+    <string name="qr_scan_gallery">喺相簿揀二維碼圖片</string>
+    <string name="qr_scan_gallery_fail">呢張圖入面搵唔到二維碼</string>
+    <string name="qr_wifi_title">唔係同一個 Wi-Fi</string>
+    <string name="qr_wifi_desc">連唔到出碼嗰部手機。請將兩部手機連去同一個 Wi-Fi，再掃多次。</string>
+    <string name="qr_bad_title">呢份備份讀唔到</string>
+    <string name="qr_bad_desc">碼掃到咗、都拉咗過嚟，但內容解唔開。可能傳輸中途斷咗，再掃多次試吓。</string>
+    <string name="qr_not_ours">呢個唔係約稿帳本嘅碼</string>
+    <string name="qr_transferring">傳緊…</string>
+    <string name="settings_camera_title">相機</string>
+    <string name="settings_camera_desc">淨係喺「二維碼傳輸 → 新手機（掃碼）」先用，掃完即走</string>
+    <string name="settings_camera_off">唔拍照、唔存相、唔上傳</string>
 </resources>

@@ -59,6 +59,11 @@ import androidx.compose.ui.unit.sp
 //    加这一条是因为「展示收款码」这件事本身属于该报备的（别人一定会问
 //    「扫了会不会被 App 记下来」），所以单独写一条讲清楚，别让它藏在别处。
 //    改动记录：POLICY_VERSION 跟着改成第四版，老用户下次启动会重读一遍。
+//
+// ⚠️ 2026-10-08 第六版（3.8.0）：**相机权限**回来了。
+//    10-07 那天第五版曾经为它升过一次，后来功能撤了、政策也跟着退回去；
+//    10-08 逸风拍板「现在就加吧」，所以这一版再升一次。
+//    老用户下次启动会重读一遍 —— 这正是版本号存在的意义，别偷懒不升。
 
 /**
  * 这一版政策的版本号。
@@ -66,7 +71,7 @@ import androidx.compose.ui.unit.sp
  * 存进 [Prefs.privacyAgreedVersion]：**以后政策改了就改这个字符串**，
  * App 下次启动会自动再弹一次同意页（改了什么也没瞒着人）。
  */
-const val POLICY_VERSION = "2026-10-07.5"
+const val POLICY_VERSION = "2026-10-08.6"
 
 /** 政策正文：一段标题 + 若干段正文 */
 private data class PolicySection(val heading: String, val body: List<String>)
@@ -215,6 +220,10 @@ private val policyPermissions: List<PolicyPermission> get() = listOf(
     // 2026-10-03 第三版加：参考图用的系统选择器。**「不申请」也是一种要报备的事** ——
     // 权限表里明写着一条「相册 / 存储：不申请」，比只在正文里提一句更让人放心。
     PolicyPermission(AppCtx.s(R.string.settings_photos_title), AppCtx.s(R.string.settings_photos_desc), AppCtx.s(R.string.settings_photos_off)),
+    // 2026-10-08 第六版加：二维码传输要扫码，所以**第一次真的有了相机权限**。
+    // 摆在这一节末尾（前面几条都是老面孔），并在说明里写死「只在扫码时用」——
+    // ⚠️ 这句话必须对得上代码：除了 QrScanActivity 那一处，全工程没有任何地方碰相机。
+    PolicyPermission(AppCtx.s(R.string.settings_camera_title), AppCtx.s(R.string.settings_camera_desc), AppCtx.s(R.string.settings_camera_off)),
 )
 
 // MARK: - 正文（两处共用）

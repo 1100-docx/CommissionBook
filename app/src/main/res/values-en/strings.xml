@@ -596,4 +596,38 @@ System: Android %4$s (API %5$s)
     <string name="crash_clear_body">This only deletes these text files on this phone. Your ledger data is untouched.</string>
     <string name="crash_clear_ok">Clear</string>
     <string name="crash_note">Crash records are written to this phone only — the app has no network access and needs no permissions. They contain none of your ledger data: no artist names, amounts or commission titles. They leave your phone only when you tap "Send by email" yourself.</string>
+    <!-- QR transfer (added 2026-10-08). Same-Wi-Fi only, no inline-code path.
+         The code expires in 5 minutes and works only once — see qr_show_lan_hint. -->
+    <string name="qr_entry">QR transfer</string>
+    <string name="qr_entry_desc">Old phone shows a code, new phone scans it — same Wi-Fi only. No internet, no server.</string>
+    <string name="qr_role_title">Which phone is this?</string>
+    <string name="qr_role_desc">The new phone scans; the old phone shows the code.</string>
+    <string name="qr_role_new">New phone (scan)</string>
+    <string name="qr_role_old">Old phone (show code)</string>
+    <string name="qr_show_title">Scan this with the new phone</string>
+    <string name="qr_show_desc">Settings → Backup and restore → QR transfer → New phone (scan)</string>
+    <string name="qr_show_failed">Couldn\'t make a code: connect both phones to the same Wi-Fi first.</string>
+    <string name="qr_show_cant_draw">Couldn\'t draw the QR code — use \"Share backup\" instead.</string>
+    <string name="qr_show_lan_hint">Both phones must be on the same Wi-Fi. This code expires in %1$s and works only once — don\'t screenshot it.</string>
+    <string name="qr_show_left">%1$s left</string>
+    <string name="qr_show_expired">This code has expired — close it and get a new one.</string>
+    <string name="qr_show_used">Already scanned. This code can\'t be used again.</string>
+    <string name="qr_scan_hint_main">Scan the other phone\'s QR code</string>
+    <string name="qr_scan_hint_sub">Both phones must be on the same Wi-Fi</string>
+    <string name="qr_scan_torch">Tap to light up</string>
+    <string name="qr_scan_torch_off">Tap to turn off</string>
+    <string name="qr_scan_back">Back</string>
+    <string name="qr_scan_flip">Switch camera</string>
+    <string name="qr_scan_flip_none">This device has only one camera</string>
+    <string name="qr_scan_gallery">Pick a QR image from photos</string>
+    <string name="qr_scan_gallery_fail">No QR code found in that image</string>
+    <string name="qr_wifi_title">Not on the same Wi-Fi</string>
+    <string name="qr_wifi_desc">Couldn\'t reach the phone showing the code. Connect both phones to the same Wi-Fi, then scan again.</string>
+    <string name="qr_bad_title">This backup can\'t be read</string>
+    <string name="qr_bad_desc">The code scanned and the data arrived, but it won\'t open. The transfer may have been cut short — try scanning again.</string>
+    <string name="qr_not_ours">That\'s not a Commission Book code</string>
+    <string name="qr_transferring">Transferring…</string>
+    <string name="settings_camera_title">Camera</string>
+    <string name="settings_camera_desc">Used only for \"QR transfer → New phone (scan)\", and only while scanning</string>
+    <string name="settings_camera_off">No photos taken, none saved, nothing uploaded</string>
 </resources>
