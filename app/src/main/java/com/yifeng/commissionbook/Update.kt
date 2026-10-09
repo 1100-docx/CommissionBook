@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
@@ -26,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -496,6 +500,12 @@ fun UpdateDialog(
             onDismissRequest = { onStatus(null) },
             title = { Text(AppCtx.s(R.string.update_title, s.release.versionName)) },
             text = {
+                // 2026-10-09 修：更新说明可能很长（跨好几个版本时能到上千字），
+                // 原来直接铺进去 → 内容顶出弹窗、下面的字被切掉、按钮也跟着挤没。
+                // 现在给说明一块「最多占屏幕 40% 高、可以上下滑」的区域。
+                val maxNotesH = LocalConfiguration.current.screenHeightDp.dp * 0.40f
+                val notesText =
+                    if (s.release.notes.isBlank()) AppCtx.s(R.string.update_no_notes) else s.release.notes
                 Column {
                     Text(
                         AppCtx.s(R.string.update_notes_title),
@@ -504,12 +514,27 @@ fun UpdateDialog(
                         color = cs.onSurface,
                     )
                     Spacer(Modifier.height(4.dp))
-                    Text(
-                        if (s.release.notes.isBlank()) AppCtx.s(R.string.update_no_notes) else s.release.notes,
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp,
-                        color = cs.onSurfaceVariant,
-                    )
+                    Column(
+                        Modifier
+                            .heightIn(max = maxNotesH)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            notesText,
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp,
+                            color = cs.onSurfaceVariant,
+                        )
+                    }
+                    // 长说明才给这行提示，短说明不占地方
+                    if (notesText.length > 180) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            AppCtx.s(R.string.update_scroll_hint),
+                            fontSize = 12.sp,
+                            color = cs.onSurfaceVariant,
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -593,11 +618,18 @@ fun UpdateDialog(
             },
             title = { Text(AppCtx.s(R.string.settings_update_check)) },
             text = {
-                Text(
-                    AppCtx.s(R.string.update_install_failed, apk?.absolutePath ?: "?"),
-                    fontSize = 13.sp,
-                    lineHeight = 20.sp,
-                )
+                val maxH = LocalConfiguration.current.screenHeightDp.dp * 0.40f
+                Column(
+                    Modifier
+                        .heightIn(max = maxH)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        AppCtx.s(R.string.update_install_failed, apk?.absolutePath ?: "?"),
+                        fontSize = 13.sp,
+                        lineHeight = 20.sp,
+                    )
+                }
             },
         )
     }

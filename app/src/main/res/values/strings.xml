@@ -500,6 +500,7 @@
     <string name="update_title">有新版本 %1$s</string>
     <string name="update_notes_title">更新内容</string>
     <string name="update_no_notes">（这一版没写更新说明）</string>
+    <string name="update_scroll_hint">上下滑动可看全部 ↓</string>
     <string name="update_download">下载并安装</string>
     <string name="update_skip">跳过这个版本</string>
     <string name="update_downloading">正在下载…%1$d%%</string>

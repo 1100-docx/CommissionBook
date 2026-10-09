@@ -508,6 +508,7 @@ System: Android %4$s (API %5$s)
     <string name="update_title">Version %1$s is available</string>
     <string name="update_notes_title">What is new</string>
     <string name="update_no_notes">(No release notes for this version)</string>
+    <string name="update_scroll_hint">Scroll to read the rest ↓</string>
     <string name="update_download">Download and install</string>
     <string name="update_skip">Skip this version</string>
     <string name="update_downloading">Downloading… %1$d%%</string>

@@ -499,6 +499,7 @@
     <string name="update_title">有新版本 %1$s</string>
     <string name="update_notes_title">更新內容</string>
     <string name="update_no_notes">（這一版沒寫更新說明）</string>
+    <string name="update_scroll_hint">上下滑動可以睇晒全部 ↓</string>
     <string name="update_download">下載並安裝</string>
     <string name="update_skip">跳過這個版本</string>
     <string name="update_downloading">正在下載…%1$d%%</string>
