@@ -149,6 +149,12 @@ private val policySections: List<PolicySection> get() = listOf(
             //      以后他看到备份突然几十 MB 会觉得「怎么变味了」。
             AppCtx.s(R.string.privacy_photos_title),
             AppCtx.s(R.string.privacy_photos_body),
+            // 2026-10-08 第六版加：二维码传输。这条跟 iOS 那边同一条 ——
+            // 加了这个功能之后，App **第一次会碰网络**（局域网直传）也**第一次要相机权限**，
+            // 所以按「参考图 / 崩溃记录」那两条的写法，单开一条把边界写死：
+            // 只在同一个 Wi-Fi 内、不经服务器、码 5 分钟失效且只能扫一次。
+            AppCtx.s(R.string.privacy_qr_title),
+            AppCtx.s(R.string.privacy_qr_body),
         ),
     ),
     PolicySection(

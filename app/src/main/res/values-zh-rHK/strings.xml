@@ -625,4 +625,7 @@
     <string name="settings_camera_title">相機</string>
     <string name="settings_camera_desc">淨係喺「二維碼傳輸 → 新手機（掃碼）」先用，掃完即走</string>
     <string name="settings_camera_off">唔拍照、唔存相、唔上傳</string>
+    <!-- 二維碼傳輸（2026-10-08 加）：政策正文入面一條，同 iOS 對齊 -->
+    <string name="privacy_qr_title">· **二維碼傳輸（2026-10-08 新加）**</string>
+    <string name="privacy_qr_body">換手機嗰陣將整份備份搬去另一部手機。**淨係兩部手機連同一個 Wi-Fi 先用得** —— 資料由呢部手機直接傳去嗰部手機，唔出網、唔經伺服器，App 入面亦都冇任何伺服器地址。因為要掃碼，所以**第一次申請咗相機權限**；嗰張碼 **5 分鐘**後失效，而且**淨係掃得一次**。</string>
 </resources>

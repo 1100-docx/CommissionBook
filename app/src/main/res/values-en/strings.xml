@@ -630,4 +630,7 @@ System: Android %4$s (API %5$s)
     <string name="settings_camera_title">Camera</string>
     <string name="settings_camera_desc">Used only for \"QR transfer → New phone (scan)\", and only while scanning</string>
     <string name="settings_camera_off">No photos taken, none saved, nothing uploaded</string>
+    <!-- QR transfer (added 2026-10-08): a policy bullet, matching the iOS side -->
+    <string name="privacy_qr_title">· **QR transfer (added 2026-10-08)**</string>
+    <string name="privacy_qr_body">Moves the whole backup to another phone when you change devices. **It only works when both phones are on the same Wi-Fi** — the data goes straight from one phone to the other, never over the internet, never through a server, and the app contains no server address at all. Because it scans a code, it asks for **camera access for the first time**; the code expires after **5 minutes** and can be used **only once**.</string>
 </resources>

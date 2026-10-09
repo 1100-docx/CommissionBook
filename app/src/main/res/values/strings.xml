@@ -624,4 +624,7 @@
     <string name="settings_camera_title">相机</string>
     <string name="settings_camera_desc">只在「二维码传输 → 新手机（扫码）」时用，扫完即走</string>
     <string name="settings_camera_off">不拍照、不存照片、不上传</string>
+    <!-- 二维码传输（2026-10-08 加）：政策正文里的一条，跟 iOS 那边对齐 -->
+    <string name="privacy_qr_title">· **二维码传输（2026-10-08 新加）**</string>
+    <string name="privacy_qr_body">换手机时把整份备份搬到另一台手机。**只在两台手机连同一个 Wi-Fi 时才能用** —— 数据从这台手机直接传到那台手机，不出网、不经服务器，App 里也没有任何服务器地址。因为要扫码，所以**第一次申请了相机权限**；那张码 **5 分钟**后失效，而且**只能扫一次**。</string>
 </resources>
