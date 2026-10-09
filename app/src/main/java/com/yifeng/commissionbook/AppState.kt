@@ -256,21 +256,54 @@ class AppState(private val context: Context) {
         return n
     }
 
+    /**
+     * 常用语模板（2026-10-09 加，#7）。
+     * Compose 状态 —— 管理页里改一条，写单那边的「插入常用语」立刻是新的一份。
+     */
+    var phrases by mutableStateOf(prefs.phrases)
+        private set
+
+    /**
+     * 整批换掉常用语。顺手**去空白、去重复**：
+     * 同一句话存两遍没有任何意义，还会让选择列表看着像坏了。
+     */
+    fun savePhrases(list: List<String>) {
+        val clean = list.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        phrases = clean
+        prefs.phrases = clean
+    }
+
+    /**
+     * 把一句常用语插进一段文字末尾（备注框那个「插入常用语」用的）。
+     * 原来有内容就**另起一行**再插，不会把上一句话黏在一起。
+     */
+    fun appendPhrase(note: String, phrase: String): String {
+        val p = phrase.trim()
+        if (p.isEmpty()) return note
+        val base = note.trimEnd()
+        return if (base.isEmpty()) p else "$base\n$p"
+    }
+
     /** 恢复备份：整批换掉 */
-    fun replaceAll(newItems: List<Commission>, newNotes: Map<String, String>, newAvatars: Map<String, String>? = null) {
+    fun replaceAll(newItems: List<Commission>, newNotes: Map<String, String>, newAvatars: Map<String, String>? = null, newPhrases: List<String>? = null) {
         items = newItems
         notes = newNotes
         // ⚠️ 头像 **备份里有才灌**：老备份根本没有这个键，
         //    写成 `?: emptyMap()` 一股脑灌进去，恢复一份旧备份就会把现在的头像全清掉。
         if (newAvatars != null) Avatars.importBase64(newAvatars)
+        // 常用语同样：**备份里有才认**（2026-10-09 加）。而且做成**合并去重**而不是覆盖 ——
+        // 常用语是「我的习惯用语」，跟账本数据不是一回事；恢复一份备份顺手把
+        // 本机上攒的短语抹掉，那不是用户想要的结果。
+        if (newPhrases != null) savePhrases(phrases + newPhrases)
         persist()
     }
 
-    /** 全部数据打成一个 JSON 字符串（备份用，跟 iOS 版同一个格式）。⚠️ 带图、带头像，见 [Backup.encode] */
+    /** 全部数据打成一个 JSON 字符串（备份用，跟 iOS 版同一个格式）。⚠️ 带图、带头像、带常用语，见 [Backup.encode] */
     fun toJsonString(): String = Backup.encode(
         items, notes,
         photoBytes = { store.readPhoto(it) },
         avatars = Avatars.exportBase64(),
+        phrases = phrases,
     )
 
     // MARK: - 屏幕上要用的几个数
@@ -284,7 +317,32 @@ class AppState(private val context: Context) {
 
     val active: List<Commission> get() = modeItems.filter { !it.archived }
 
-    val activeTotal: Double get() = active.sumOf { it.total }
+    val activeTotal: Double get() = modeItems.filter { !it.archived }.sumOf { it.total }
 
-    val activePaid: Double get() = active.sumOf { it.deposit }
+    val activePaid: Double get() = modeItems.filter { !it.archived }.sumOf { it.deposit }
+
+    // MARK: - 未结清单（2026-10-09 加，#1）
+
+    /**
+     * 还有钱没结清的单（欠款 > 0）。
+     *
+     * ⚠️ **含已归档**：归档是「收进档案」，不是「这笔钱不用收了」。
+     *    过滤掉它，等于让一笔没到账的钱从账上消失 —— 那才是真会出事的地方。
+     * （总价空着的是 0，本来也算不出欠款，自然不会进来。）
+     *
+     * 排序：有截止日的排前面（早的在前，逾期的自然冒头），没截止日的按日期新的在前。
+     */
+    val unpaidItems: List<Commission>
+        get() = modeItems
+            .filter { it.unpaid > 0.0 }
+            .sortedWith(
+                compareBy(
+                    { it.deadlineMillis == null },
+                    { it.deadlineMillis ?: Long.MAX_VALUE },
+                    { -it.dateMillis },
+                )
+            )
+
+    /** 所有未结单加起来还欠多少 */
+    val unpaidTotal: Double get() = unpaidItems.sumOf { it.unpaid }
 }

@@ -628,4 +628,43 @@
     <!-- 二维码传输（2026-10-08 加）：政策正文里的一条，跟 iOS 那边对齐 -->
     <string name="privacy_qr_title">· **二维码传输（2026-10-08 新加）**</string>
     <string name="privacy_qr_body">换手机时把整份备份搬到另一台手机。**只在两台手机连同一个 Wi-Fi 时才能用** —— 数据从这台手机直接传到那台手机，不出网、不经服务器，App 里也没有任何服务器地址。因为要扫码，所以**第一次申请了相机权限**；那张码 **5 分钟**后失效，而且**只能扫一次**。</string>
+
+    <!-- ===== 使用权等级（2026-10-09 加，#6）===== -->
+    <string name="usage_label">使用权</string>
+    <string name="usage_none">未指定</string>
+    <string name="usage_personal">个人</string>
+    <string name="usage_noncommercial">非商用</string>
+    <string name="usage_commercial">商用</string>
+    <string name="usage_derivative">二创</string>
+    <string name="usage_hint">圈里最容易吵的一条：写清楚了，两边都省事</string>
+    <!-- ===== 常用语模板（2026-10-09 加，#7）===== -->
+    <string name="phrase_section">常用语</string>
+    <string name="phrase_title">常用语</string>
+    <string name="phrase_subtitle">常写的备注，写单时一键插入</string>
+    <string name="phrase_add_title">新增常用语</string>
+    <string name="phrase_edit_title">修改常用语</string>
+    <string name="phrase_hint_input">比如：要透明背景 / 先给草稿再上色</string>
+    <string name="phrase_empty">还没有常用语 —— 点右上角「+」加一条试试</string>
+    <string name="phrase_count">已存 %1$d 条</string>
+    <string name="phrase_insert">插入常用语</string>
+    <string name="phrase_delete_title">删掉这条常用语？</string>
+    <string name="phrase_delete_body">「%1$s」删掉之后，写单的时候就不能一键插入了。</string>
+    <!-- ===== 未结清单（2026-10-09 加，#1）===== -->
+    <string name="unpaid_title">未结清单</string>
+    <string name="unpaid_subtitle">还没结清的钱，一条不漏</string>
+    <string name="unpaid_hero_label">还欠（全部加起来）</string>
+    <string name="unpaid_hero_count">共 %1$d 单</string>
+    <string name="unpaid_empty">没有未结清的单 —— 钱都收齐了</string>
+    <!-- 买家口气版（逸风 2026-10-09 圈的：原来这两句写死成画师口气了）-->
+    <string name="unpaid_empty_paid">没有未结清的单 —— 账都付清了</string>
+    <string name="unpaid_none_paid">一笔没欠，全付清了</string>
+    <string name="unpaid_paid_of_total">%1$s %2$s / 总价 %3$s</string>
+    <string name="unpaid_archived_tag">已归档</string>
+    <string name="unpaid_copy">复制清单</string>
+    <string name="unpaid_copied">清单已复制，可以直接粘到微信里</string>
+    <string name="unpaid_copy_header">%1$s（共 %2$d 单 · 还欠 %3$s）</string>
+    <string name="unpaid_copy_paid_part">（%1$s %2$s / %3$s %4$s）</string>
+    <string name="unpaid_copy_late_mark">（已逾期）</string>
+    <string name="unpaid_none">一笔没欠，全收齐了</string>
+    <string name="unpaid_stats_line">共 %1$d 单 · 待结 %2$s</string>
 </resources>

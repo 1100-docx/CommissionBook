@@ -22,6 +22,12 @@ data class BackupData(
     val items: List<Commission>,
     val notes: Map<String, String>,
     val avatars: Map<String, String>?,
+    /**
+     * 常用语模板（2026-10-09 加，#7）。
+     * ⚠️ 同样**可空**，理由跟 [avatars] 一模一样：老备份里没有这个键 →
+     *    恢复时**不该动**本机现有的常用语（不然恢复一份旧备份就把短语全清了）。
+     */
+    val phrases: List<String>?,
 )
 
 /**
@@ -55,6 +61,7 @@ object Backup {
         notes: Map<String, String>,
         photoBytes: ((String) -> ByteArray?)? = null,
         avatars: Map<String, String> = emptyMap(),
+        phrases: List<String> = emptyList(),
     ): String {
         val root = JSONObject()
         root.put("commissions", Json.encodeCommissions(items, photoBytes))
@@ -65,6 +72,13 @@ object Backup {
             val o = JSONObject()
             for ((k, v) in avatars) o.put(k, v)
             root.put("artistAvatars", o)
+        }
+        // 常用语模板（2026-10-09 加，#7）：一条都没存就**连键都不写** ——
+        // 老备份长什么样、新备份还长什么样（跟 artistAvatars 一个规矩）。
+        if (phrases.isNotEmpty()) {
+            val arr = JSONArray()
+            for (p in phrases) arr.put(p)
+            root.put("phrases", arr)
         }
         return root.toString(2)
     }
@@ -93,7 +107,13 @@ object Backup {
             }
             m
         }
-        BackupData(items, notes, avatars)
+        // 常用语（2026-10-09 加）：**备份里有这个键才认**（没有 → null = 别动本机的）。
+        val phrases = root.optJSONArray("phrases")?.let { arr ->
+            (0 until arr.length()).mapNotNull { i ->
+                arr.optString(i).trim().takeIf { it.isNotEmpty() }
+            }
+        }
+        BackupData(items, notes, avatars, phrases)
     }.getOrNull()
 
     /** 备份文件名：约稿账本-2026-09-29-0250-手动.json */

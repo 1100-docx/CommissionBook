@@ -659,6 +659,8 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
             photoPath = { state.photoFile(it).absolutePath },
             // 新单子的水印起手值 = **最近一条填过水印的单子**（水印是每条一套，但不必每单重填一遍）
             watermarkSeed = state.modeItems.lastOrNull { it.wmText.isNotBlank() },
+            // 常用语（2026-10-09 加，#7）：全局那一份，表单里点「插入常用语」时用
+            phrases = state.phrases,
         )
     }
 
@@ -669,6 +671,7 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
             onDismiss = { editing = null },
             onAddPhoto = { state.addPhoto(it) },
             photoPath = { state.photoFile(it).absolutePath },
+            phrases = state.phrases,
             onSave = { new ->
                 // ② 在表单里刚改成「已交付」→ 来一下小庆祝
                 if (new.status == CommissionStatus.DELIVERED && item.status != CommissionStatus.DELIVERED) {
@@ -1204,6 +1207,14 @@ fun EditSheet(
 
      */
     watermarkSeed: Commission? = null,
+    /**
+     * 常用语模板（2026-10-09 加，#7）。
+     *
+     * 传进来的是**全局那一份**（在设置 →「常用语」里增删），表单这边只读：
+     * 写单时点一下「插入常用语」，把选中的那句接到备注末尾。
+     * 默认空表 = 没存过常用语，那一行按钮就不显示（别给没这习惯的人多塞一颗按钮）。
+     */
+    phrases: List<String> = emptyList(),
 ) {
 
     var artist by remember { mutableStateOf(original?.artist ?: "") }
@@ -1215,6 +1226,12 @@ fun EditSheet(
     var hasDeadline by remember { mutableStateOf(original?.deadlineMillis != null) }
     var deadlineStr by remember { mutableStateOf(original?.deadlineMillis?.let { dayText(it) } ?: "") }
     var note by remember { mutableStateOf(original?.note ?: "") }
+
+    // 使用权等级（2026-10-09 加，#6）。老单子没有这个字段 → 未指定。
+    var usage by remember { mutableStateOf(original?.usageRight ?: UsageRight.NONE) }
+
+    // 常用语选择弹窗（2026-10-09 加，#7）
+    var showPhrasePicker by remember { mutableStateOf(false) }
 
     // 日期选择器（2026-10-05 逸风要求：下单日期、截止日期都点选，不手打）
     var showDatePicker by remember { mutableStateOf(false) }
@@ -1325,6 +1342,26 @@ fun EditSheet(
                 }
             }
 
+            // 使用权等级（2026-10-09 加，#6）。
+            //
+            // 摆这儿而不是塞进备注：这是**一条能搜、能筛的硬信息** ——
+            // 「这张图到底能不能商用」在圈里最容易吵，写成一句话躺在备注里就等于没有。
+            // 样式跟上面「进度」一样：一排胶囊，横向够不着就滑。
+            Text(AppCtx.s(R.string.usage_label), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                UsageRight.entries.forEach { u ->
+                    SlimChip(u.label, usage == u) { usage = u }
+                }
+            }
+            Text(
+                AppCtx.s(R.string.usage_hint),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+            )
+
             // 2026-10-05（3.5.36）逸风要求：日期不再手打，点一下弹日期选择器。
             // ⚠️ 存的还是 "yyyy-MM-dd" 这根字符串（数据格式一点没动），
             //    只是**填它的方式**从键盘换成选择器 —— 见 Ui.kt 的 PickerField。
@@ -1354,6 +1391,22 @@ fun EditSheet(
                     icon = Icons.Outlined.CalendarMonth,
                     onClick = { showDeadlinePicker = true },
                 )
+            }
+
+            // 常用语（2026-10-09 加，#7）：有存过才显示这一行按钮。
+            // 按钮摆在备注框**上面**、靠右 —— 先看见「可以插一句」，再写。
+            if (phrases.isNotEmpty()) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { showPhrasePicker = true }) {
+                        Icon(
+                            Icons.Outlined.Checklist,
+                            contentDescription = null,
+                            modifier = Modifier.width(18.dp).height(18.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(AppCtx.s(R.string.phrase_insert), fontSize = 13.sp)
+                    }
+                }
             }
 
             OutlinedTextField(
@@ -1495,6 +1548,8 @@ fun EditSheet(
                             wmText = wmText.trim(),
                             wmColorArgb = wmColor,
                             wmPercent = wmPercent,
+                            // 使用权等级（2026-10-09 加，#6）：存的是 key（英文小写），跟语言无关
+                            usage = usage.key,
                         )
                         onSave(c)
                     },
@@ -1518,6 +1573,37 @@ fun EditSheet(
                 Watermark.styleOf(wmText.trim(), wmColor, wmPercent)
             } else {
                 null
+            },
+        )
+    }
+
+    // 常用语选择（2026-10-09 加，#7）：点一条 → 接到备注末尾（原来是空的就直接等于那句）。
+    // ⚠️ 用**追加**不是覆盖：备注里往往已经写了这条单子特有的要求，
+    //    插一句常用语不该把那句话冲掉。
+    if (showPhrasePicker) {
+        AlertDialog(
+            onDismissRequest = { showPhrasePicker = false },
+            title = { Text(AppCtx.s(R.string.phrase_insert)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    phrases.forEach { p ->
+                        Text(
+                            p,
+                            fontSize = 14.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    val base = note.trimEnd()
+                                    note = if (base.isEmpty()) p else "$base\n$p"
+                                    showPhrasePicker = false
+                                }
+                                .padding(vertical = 11.dp),
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPhrasePicker = false }) { Text(AppCtx.s(R.string.common_cancel)) }
             },
         )
     }

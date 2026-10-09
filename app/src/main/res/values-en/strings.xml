@@ -634,4 +634,42 @@ System: Android %4$s (API %5$s)
     <!-- QR transfer (added 2026-10-08): a policy bullet, matching the iOS side -->
     <string name="privacy_qr_title">· **QR transfer (added 2026-10-08)**</string>
     <string name="privacy_qr_body">Moves the whole backup to another phone when you change devices. **It only works when both phones are on the same Wi-Fi** — the data goes straight from one phone to the other, never over the internet, never through a server, and the app contains no server address at all. Because it scans a code, it asks for **camera access for the first time**; the code expires after **5 minutes** and can be used **only once**.</string>
+
+    <!-- ===== Usage rights (2026-10-09, #6) ===== -->
+    <string name="usage_label">Usage rights</string>
+    <string name="usage_none">Not set</string>
+    <string name="usage_personal">Personal</string>
+    <string name="usage_noncommercial">Non-commercial</string>
+    <string name="usage_commercial">Commercial</string>
+    <string name="usage_derivative">Derivative works</string>
+    <string name="usage_hint">The one thing artists and clients argue about most — write it down and both sides relax</string>
+    <!-- ===== Phrases (2026-10-09, #7) ===== -->
+    <string name="phrase_section">Phrases</string>
+    <string name="phrase_title">Phrases</string>
+    <string name="phrase_subtitle">Notes you type over and over — insert them with one tap</string>
+    <string name="phrase_add_title">New phrase</string>
+    <string name="phrase_edit_title">Edit phrase</string>
+    <string name="phrase_hint_input">e.g. Transparent background / Sketch before colour</string>
+    <string name="phrase_empty">No phrases yet — tap + at the top right to add one</string>
+    <string name="phrase_count">%1$d saved</string>
+    <string name="phrase_insert">Insert a phrase</string>
+    <string name="phrase_delete_title">Delete this phrase?</string>
+    <string name="phrase_delete_body">Once removed, “%1$s” will no longer be one tap away when you write a commission.</string>
+    <!-- ===== Outstanding list (2026-10-09, #1) ===== -->
+    <string name="unpaid_title">Outstanding</string>
+    <string name="unpaid_subtitle">Every payment not yet settled, none missed</string>
+    <string name="unpaid_hero_label">Still owed (all together)</string>
+    <string name="unpaid_hero_count">%1$d commission(s)</string>
+    <string name="unpaid_empty">Nothing outstanding — every payment is settled</string>
+    <string name="unpaid_empty_paid">Nothing outstanding — every payment is made</string>
+    <string name="unpaid_none_paid">Nothing owed — all paid</string>
+    <string name="unpaid_paid_of_total">%1$s %2$s / total %3$s</string>
+    <string name="unpaid_archived_tag">Archived</string>
+    <string name="unpaid_copy">Copy list</string>
+    <string name="unpaid_copied">List copied — paste it straight into a chat</string>
+    <string name="unpaid_copy_header">%1$s (%2$d commission(s), %3$s still owed)</string>
+    <string name="unpaid_copy_paid_part"> (%1$s %2$s / %3$s %4$s)</string>
+    <string name="unpaid_copy_late_mark"> (overdue)</string>
+    <string name="unpaid_none">Nothing owed — all settled</string>
+    <string name="unpaid_stats_line">%1$d commission(s) · %2$s outstanding</string>
 </resources>

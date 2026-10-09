@@ -74,6 +74,20 @@ object Terms {
     /** 还差的那部分 */
     fun unpaid(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.ledger_unpaid) else AppCtx.s(R.string.ledger_awaiting_balance)
 
+    /**
+     * 未结清单在**统计页那一行右边**的小字（一笔没欠时）。
+     *
+     * ⚠️ 逸风 2026-10-09 对着真机圈出来的：这几句原来写死的是画师口气
+     *    （「全收齐了」「钱都收齐了」）—— 买家模式下是我在**往外付钱**，
+     *    说「收齐」等于站错了队。**凡是跟钱的方向有关的词，都得跟着 mode 走。**
+     */
+    fun unpaidNone(m: AppMode): String =
+        if (m == AppMode.BUYER) AppCtx.s(R.string.unpaid_none_paid) else AppCtx.s(R.string.unpaid_none)
+
+    /** 未结清单**那一页空着时**那句（同一个坑，一并改掉） */
+    fun unpaidEmpty(m: AppMode): String =
+        if (m == AppMode.BUYER) AppCtx.s(R.string.unpaid_empty_paid) else AppCtx.s(R.string.unpaid_empty)
+
     fun empty(m: AppMode): String = if (m == AppMode.BUYER) AppCtx.s(R.string.ledger_no_commissions_yet) else AppCtx.s(R.string.ledger_no_jobs_yet)
     fun searchHint(m: AppMode): String = AppCtx.s(R.string.common_search_placeholder, other(m))
     fun topSpender(m: AppMode): String =
@@ -110,6 +124,30 @@ data class Photo(
     val name: String,
 
 )
+
+// MARK: - 使用权等级（2026-10-09 加，#6）
+//
+// 绘圈最容易吵起来的一条：「这张图我能拿去做商用吗？能二创吗？」
+// 以前只能写在备注里的一句话，谁也搜不出来。现在做成**结构化字段**。
+//
+// ⚠️ 存盘值用 `key`（英文小写），**不是** 中文标签 —— 标签要跟语言走，
+//    存进去的话一切语言就再也显示不回中文了（进度那栏 2026-10-03 就是这么栽的）。
+// ⚠️ 枚举构造参数里**绝对不能**调 AppCtx.s()（非界面代码取字符串会崩，
+//    见工程里 3.5.14 那次）。所以这里只存 `@StringRes`，显示走下面的 `label`。
+enum class UsageRight(val key: String, @StringRes val labelRes: Int) {
+    NONE("none", R.string.usage_none),
+    PERSONAL("personal", R.string.usage_personal),
+    NONCOMMERCIAL("noncommercial", R.string.usage_noncommercial),
+    COMMERCIAL("commercial", R.string.usage_commercial),
+    DERIVATIVE("derivative", R.string.usage_derivative);
+
+    /** 显示用（跟着语言走）。`key` 是存盘值，一个字节都别改 */
+    val label: String get() = AppCtx.s(labelRes)
+
+    companion object {
+        fun from(key: String?): UsageRight = entries.firstOrNull { it.key == key } ?: NONE
+    }
+}
 
 data class Commission(
     val id: String = UUID.randomUUID().toString(),
@@ -155,9 +193,21 @@ data class Commission(
     var wmText: String = "",
     var wmColorArgb: Int = Watermark.DEFAULT_COLOR,
     var wmPercent: Int = Watermark.DEFAULT_PERCENT,
+
+    /**
+     * 使用权等级（2026-10-09 加，#6）。存的是 [UsageRight.key]。
+     *
+     * ⚠️ 老数据没有 `usage` 这个键 → 默认 `"none"`（未指定），
+     *    升级上来不会给任何一条凭空安一个等级。
+     * ⚠️ iOS 版读的是**同名键**（`usage`），两边一起改，否则互导会丢。
+     */
+    var usage: String = UsageRight.NONE.key,
 ) {
     /** 还欠多少 */
     val unpaid: Double get() = (total - deposit).coerceAtLeast(0.0)
+
+    /** 使用权（坏值一律当「未指定」，不至于因为一个键读不出来就崩） */
+    val usageRight: UsageRight get() = UsageRight.from(usage)
 
     /**
      * 这一单要用的水印（开关没开、或者内容空着 → null = 不加印）。
@@ -235,6 +285,9 @@ object Json {
             c.deadlineMillis?.let { o.put("deadline", SwiftDate.toSwiftMillis(it)) }
             o.put("note", c.note)
             o.put("mode", c.mode)
+            // 使用权等级（2026-10-09 加）。跟 mode 一样**总是写**：
+            // 有没有这个键读出来都是「未指定」，但总是写能少一条「什么情况下会丢」的猜测。
+            o.put("usage", c.usage)
             if (c.photos.isNotEmpty()) {
                 val ph = JSONArray()
                 for (p in c.photos) {
@@ -315,6 +368,9 @@ object Json {
                     wmText = o.optString("wmText"),
                     wmColorArgb = o.optInt("wmColor", Watermark.DEFAULT_COLOR),
                     wmPercent = o.optInt("wmPercent", Watermark.DEFAULT_PERCENT),
+                    // 使用权等级（2026-10-09 加）。老数据 / iOS 老版本没这个键 → 未指定。
+                    // 认不出来的值也一律当未指定（不抛异常、不丢整条）。
+                    usage = UsageRight.from(o.optString("usage").ifBlank { UsageRight.NONE.key }).key,
                 )
             )
         }

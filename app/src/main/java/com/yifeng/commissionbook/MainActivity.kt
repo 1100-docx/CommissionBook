@@ -217,7 +217,8 @@ class MainActivity : FragmentActivity() {
         if (payload == null) {
             toast(AppCtx.s(R.string.common_backup_unreadable))
         } else {
-            state.replaceAll(payload.items, payload.notes, payload.avatars)
+            // 常用语（2026-10-09 加）：备份里有才灌（老备份没这个键 → null → 不动本机那份）
+            state.replaceAll(payload.items, payload.notes, payload.avatars, payload.phrases)
             toast(AppCtx.s(R.string.common_restored_count, payload.items.size))
         }
     }
@@ -687,6 +688,9 @@ private fun RootScreen(
     var showSponsor by remember { mutableStateOf(false) }
     // 2026-10-07：崩溃记录页（同样盖一层，跟隐私政策 / 反馈页一套出场方式）
     var showCrashLog by remember { mutableStateOf(false) }
+    // 2026-10-09：#1 未结清单（从统计页那张卡进）、#7 常用语管理（从设置页那行进）
+    var showUnpaid by remember { mutableStateOf(false) }
+    var showPhrases by remember { mutableStateOf(false) }
     // 本机存着几条崩溃记录 —— 设置页那一行右边显示个数。
     // ⚠️ 每次关掉崩溃记录页都要重数（用户可能在里头点了「清空全部记录」），
     //    真正的重数逻辑在下面拿到 context 之后（这里先只声明状态）。
@@ -698,6 +702,8 @@ private fun RootScreen(
     val crumbNow = when {
         showReport -> "年度报告"
         showCalculator -> "报价计算器"
+        showUnpaid -> "未结清单"
+        showPhrases -> "常用语"
         showFeedback -> "反馈"
         showHelp -> "帮助"
         showSponsor -> "支持作者"
@@ -780,7 +786,7 @@ private fun RootScreen(
                 when (tabs[page]) {
                     Tab.Ledger -> LedgerScreen(m, state)
                     Tab.Artists -> ArtistsScreen(m, state)
-                    Tab.Stats -> StatsScreen(m, state, onOpenReport = { showReport = true })
+                    Tab.Stats -> StatsScreen(m, state, onOpenReport = { showReport = true }, onOpenUnpaid = { showUnpaid = true })
                     Tab.Settings -> SettingsScreen(
                         modifier = m,
                         state = state,
@@ -801,6 +807,7 @@ private fun RootScreen(
                         onOpenSponsor = { showSponsor = true },
                         crashCount = crashCount,
                         onOpenCrashLog = { showCrashLog = true },
+                        onOpenPhrases = { showPhrases = true },
                     )
                 }
             }
@@ -831,6 +838,24 @@ private fun RootScreen(
             exit = fadeOut(tween(150)),
         ) {
             CrashLogScreen(onBack = { showCrashLog = false })
+        }
+
+        // 未结清单（2026-10-09 加，#1）：同一套出场方式
+        AnimatedVisibility(
+            visible = showUnpaid,
+            enter = fadeIn(tween(200)) + slideInVertically(tween(260)) { it / 14 },
+            exit = fadeOut(tween(150)),
+        ) {
+            UnpaidScreen(state = state, onBack = { showUnpaid = false })
+        }
+
+        // 常用语管理（2026-10-09 加，#7）：同一套出场方式
+        AnimatedVisibility(
+            visible = showPhrases,
+            enter = fadeIn(tween(200)) + slideInVertically(tween(260)) { it / 14 },
+            exit = fadeOut(tween(150)),
+        ) {
+            PhraseScreen(state = state, onBack = { showPhrases = false })
         }
 
         // ① 年度报告（2026-09-30 第三批）：同一套出场方式

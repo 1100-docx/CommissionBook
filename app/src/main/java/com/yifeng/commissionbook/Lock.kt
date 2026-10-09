@@ -187,6 +187,29 @@ class Prefs(context: Context) {
         get() = sp.getString("privacyAgreedVersion", "") ?: ""
         set(v) = sp.edit().putString("privacyAgreedVersion", v).apply()
 
+    // —— 常用语模板（2026-10-09 加，#7）——
+    //
+    // 把常写的要求 / 备注存成短语，写新单时一键插进备注框。
+    // 存成一整串 JSON 数组（`["要透明背景","先给草稿再上色"]`）：条数少、
+    // 一次全读全写最省事，也不用为它单开一个文件。
+    //
+    // ⚠️ 读坏了（文件被改花、手工编辑过）**不能崩** —— 一律当空表返回，
+    //    宁可短语没了，也不能让 App 打不开。
+    /** 常用语（按用户排的顺序） */
+    var phrases: List<String>
+        get() = runCatching {
+            val t = sp.getString("phrases", "") ?: ""
+            if (t.isBlank()) {
+                emptyList()
+            } else {
+                val arr = org.json.JSONArray(t)
+                (0 until arr.length()).mapNotNull { i ->
+                    arr.optString(i).trim().takeIf { it.isNotEmpty() }
+                }
+            }
+        }.getOrElse { emptyList() }
+        set(v) = sp.edit().putString("phrases", org.json.JSONArray(v).toString()).apply()
+
     /**
      * 使用模式：买家 / 画师（见 [AppMode]）。
      * 存的是 key（"buyer" / "artist"），不是显示名 —— 以后改叫法不会把存值读坏。

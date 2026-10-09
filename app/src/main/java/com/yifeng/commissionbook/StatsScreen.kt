@@ -22,6 +22,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,7 +53,7 @@ import java.util.Calendar
  * 归档 = 收进档案，不是「没发生过」；过滤掉它，历史上的总数就会凭空变小。
  */
 @Composable
-fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
+fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit, onOpenUnpaid: () -> Unit) {
 
     val all = state.modeItems
     val total = all.sumOf { it.total }
@@ -160,6 +163,40 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit) {
                         )
                         Spacer(Modifier.weight(1f))
                         Text(AppCtx.s(R.string.stats_annual_report_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                // ①.6 未结清单（2026-10-09 加，#1）。
+                // 摆在统计页**靠上**的位置：统计页里别的都在「往回看」，
+                // 只有这一张是**眼下要办的事**（谁的钱还没结），所以它得先被看见。
+                // 点进去是完整清单 + 一键复制（见 UnpaidScreen）。
+                val unpaidList = state.unpaidItems
+                SoftCard(onClick = onOpenUnpaid) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            CardTitle(AppCtx.s(R.string.unpaid_title))
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                if (unpaidList.isEmpty()) {
+                                    // 买家=付清 / 画师=收齐，别写死成画师口气
+                                    Terms.unpaidNone(state.appMode)
+                                } else {
+                                    AppCtx.s(
+                                        R.string.unpaid_stats_line,
+                                        unpaidList.size,
+                                        money(state.unpaidTotal),
+                                    )
+                                },
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = tnum,
+                            )
+                        }
+                        Icon(
+                            Icons.Outlined.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
 

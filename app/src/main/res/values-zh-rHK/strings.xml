@@ -629,4 +629,39 @@
     <!-- 二維碼傳輸（2026-10-08 加）：政策正文入面一條，同 iOS 對齊 -->
     <string name="privacy_qr_title">· **二維碼傳輸（2026-10-08 新加）**</string>
     <string name="privacy_qr_body">換手機嗰陣將整份備份搬去另一部手機。**淨係兩部手機連同一個 Wi-Fi 先用得** —— 資料由呢部手機直接傳去嗰部手機，唔出網、唔經伺服器，App 入面亦都冇任何伺服器地址。因為要掃碼，所以**第一次申請咗相機權限**；嗰張碼 **5 分鐘**後失效，而且**淨係掃得一次**。</string>
+
+    <string name="usage_label">使用權</string>
+    <string name="usage_none">未指定</string>
+    <string name="usage_personal">個人</string>
+    <string name="usage_noncommercial">非商用</string>
+    <string name="usage_commercial">商用</string>
+    <string name="usage_derivative">二創</string>
+    <string name="usage_hint">圈子入面最容易嘈嘅一條：寫清楚咗，兩邊都慳事</string>
+    <string name="phrase_section">常用語</string>
+    <string name="phrase_title">常用語</string>
+    <string name="phrase_subtitle">成日寫嘅備註，開單時一撳就插入</string>
+    <string name="phrase_add_title">新增常用語</string>
+    <string name="phrase_edit_title">修改常用語</string>
+    <string name="phrase_hint_input">例如：要透明背景 / 先畀草稿再上色</string>
+    <string name="phrase_empty">仲未有常用語 —— 撳右上角「+」加一條試下</string>
+    <string name="phrase_count">已存 %1$d 條</string>
+    <string name="phrase_insert">插入常用語</string>
+    <string name="phrase_delete_title">刪咗呢條常用語？</string>
+    <string name="phrase_delete_body">「%1$s」刪咗之後，開單嘅時候就唔可以一撳插入喇。</string>
+    <string name="unpaid_title">未結清單</string>
+    <string name="unpaid_subtitle">未找清嘅錢，一條都唔漏</string>
+    <string name="unpaid_hero_label">仲欠（全部加埋）</string>
+    <string name="unpaid_hero_count">共 %1$d 單</string>
+    <string name="unpaid_empty">冇未結清嘅單 —— 錢都收齊喇</string>
+    <string name="unpaid_empty_paid">冇未結清嘅單 —— 錢都找清喇</string>
+    <string name="unpaid_none_paid">一筆都冇欠，全部付清喇</string>
+    <string name="unpaid_paid_of_total">%1$s %2$s / 總價 %3$s</string>
+    <string name="unpaid_archived_tag">已歸檔</string>
+    <string name="unpaid_copy">複製清單</string>
+    <string name="unpaid_copied">清單已複製，可以直接貼去微信</string>
+    <string name="unpaid_copy_header">%1$s（共 %2$d 單 · 仲欠 %3$s）</string>
+    <string name="unpaid_copy_paid_part">（%1$s %2$s / %3$s %4$s）</string>
+    <string name="unpaid_copy_late_mark">（已逾期）</string>
+    <string name="unpaid_none">一筆都冇欠，全部收齊</string>
+    <string name="unpaid_stats_line">共 %1$d 單 · 待結 %2$s</string>
 </resources>

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
@@ -98,6 +99,9 @@ fun SettingsScreen(
     // 得让她能自己翻出来发我。`crashCount` = 本机存着几条（0 时右边什么都不显示）。
     crashCount: Int = 0,
     onOpenCrashLog: () -> Unit = {},
+    // 常用语管理（2026-10-09 加，#7）：设置页这一行进去增删改。
+    // 为什么管理放设置、插入放表单：管理是「偶尔整理一次」，写单时才是天天要用的那一下。
+    onOpenPhrases: () -> Unit = {},
 ) {
     val context = LocalContext.current
 
@@ -619,7 +623,28 @@ fun SettingsScreen(
                     }
                 }
 
-                // ③.6 帮助（2026-10-01 加）
+                // ③.6 常用语（2026-10-09 加，#7）
+                //
+                // ⚠️ 单独一组、**两种模式都显示**：买家和画师都要写备注，
+                //    所以不能塞进上面那个「只在画师模式出现」的小工具组里。
+                Column {
+                    SectionLabel(AppCtx.s(R.string.phrase_section))
+                    InsetGroup {
+                        GroupRow(
+                            title = AppCtx.s(R.string.phrase_title),
+                            subtitle = AppCtx.s(R.string.phrase_subtitle),
+                            icon = Icons.Outlined.Checklist,
+                            divider = false,
+                            // 右边显示「已存几条」——跟崩溃记录那一行一个做法（0 条不显示）
+                            trailing = {
+                                if (state.phrases.isNotEmpty()) InfoValue("${state.phrases.size}")
+                            },
+                            onClick = onOpenPhrases,
+                        )
+                    }
+                }
+
+                // ③.7 帮助（2026-10-01 加）
                 // 逸风：「建议出帮助选项，因为后续功能越多，用户越难以自己摸索」。
                 // 放这儿（小工具之后、关于之前）—— 顺序上刚好是「用的东西 → 不会就查 → 别的」。
                 Column {
