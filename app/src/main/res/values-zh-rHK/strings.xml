@@ -515,7 +515,7 @@
     <string name="privacy_net_visible">· 但如實說：請求本身會讓對面看到你的 IP、請求了哪個檔案、什麼時間，還有請求標頭裏自報家門的 App 名字（CommissionBook-Android）—— 這是任何一次聯網都躲不掉的，本 App 改不了，也不替對方做保證。</string>
     <string name="privacy_net_mirror">· 還有一層：大陸直連 GitHub 常常不通，所以檢查更新會優先走公共加速鏡像（gh-proxy.com 這類公益站），請求也經過它們。它們是第三方，不是本 App 的伺服器。介意的話，把「設定 → 更新 → 啟動時自動檢查更新」關掉，App 就一次請求都不發。</string>
     <string name="settings_network_title">網絡訪問</string>
-    <string name="settings_network_desc">「檢查更新」用：只讀版本號，不上傳任何數據</string>
+    <string name="settings_network_desc">「檢查更新」用：只讀版本號，唔上傳任何數據；二維碼傳輸嗰陣淨係喺同一個 Wi-Fi 內同對面嗰部手機通訊，唔經伺服器</string>
     <string name="settings_network_off">關掉自動檢查後，App 不再主動聯網</string>
     <string name="settings_install_title">安裝未知應用</string>
     <string name="settings_install_desc">裝新版本時用：打開系統安裝介面，裝不裝由你按</string>
@@ -590,7 +590,7 @@
     <string name="crash_clear_ask">清咗就搵唔返，確定？</string>
     <string name="crash_clear_body">只係刪本機呢幾個文字檔，帳本資料一點都唔會郁。</string>
     <string name="crash_clear_ok">清</string>
-    <string name="crash_note">崩潰記錄只寫喺呢部手機度 —— App 唔聯網、唔要任何權限。入面冇你嘅帳本內容：畫師名、金額、稿件名一概唔會掂。只有你自己撳「發到郵箱」，佢先會離開呢部手機。</string>
+    <string name="crash_note">崩潰記錄淨係寫喺呢部手機度 —— 入面冇你嘅帳本內容：畫師名、金額、稿件名一概唔會掂。只有你自己撳「發到郵箱」，佢先會離開呢部手機。App 平時唔聯網（淨係「檢查更新」會讀一下版本號），用起上嚟都唔需要任何權限；只有你主動撳「二維碼傳輸 → 掃碼」先用得著相機。</string>
     <!-- 二維碼傳輸（2026-10-08 加）。呢一版**淨係走區域網絡**（冇內聯碼嗰條路喇），
          而且呢張碼**5 分鐘失效、只可以掃一次** —— 截圖傳俾人都用唔到。 -->
     <string name="qr_entry">二維碼傳輸</string>

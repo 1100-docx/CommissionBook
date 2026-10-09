@@ -524,7 +524,7 @@ System: Android %4$s (API %5$s)
     <string name="privacy_net_visible">· Honestly: any request itself lets the other side see your IP address, which file was requested, when, and the app name declared in the request header (CommissionBook-Android). No network request can avoid that, this app cannot change it, and it cannot make promises on behalf of anyone else.</string>
     <string name="privacy_net_mirror">· One more layer: GitHub is often unreachable from mainland China, so update checks try public acceleration mirrors first (free services such as gh-proxy.com) and the request passes through them. They are third parties, not servers belonging to this app. If that bothers you, turn off automatic update checks in Settings → Updates and the app makes no requests at all.</string>
     <string name="settings_network_title">Network access</string>
-    <string name="settings_network_desc">Used for update checks: reads a version number, uploads nothing</string>
+    <string name="settings_network_desc">Used for update checks: reads a version number, uploads nothing. QR transfer talks only to the other phone, inside your own Wi-Fi — no server involved</string>
     <string name="settings_network_off">With auto-checks off, the app never goes online on its own</string>
     <string name="settings_install_title">Install unknown apps</string>
     <string name="settings_install_desc">Used when installing a new version: opens the system installer, you decide</string>
@@ -595,7 +595,7 @@ System: Android %4$s (API %5$s)
     <string name="crash_clear_ask">These records can\'t be recovered once cleared. Sure?</string>
     <string name="crash_clear_body">This only deletes these text files on this phone. Your ledger data is untouched.</string>
     <string name="crash_clear_ok">Clear</string>
-    <string name="crash_note">Crash records are written to this phone only — the app has no network access and needs no permissions. They contain none of your ledger data: no artist names, amounts or commission titles. They leave your phone only when you tap "Send by email" yourself.</string>
+    <string name="crash_note">Crash records are written to this phone only. They contain none of your ledger data: no artist names, amounts or commission titles. The app is normally offline (only the Check for updates screen reads a version number) and needs no permissions to use — the camera is used only while you are actually scanning a QR code. They leave your phone only when you tap "Send by email" yourself.</string>
     <!-- QR transfer (added 2026-10-08). Same-Wi-Fi only, no inline-code path.
          The code expires in 5 minutes and works only once — see qr_show_lan_hint. -->
     <string name="qr_entry">QR transfer</string>

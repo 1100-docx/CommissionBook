@@ -516,7 +516,7 @@
     <string name="privacy_net_visible">· 但如实说：请求本身会让对面看到你的 IP、请求了哪个文件、什么时间，还有请求头里自报家门的 App 名字（CommissionBook-Android）—— 这是任何一次联网都躲不掉的，本 App 改不了，也不替对方做保证。</string>
     <string name="privacy_net_mirror">· 还有一层：大陆直连 GitHub 常常不通，所以检查更新会优先走公共加速镜像（gh-proxy.com 这类公益站），请求也经过它们。它们是第三方，不是本 App 的服务器。介意的话，把「设置 → 更新 → 启动时自动检查更新」关掉，App 就一次请求都不发。</string>
     <string name="settings_network_title">网络访问</string>
-    <string name="settings_network_desc">「检查更新」用：只读版本号，不上传任何数据</string>
+    <string name="settings_network_desc">「检查更新」用：只读版本号，不上传任何数据；二维码传输时只在同一个 Wi-Fi 内跟对面那台手机通信，不经服务器</string>
     <string name="settings_network_off">关掉自动检查后，App 不再主动联网</string>
     <string name="settings_install_title">安装未知应用</string>
     <string name="settings_install_desc">装新版本时用：打开系统安装界面，装不装由你点</string>
@@ -588,7 +588,7 @@
     <string name="crash_clear_ask">清空后这些记录就找不回来了，确定吗？</string>
     <string name="crash_clear_body">只是删掉本机这几个文本文件，账本数据一点都不动。</string>
     <string name="crash_clear_ok">清空</string>
-    <string name="crash_note">崩溃记录只写在这台手机上 —— App 不联网、不要任何权限。里面没有你的账本内容：画师名、金额、稿件名一概不碰。只有你自己点「发到邮箱」，它才会离开这台手机。</string>
+    <string name="crash_note">崩溃记录只写在这台手机上 —— 里面没有你的账本内容：画师名、金额、稿件名一概不碰。只有你自己点「发到邮箱」，它才会离开这台手机。App 平时不联网（只有「检查更新」会读一下版本号），用起来也不需要任何权限；只有你主动点「二维码传输 → 扫码」时才会用到相机。</string>
     <!-- 二维码传输（2026-10-08 加，见 QrTransfer.kt / QrScanActivity.kt）。
          这一版**只走局域网**（没有内联码那条路了），而且这张码
          **5 分钟失效、只能扫一次** —— 截屏发给别人也用不了（见 qr_show_lan_hint）。 -->
