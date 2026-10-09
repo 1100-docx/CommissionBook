@@ -621,8 +621,8 @@ System: Android %4$s (API %5$s)
     <string name="qr_scan_flip_none">This device has only one camera</string>
     <string name="qr_scan_gallery">Pick a QR image from photos</string>
     <string name="qr_scan_gallery_fail">No QR code found in that image</string>
-    <string name="qr_wifi_title">Not on the same Wi-Fi</string>
-    <string name="qr_wifi_desc">Couldn\'t reach the phone showing the code. Connect both phones to the same Wi-Fi, then scan again.</string>
+    <string name="qr_wifi_title">Can\'t reach that phone</string>
+    <string name="qr_wifi_desc">Connection timed out. The two phones may not be on the same Wi-Fi — or this network blocks device-to-device traffic (common on hotel, school and cafe routers). Try turning on the old phone\'s hotspot, connect the new phone to it, then scan again.</string>
     <string name="qr_bad_title">This backup can\'t be read</string>
     <string name="qr_bad_desc">The code scanned and the data arrived, but it won\'t open. The transfer may have been cut short — try scanning again.</string>
     <string name="qr_not_ours">That\'s not a Commission Book code</string>

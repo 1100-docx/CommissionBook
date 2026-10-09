@@ -615,8 +615,8 @@
     <string name="qr_scan_flip_none">这台机器只有一个摄像头</string>
     <string name="qr_scan_gallery">从相册选二维码图片</string>
     <string name="qr_scan_gallery_fail">这张图里没找到二维码</string>
-    <string name="qr_wifi_title">不在同一个 Wi-Fi</string>
-    <string name="qr_wifi_desc">没连上出码那台手机。请把两部手机连到同一个 Wi-Fi，再扫一次。</string>
+    <string name="qr_wifi_title">连不上那台手机</string>
+    <string name="qr_wifi_desc">连接超时。可能是两部手机不在同一个 Wi-Fi，也可能是这个网络禁止设备互连（酒店、学校、咖啡馆的路由器常这样）。可以试试：打开旧手机的热点，让新手机连上这个热点，再扫一次。</string>
     <string name="qr_bad_title">这份备份读不出来</string>
     <string name="qr_bad_desc">码扫到了、也拉过来了，但内容解不开。可能传输中途断了，再扫一次试试。</string>
     <string name="qr_not_ours">这不是约稿账本的码</string>

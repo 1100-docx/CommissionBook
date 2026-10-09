@@ -615,8 +615,8 @@
     <string name="qr_scan_flip_none">這台機器只有一個鏡頭</string>
     <string name="qr_scan_gallery">從相簿選二維碼圖片</string>
     <string name="qr_scan_gallery_fail">這張圖裡沒找到二維碼</string>
-    <string name="qr_wifi_title">不在同一個 Wi-Fi</string>
-    <string name="qr_wifi_desc">沒連上出碼那台手機。請把兩部手機連到同一個 Wi-Fi，再掃一次。</string>
+    <string name="qr_wifi_title">連不上那台手機</string>
+    <string name="qr_wifi_desc">連線逾時。可能是兩部手機不在同一個 Wi-Fi，也可能是這個網路禁止裝置互連（飯店、學校、咖啡廳的路由器常這樣）。可以試試：打開舊手機的熱點，讓新手機連上這個熱點，再掃一次。</string>
     <string name="qr_bad_title">這份備份讀不出來</string>
     <string name="qr_bad_desc">碼掃到了、也拉過來了，但內容解不開。可能傳輸中途斷了，再掃一次試試。</string>
     <string name="qr_not_ours">這不是約稿帳本的碼</string>
