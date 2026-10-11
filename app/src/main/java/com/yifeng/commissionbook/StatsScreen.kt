@@ -144,7 +144,18 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit, o
                     }
 
                     // ① 年度报告（2026-09-30 第三批）：一张能发出去的年度卡
-                    Spacer(Modifier.height(4.dp))
+                    //
+                    // ⚠️ 2026-10-11 重排：原来是「蓝字靠左 + 灰字甩到最右」的一行散排，
+                    //    在一张竖排卡片里显得没着落（灰字孤零零漂在右边）。
+                    //    改成**跟全 App 一致的「行」**：左边两行（标题 + 一句话说明）、
+                    //    右边一枚「›」，顶上加一道很淡的分隔线，卡片里两段就断得干净。
+                    Spacer(Modifier.height(2.dp))
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant)
+                    )
                     Row(
                         Modifier
                             .fillMaxWidth()
@@ -152,17 +163,31 @@ fun StatsScreen(modifier: Modifier, state: AppState, onOpenReport: () -> Unit, o
                             .clickable {
                                 onOpenReport()
                             }
-                            .padding(vertical = 9.dp),
+                            .padding(top = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            AppCtx.s(R.string.stats_view_annual_report),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary,
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                AppCtx.s(R.string.stats_view_annual_report),
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                AppCtx.s(R.string.stats_annual_report_desc),
+                                fontSize = 11.5.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp),
+                            )
+                        }
+                        Icon(
+                            Icons.Outlined.ChevronRight,
+                            contentDescription = null,
+                            // 跟「未结清单」那张卡右边的 › 用同一个灰 —— 全 App 的「进入下一页」
+                            // 都是这枚灰箭头，别这边蓝那边灰
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
                         )
-                        Spacer(Modifier.weight(1f))
-                        Text(AppCtx.s(R.string.stats_annual_report_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 

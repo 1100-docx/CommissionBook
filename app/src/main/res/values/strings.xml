@@ -461,7 +461,7 @@
     <string name="stats_this_month">本月</string>
     <string name="stats_this_year">本年</string>
     <string name="stats_view_annual_report">看年度报告</string>
-    <string name="stats_annual_report_desc">一张图看完一年 ›</string>
+    <string name="stats_annual_report_desc">一张图看完一年</string>
     <string name="stats_by_status">按进度</string>
     <string name="stats_status_summary">进行中 %1$s 单 · 已归档 %2$s 单（已归档的也在这上面）</string>
     <string name="stats_last_6_months_amount">近 6 个月下单金额</string>

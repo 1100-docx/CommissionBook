@@ -470,7 +470,7 @@ System: Android %4$s (API %5$s)
     <string name="stats_this_month">This Month</string>
     <string name="stats_this_year">This Year</string>
     <string name="stats_view_annual_report">View Annual Report</string>
-    <string name="stats_annual_report_desc">See a whole year in one image ›</string>
+    <string name="stats_annual_report_desc">See a whole year in one image</string>
     <string name="stats_by_status">By Status</string>
     <string name="stats_status_summary">%1$s in progress · %2$s archived (archived ones are included here too)</string>
     <string name="stats_last_6_months_amount">Order amount over the last 6 months</string>

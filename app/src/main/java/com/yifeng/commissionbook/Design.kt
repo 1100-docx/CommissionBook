@@ -205,7 +205,10 @@ fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
     val dark = isDarkUi()
     val shape = RoundedCornerShape(24.dp)
     val brush = if (dark) {
-        Brush.linearGradient(listOf(Color(0xFF1C2E47), Color(0xFF16202E)))
+        // ⚠️ 2026-10-11 修：原来那组（0xFF1C2E47 → 0xFF16202E）在真机深色下
+        //    偏灰、发水泥色，跟整页的蓝调不搭。改成**同色系往里压**：
+        //    起笔还是蓝（更深），收笔略偏靛 —— 深色下也要看出「这张卡是蓝的」。
+        Brush.linearGradient(listOf(Color(0xFF1E3C61), Color(0xFF14243B)))
     } else {
         // 三档渐变（深→中→亮），比两档更有层次
         Brush.linearGradient(listOf(Color(0xFF2968BB), Color(0xFF4E93DE), Color(0xFF6FB4F2)))
@@ -229,11 +232,15 @@ fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
                 // 两团光斑（右上偏白、左下偏亮蓝）—— 渐变卡不再是「一块死蓝」，有光在里面。
                 // ⚠️ 第一版只给了 0.20 透明度、半径又很大，实测**根本看不出来**（等于白写）。
                 //    要看得见就得「小一点、亮一点」：半径收到 0.45 倍宽、白光提到 0.38。
+                // ⚠️ 2026-10-11 再调：深色下那团白光 0.38 会变成一大块灰雾（截图里很明显），
+                //    所以**深色单独一套**：白光压到 0.16 并换偏蓝的白，蓝光用更亮的蓝。
+                val spotA = if (dark) Color(0xFFAECDF2).copy(alpha = 0.16f) else Color.White.copy(alpha = 0.38f)
+                val spotB = if (dark) Color(0xFF5E9EDC).copy(alpha = 0.22f) else Color(0xFFBFE6FF).copy(alpha = 0.34f)
                 val c1 = Offset(size.width * 0.88f, size.height * 0.02f)
                 val r1 = size.width * 0.46f
                 drawCircle(
                     brush = Brush.radialGradient(
-                        listOf(Color.White.copy(alpha = 0.38f), Color.Transparent),
+                        listOf(spotA, Color.Transparent),
                         center = c1, radius = r1,
                     ),
                     radius = r1, center = c1,
@@ -242,7 +249,7 @@ fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
                 val r2 = size.width * 0.55f
                 drawCircle(
                     brush = Brush.radialGradient(
-                        listOf(Color(0xFFBFE6FF).copy(alpha = 0.34f), Color.Transparent),
+                        listOf(spotB, Color.Transparent),
                         center = c2, radius = r2,
                     ),
                     radius = r2, center = c2,
@@ -365,9 +372,21 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** 标题右边那个圆按钮 */
+/**
+ * 标题右边那个圆按钮。
+ *
+ * [filled] = true 时是**主操作**的样子（实心主色 + 白图标 + 一点主色投影）：
+ * 大标题右边现在常驻两颗圆钮（搜索 / 新增），原来两颗长得一模一样，
+ * 一眼分不出哪个是「主要动作」。2026-10-11 把新增改实心 —— 深浅色下都跳得出来，
+ * 也不破坏「圆钮」这套形状语言。
+ */
 @Composable
-fun CircleIconButton(icon: ImageVector, desc: String, onClick: () -> Unit) {
+fun CircleIconButton(
+    icon: ImageVector,
+    desc: String,
+    filled: Boolean = false,
+    onClick: () -> Unit,
+) {
     val cs = MaterialTheme.colorScheme
     val dark = isDarkUi()
     val interaction = remember { MutableInteractionSource() }
@@ -381,13 +400,37 @@ fun CircleIconButton(icon: ImageVector, desc: String, onClick: () -> Unit) {
         Modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .size(38.dp)
-            .then(if (dark) Modifier.border(1.dp, cs.outlineVariant, CircleShape) else Modifier)
+            .then(
+                when {
+                    filled -> if (dark) Modifier
+                        else Modifier.shadow(
+                            elevation = 6.dp,
+                            shape = CircleShape,
+                            clip = false,
+                            ambientColor = Color(0x332E74CA),
+                            spotColor = Color(0x3D2E74CA),
+                        )
+                    dark -> Modifier.border(1.dp, cs.outlineVariant, CircleShape)
+                    else -> Modifier
+                }
+            )
             .clip(CircleShape)
-            .background(if (dark) cs.surfaceVariant.copy(alpha = 0.5f) else cs.surface)
+            .background(
+                when {
+                    filled -> cs.primary
+                    dark -> cs.surfaceVariant.copy(alpha = 0.5f)
+                    else -> cs.surface
+                }
+            )
             .clickable(interactionSource = interaction, indication = null) { onClick() },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = desc, tint = cs.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        Icon(
+            icon,
+            contentDescription = desc,
+            tint = if (filled) cs.onPrimary else cs.onSurfaceVariant,
+            modifier = Modifier.size(if (filled) 21.dp else 20.dp),
+        )
     }
 }
 

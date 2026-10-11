@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.ArrowForward
@@ -183,7 +184,9 @@ fun LedgerScreen(modifier: Modifier, state: AppState) {
                     if (!searching) query = ""
                 }
                 Spacer(Modifier.width(8.dp))
-                CircleIconButton(Icons.Outlined.Add, AppCtx.s(R.string.common_add)) { creating = true }
+                // 2026-10-11：「+」改实心主色 —— 大标题右边两颗圆钮原来一模一样，
+                // 一眼分不出哪个是主操作。现在新增跳出来、搜索保持安静（见 CircleIconButton）。
+                CircleIconButton(Icons.Outlined.Add, AppCtx.s(R.string.common_add), filled = true) { creating = true }
             }
 
             // ⚠️ 2026-10-02 改：**整页并进同一个 LazyColumn**。
@@ -729,6 +732,11 @@ private fun SortButton(sort: SortMode, onPick: (SortMode) -> Unit) {
  *
  * `enabled = false` 时不响应点击、颜色压淡 —— **但位置照样占着**，
  * 这样同一张卡片的箭头永远在同一个地方，闭着眼也不会点错。
+ *
+ * ⚠️ 2026-10-11 视觉减重：原来是「实心淡底 + 圈」的两枚圆片，跟进度条并排时
+ *    两团圆斑比进度条还抢眼，整张卡显得吵。改成**无底的轻箭头**（按下才浮出一层
+ *    很淡的底），进度条回到主角位。可点区域仍是 34dp、两侧位置不变，
+ *    所以「不会点错」这条不受影响。
  */
 @Composable
 private fun StageArrow(
@@ -740,18 +748,27 @@ private fun StageArrow(
 ) {
     val dim = MaterialTheme.colorScheme.onSurfaceVariant
     val fg = when {
-        !enabled -> dim.copy(alpha = 0.45f)
+        !enabled -> dim.copy(alpha = 0.35f)
+        // 退回箭头压一档：推进才是主操作，两颗一样重会让卡片没有重心
+        !forward -> tint.copy(alpha = 0.75f)
         else -> tint
     }
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val pressBg by androidx.compose.animation.animateColorAsState(
+        targetValue = if (pressed && enabled) tint.copy(alpha = 0.10f) else Color.Transparent,
+        animationSpec = androidx.compose.animation.core.tween(120),
+        label = "arrowBg",
+    )
     Box(
         Modifier
-            .size(30.dp)
+            .size(34.dp)
             .clip(CircleShape)
-            .background(if (enabled) tint.copy(alpha = 0.14f) else dim.copy(alpha = 0.07f))
+            .background(pressBg)
             .then(
                 if (enabled) {
                     Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
+                        interactionSource = interaction,
                         indication = null,
                         onClick = onClick,
                     )
@@ -765,7 +782,7 @@ private fun StageArrow(
             if (forward) Icons.Outlined.ArrowForward else Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = desc,
             tint = fg,
-            modifier = Modifier.size(17.dp),
+            modifier = Modifier.size(19.dp),
         )
     }
 }
@@ -834,7 +851,7 @@ private fun CommissionCard(
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             // ③ 推进进度 / **退回一档**（2026-10-01 加）
             //
@@ -852,9 +869,10 @@ private fun CommissionCard(
                 desc = AppCtx.s(R.string.ledger_revert_one),
                 onClick = onRetreat,
             )
-            Spacer(Modifier.width(8.dp))
+            // 箭头改成无底样式之后，图标跟进度条之间不用再留一个大缝（图标本身居中就带出内边距）
+            Spacer(Modifier.width(4.dp))
             Box(Modifier.weight(1f)) { StageBar(item.status) }
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(4.dp))
             StageArrow(
                 forward = true,
                 enabled = nextStatus != null,
@@ -864,7 +882,7 @@ private fun CommissionCard(
             )
         }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(9.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             // 金额当主角（加粗放大），已付降成小字 —— 卡片第一眼先看到「多少钱」
             Text(
@@ -894,9 +912,12 @@ private fun CommissionCard(
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = if (dl.second) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    // 日期/天数也走等宽数字：列表里上下两张卡的「还剩 N 天」「2026-10-03」
+                    // 口径一致，滚动时不会左右飘（钱早就用上了，日期一直是漏网的）
+                    style = tnum,
                 )
             } else {
-                Text(dayText(item.dateMillis), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(dayText(item.dateMillis), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, style = tnum)
             }
         }
 
