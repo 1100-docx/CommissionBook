@@ -28,6 +28,11 @@ data class BackupData(
      *    恢复时**不该动**本机现有的常用语（不然恢复一份旧备份就把短语全清了）。
      */
     val phrases: List<String>?,
+    /**
+     * 画师图片备注（2026-10-11 加，**仅安卓**）。同样的可空语义：
+     * 老备份、iOS 导出的备份都没有这个键 → null → 恢复时不动本机现有的图。
+     */
+    val artistPhotos: Map<String, List<String>>? = null,
 )
 
 /**
@@ -42,6 +47,10 @@ data class BackupData(
  *
  * `artistAvatars` 是 2026-10-08 加的（头像）—— 一本都没设就不写这个键，
  * 老备份长什么样、新备份还长什么样。
+ *
+ * `artistPhotos`（画师图片备注）是 2026-10-11 加的，**安卓独有的键**（逸风拍板：这个功能
+ * 只做安卓）。iOS 读备份按键取值、会忽略它，所以互导不受影响；
+ * 但「安卓 → iOS 恢复 → 再从 iOS 导出」这一段会把图片备注丢在 iOS 那侧 —— 说好的。
  */
 object Backup {
 
@@ -55,6 +64,10 @@ object Backup {
      * @param photoBytes 能给出一张图的原始字节；给不出（或者图片文件已经没了）
      *                   就只写文件名，不会让整份备份导不出来。
      * @param avatars 名字 → base64 的头像（2026-10-08 加）。空着就**连键都不写**。
+     * @param artistPhotos 画师图片备注（2026-10-11 加，**仅安卓**）：名字 → 图文件名列表。
+     *                     一张都没挂就**连键都不写**。图本体同样 base64 进 JSON
+     *                     （形状：`{"画师名":[{"name":"ap1.jpg","b64":"…"}]}`）。
+     * @param artistPhotoBytes 给出一张画师图的原字节；取不到就只写名字（跟参考图一个兜底）。
      */
     fun encode(
         items: List<Commission>,
@@ -62,6 +75,8 @@ object Backup {
         photoBytes: ((String) -> ByteArray?)? = null,
         avatars: Map<String, String> = emptyMap(),
         phrases: List<String> = emptyList(),
+        artistPhotos: Map<String, List<String>> = emptyMap(),
+        artistPhotoBytes: ((String) -> ByteArray?)? = null,
     ): String {
         val root = JSONObject()
         root.put("commissions", Json.encodeCommissions(items, photoBytes))
@@ -80,6 +95,29 @@ object Backup {
             for (p in phrases) arr.put(p)
             root.put("phrases", arr)
         }
+        // 画师图片备注（2026-10-11 加，**仅安卓**）：一张都没挂就连键都不写。
+        // ⚠️ 这个键 iOS 不认识 —— 它读备份时会忽略（那边是按键取值的），
+        //    所以跨端互导不受影响；只是「过了 iOS 一遍再导出」会丢掉这部分，
+        //    这是逸风 2026-10-11 拍板接受的（这个功能只做安卓）。
+        if (artistPhotos.isNotEmpty()) {
+            val o = JSONObject()
+            var any = false
+            for ((k, names) in artistPhotos) {
+                if (names.isEmpty()) continue
+                val arr = JSONArray()
+                for (n in names) {
+                    val o2 = JSONObject().put("name", n)
+                    val bytes = artistPhotoBytes?.invoke(n)
+                    if (bytes != null) {
+                        o2.put("b64", android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
+                    }
+                    arr.put(o2)
+                }
+                o.put(k, arr)
+                any = true
+            }
+            if (any) root.put("artistPhotos", o)
+        }
         return root.toString(2)
     }
 
@@ -92,6 +130,7 @@ object Backup {
     fun decode(
         text: String,
         onPhoto: ((String, ByteArray) -> Unit)? = null,
+        onArtistPhoto: ((String, ByteArray) -> Unit)? = null,
     ): BackupData? = runCatching {
         val root = JSONObject(text)
         val arr = root.optJSONArray("commissions") ?: JSONArray()
@@ -113,7 +152,28 @@ object Backup {
                 arr.optString(i).trim().takeIf { it.isNotEmpty() }
             }
         }
-        BackupData(items, notes, avatars, phrases)
+        // 画师图片备注（2026-10-11 加，**仅安卓**）：同样「有键才认」。
+        // 图本体 base64 交给 onArtistPhoto 落盘；只写得进名字的（图丢了）也照样收下。
+        val artistPhotos = root.optJSONObject("artistPhotos")?.let { o ->
+            val m = LinkedHashMap<String, List<String>>()
+            for (k in o.keys()) {
+                val arr = o.optJSONArray(k) ?: continue
+                val list = ArrayList<String>(arr.length())
+                for (i in 0 until arr.length()) {
+                    val entry = arr.optJSONObject(i) ?: continue
+                    val n = Photos.safeName(entry.optString("name"))
+                    if (n.isBlank()) continue
+                    list.add(n)
+                    val b64 = entry.optString("b64")
+                    if (b64.isNotBlank() && onArtistPhoto != null) {
+                        runCatching { onArtistPhoto(n, android.util.Base64.decode(b64, android.util.Base64.DEFAULT)) }
+                    }
+                }
+                if (list.isNotEmpty()) m[k] = list
+            }
+            m
+        }
+        BackupData(items, notes, avatars, phrases, artistPhotos)
     }.getOrNull()
 
     /** 备份文件名：约稿账本-2026-09-29-0250-手动.json */

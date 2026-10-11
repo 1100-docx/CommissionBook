@@ -24,6 +24,13 @@ class AppState(private val context: Context) {
         private set
 
     /**
+     * 画师图片备注（2026-10-11 加，**仅安卓**）：名字 → 图文件名列表。
+     * Compose 状态 —— 详情页里加/删一张，画师卡片上的缩略图立刻跟着变。
+     */
+    var artistPhotos by mutableStateOf<Map<String, List<String>>>(emptyMap())
+        private set
+
+    /**
      * 当前使用模式（买家 / 画师）。
      * ⚠️ 是 Compose 状态，不是直接读 prefs —— 这样在设置页一改，所有页面立刻重画。
      */
@@ -133,11 +140,13 @@ class AppState(private val context: Context) {
     fun reload() {
         items = store.loadCommissions()
         notes = store.loadNotes()
+        artistPhotos = store.loadArtistPhotos()
     }
 
     private fun persist() {
         store.saveCommissions(items)
         store.saveNotes(notes)
+        store.saveArtistPhotos(artistPhotos)
         // 数据一变就把提醒闹钟重排一遍 —— 最简单的做法，也最不容易漏
         Reminders.reschedule(context, items, prefs.reminderEnabled, prefs.reminderHour, prefs.reminderMinute)
         // 顺手清掉没人引用的参考图（删单、改单、恢复备份之后都走这儿）。
@@ -160,6 +169,44 @@ class AppState(private val context: Context) {
     fun addPhoto(uri: Uri): String? = store.savePhotoFrom(uri)
 
     fun writePhotoBytes(name: String, bytes: ByteArray): Boolean = store.writePhoto(name, bytes)
+
+    // MARK: - 画师图片备注（2026-10-11 加，**仅安卓**）
+    //
+    // 「给这个画师挂几张备注图」——截图、画风参考之类。
+    // 定义上跟头像分开：头像是**那一张脸**（圆形、全列表都在用），
+    // 这里是**随手记的图**，几张都行（上限沿用参考图的 [Photos.MAX_COUNT]）。
+
+    /** 这个画师挂的图（按添加顺序） */
+    fun artistPhotosOf(artist: String): List<String> = artistPhotos[artist].orEmpty()
+
+    fun artistPhotoFile(name: String): java.io.File = store.artistPhotoFile(name)
+
+    /** 从系统图片选择器收下一张挂到画师名下（失败返回 false，调用方提示一句） */
+    fun addArtistPhoto(artist: String, uri: Uri): Boolean {
+        if (artistPhotosOf(artist).size >= Photos.MAX_COUNT) return false
+        val name = store.saveArtistPhotoFrom(uri) ?: return false
+        artistPhotos = artistPhotos.toMutableMap().also {
+            it[artist] = it[artist].orEmpty() + name
+        }
+        persist()
+        return true
+    }
+
+    fun removeArtistPhoto(artist: String, name: String) {
+        val cur = artistPhotosOf(artist)
+        if (name !in cur) return
+        store.deleteArtistPhotos(listOf(name))
+        artistPhotos = artistPhotos.toMutableMap().also {
+            val next = cur - name
+            // 空列表不占位 —— JSON 里别留 "画师": [] 这种空壳
+            if (next.isEmpty()) it.remove(artist) else it[artist] = next
+        }
+        persist()
+    }
+
+    /** 恢复备份时把图落到磁盘（解码回调里用）；名字先消毒 */
+    fun writeArtistPhotoBytes(name: String, bytes: ByteArray): Boolean =
+        store.writeArtistPhoto(Photos.safeName(name), bytes)
 
     // MARK: - 增删改
 
@@ -251,6 +298,17 @@ class AppState(private val context: Context) {
         next.remove(a)
         notes = next
 
+        // 图片备注跟着搬。⚠️ 跟上面备注的「不覆盖」**故意不一样**：两边都有图时
+        // **合并**，不丢 —— 备注只是一段字，图是真文件，少一张就再也找不回来。
+        val movedPhotos = artistPhotosOf(a)
+        if (movedPhotos.isNotEmpty()) {
+            val nextP = artistPhotos.toMutableMap()
+            val had = nextP[b].orEmpty()
+            nextP[b] = had + movedPhotos.filter { it !in had }
+            nextP.remove(a)
+            artistPhotos = nextP
+        }
+
         Avatars.rename(a, b)
         persist()
         return n
@@ -284,8 +342,20 @@ class AppState(private val context: Context) {
         return if (base.isEmpty()) p else "$base\n$p"
     }
 
-    /** 恢复备份：整批换掉 */
-    fun replaceAll(newItems: List<Commission>, newNotes: Map<String, String>, newAvatars: Map<String, String>? = null, newPhrases: List<String>? = null) {
+    /**
+     * 恢复备份：整批换掉。
+     *
+     * @param newArtistPhotos 画师图片备注（2026-10-11 加）。**可空**，语义跟 [newAvatars] 一致：
+     *        老备份 / iOS 导出的备份没有这个键 → null → **不动**本机现有的图；
+     *        安卓自己导的备份里有 → 整批换掉，顺带清掉没人引用 old 图文件。
+     */
+    fun replaceAll(
+        newItems: List<Commission>,
+        newNotes: Map<String, String>,
+        newAvatars: Map<String, String>? = null,
+        newPhrases: List<String>? = null,
+        newArtistPhotos: Map<String, List<String>>? = null,
+    ) {
         items = newItems
         notes = newNotes
         // ⚠️ 头像 **备份里有才灌**：老备份根本没有这个键，
@@ -295,6 +365,12 @@ class AppState(private val context: Context) {
         // 常用语是「我的习惯用语」，跟账本数据不是一回事；恢复一份备份顺手把
         // 本机上攒的短语抹掉，那不是用户想要的结果。
         if (newPhrases != null) savePhrases(phrases + newPhrases)
+        // 图片备注：备份里有才换（理由同上）。换完清一次「没人认领的图」——
+        // 进来的图是在解码那一步刚写好的，所以清之前先把引用集算好，一张都不会误删。
+        if (newArtistPhotos != null) {
+            artistPhotos = newArtistPhotos
+            store.pruneArtistPhotos(newArtistPhotos.values.flatten().toSet())
+        }
         persist()
     }
 
@@ -304,6 +380,8 @@ class AppState(private val context: Context) {
         photoBytes = { store.readPhoto(it) },
         avatars = Avatars.exportBase64(),
         phrases = phrases,
+        artistPhotos = artistPhotos,
+        artistPhotoBytes = { store.readArtistPhoto(it) },
     )
 
     // MARK: - 屏幕上要用的几个数

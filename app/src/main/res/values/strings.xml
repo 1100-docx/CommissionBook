@@ -277,6 +277,7 @@
     <string name="avatar_change">换个头像</string>
     <string name="avatar_remove">移除头像</string>
     <string name="avatar_rename">改名字</string>
+    <string name="artist_photos_label">图片备注</string>
     <string name="avatar_new_name">新名字</string>
     <string name="avatar_rename_note">原来的约稿、备注和头像都会跟着过去。</string>
     <string name="common_saved">已保存 ✓</string>

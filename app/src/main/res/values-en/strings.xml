@@ -286,6 +286,7 @@ System: Android %4$s (API %5$s)
     <string name="avatar_change">Change avatar</string>
     <string name="avatar_remove">Remove avatar</string>
     <string name="avatar_rename">Rename</string>
+    <string name="artist_photos_label">Photo notes</string>
     <string name="avatar_new_name">New name</string>
     <string name="avatar_rename_note">Their commissions, note and avatar will all move across.</string>
     <string name="common_saved">Saved ✓</string>

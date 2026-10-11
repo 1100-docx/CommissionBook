@@ -428,6 +428,44 @@ object Json {
         for (k in o.keys()) m[k] = o.optString(k)
         return m
     }
+
+    // MARK: - 画师图片备注（2026-10-11 加，**仅安卓**）
+    //
+    // 形状：`{"画师名": ["ap1.jpg", "ap2.jpg"]}` —— 跟 artistNotes 一样按名字挂。
+    // ⚠️ 这是**安卓独有的键**（逸风 2026-10-11 拍的板：这个功能只做安卓，
+    //    不要求 iOS 对齐）。iOS 读备份时会忽略它、导出时也不会带 ——
+    //    所以「iOS 恢复再导出」会把这部分丢在 iOS 那侧，这是说好的；
+    //    安卓自己的备份带这个键，安卓↔安卓完整。
+
+    fun encodeArtistPhotos(m: Map<String, List<String>>): JSONObject {
+        val o = JSONObject()
+        for ((k, v) in m) {
+            if (v.isEmpty()) continue
+            val arr = JSONArray()
+            for (n in v) arr.put(n)
+            o.put(k, arr)
+        }
+        return o
+    }
+
+    /**
+     * 读图片备注。文件名走 [Photos.safeName] 消毒 —— 跟参考图同一个理由：
+     * 备份可以从外面塞进来，名字里带 `../` 就能写到别的目录去。
+     */
+    fun decodeArtistPhotos(o: JSONObject?): MutableMap<String, MutableList<String>> {
+        val m = LinkedHashMap<String, MutableList<String>>()
+        if (o == null) return m
+        for (k in o.keys()) {
+            val arr = o.optJSONArray(k) ?: continue
+            val list = ArrayList<String>(arr.length())
+            for (i in 0 until arr.length()) {
+                val n = Photos.safeName(arr.optString(i))
+                if (n.isNotBlank()) list.add(n)
+            }
+            if (list.isNotEmpty()) m[k] = list
+        }
+        return m
+    }
 }
 
 // MARK: - 存盘：一个 JSON 文件，放在 App 自己的目录里
@@ -479,6 +517,73 @@ class Store(private val context: Context) {
 
     fun saveNotes(notes: Map<String, String>) {
         runCatching { notesFile.writeText(Json.encodeNotes(notes).toString()) }
+    }
+
+    // MARK: - 画师图片备注（2026-10-11 加，**仅安卓**）
+    //
+    // 名字挂在 `artistPhotos.json`（跟 artistNotes.json 一个路数），
+    // 图放**单独的目录** `files/artistphotos/`。
+    //
+    // ⚠️ 千万别把图塞进 `files/photos/`（参考图那个目录）：
+    //    那边有 [prunePhotos]，按「有没有被某条约稿引用」清孤儿文件 ——
+    //    画师的图不在那份引用名单里，第一次 persist 就会被当垃圾全清光。
+    //    分开目录之后，参考图那套清理逻辑一行都不用动。
+
+    private val artistPhotosFile: File get() = File(context.filesDir, "artistPhotos.json")
+
+    private val artistPhotosDir: File
+        get() = File(context.filesDir, "artistphotos").apply { if (!exists()) mkdirs() }
+
+    fun loadArtistPhotos(): MutableMap<String, MutableList<String>> {
+        if (!artistPhotosFile.exists()) return LinkedHashMap()
+        return runCatching {
+            Json.decodeArtistPhotos(JSONObject(artistPhotosFile.readText()))
+        }.getOrElse { LinkedHashMap() }
+    }
+
+    fun saveArtistPhotos(m: Map<String, List<String>>) {
+        runCatching { artistPhotosFile.writeText(Json.encodeArtistPhotos(m).toString()) }
+    }
+
+    fun artistPhotoFile(name: String): File = File(artistPhotosDir, Photos.safeName(name))
+
+    /** 读一张画师图的原字节（导出备份时 base64 进 JSON） */
+    fun readArtistPhoto(name: String): ByteArray? = runCatching { artistPhotoFile(name).readBytes() }.getOrNull()
+
+    /**
+     * 从系统选择器给的 uri 收下一张：压好落盘，返回文件名（失败 null）。
+     * 压缩规格跟参考图**一模一样**（长边 1400 / JPEG 82，见 [Photos.compress]）——
+     * 都是「存个参考」，没必要两套参数。名字前缀 `ap` 跟参考图的 `p` 分开，
+     * 万一以后两个目录合并了也能一眼认出谁是谁。
+     */
+    fun saveArtistPhotoFrom(uri: Uri): String? {
+        val bytes = Photos.compress(context, uri) ?: return null
+        val name = "ap" + UUID.randomUUID().toString().replace("-", "").take(14) + ".jpg"
+        return if (writeArtistPhoto(name, bytes)) name else null
+    }
+
+    /** 落盘一张画师图（恢复备份时用） */
+    fun writeArtistPhoto(name: String, bytes: ByteArray): Boolean =
+        runCatching { artistPhotoFile(name).writeBytes(bytes); true }.getOrDefault(false)
+
+    fun deleteArtistPhotos(names: Collection<String>) {
+        names.forEach { runCatching { artistPhotoFile(it).delete() } }
+    }
+
+    /**
+     * 清掉没人引用的画师图，返回删了几个。
+     *
+     * ⚠️ 跟 [prunePhotos] 一样**只在恢复备份之后调**（不能挂进每次 persist）：
+     *    artistPhotos.json 万一读坏了 → 内存里是空表 → 随手 persist 一次
+     *    就会把全部画师图当孤儿清光。宁可留着几个没人认领的文件，
+     *    也不能有「读坏一次就全没了」这条路。
+     */
+    fun pruneArtistPhotos(referenced: Set<String>): Int {
+        var n = 0
+        artistPhotosDir.listFiles()?.forEach { f ->
+            if (f.name !in referenced && f.delete()) n++
+        }
+        return n
     }
 
     // MARK: - 参考图（2026-10-03 加）

@@ -213,12 +213,18 @@ class MainActivity : FragmentActivity() {
      *    会把刚恢复进来的图当成没人要的，当场删掉。
      */
     private fun importBackupText(text: String) {
-        val payload = Backup.decode(text) { name, bytes -> state.writePhotoBytes(name, bytes) }
+        val payload = Backup.decode(
+            text,
+            onPhoto = { name, bytes -> state.writePhotoBytes(name, bytes) },
+            // 画师图片备注（2026-10-11 加，仅安卓）：图先落盘，再 replaceAll（顺序不能反）
+            onArtistPhoto = { name, bytes -> state.writeArtistPhotoBytes(name, bytes) },
+        )
         if (payload == null) {
             toast(AppCtx.s(R.string.common_backup_unreadable))
         } else {
             // 常用语（2026-10-09 加）：备份里有才灌（老备份没这个键 → null → 不动本机那份）
-            state.replaceAll(payload.items, payload.notes, payload.avatars, payload.phrases)
+            // 画师图片备注同规矩（2026-10-11）。
+            state.replaceAll(payload.items, payload.notes, payload.avatars, payload.phrases, payload.artistPhotos)
             toast(AppCtx.s(R.string.common_restored_count, payload.items.size))
         }
     }

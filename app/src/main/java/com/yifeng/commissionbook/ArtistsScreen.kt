@@ -1,8 +1,10 @@
 package com.yifeng.commissionbook
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,6 +55,11 @@ private data class ArtistGroup(
     val name: String,
     val list: List<Commission>,
     val note: String,
+    /**
+     * 图片备注（2026-10-11 加，**仅安卓**）：这个画师挂的图文件名（按添加顺序）。
+     * 卡片上最多画 3 张缩略图，多的折成「+N」。
+     */
+    val photos: List<String>,
 ) {
     val totalMoney: Double get() = list.sumOf { it.total }
     val paidMoney: Double get() = list.sumOf { it.deposit }
@@ -70,6 +78,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 name = name.ifBlank { Terms.otherBlank(state.appMode) },
                 list = list.sortedByDescending { it.dateMillis },
                 note = state.notes[it0(name)] ?: "",
+                photos = state.artistPhotosOf(it0(name)),
             )
         }
         .sortedByDescending { it.list.size }
@@ -87,6 +96,19 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
         val g = editing
         if (uri != null && g != null) {
             Avatars.setFromUri(context, it0(g.name), uri)
+        }
+    }
+
+    // 加图片备注（2026-10-11 加，**仅安卓**）：走**系统图片选择器**（Photo Picker）。
+    // ⚠️ 跟参考图一条路：不要相册权限、App 看不到没选的那些图（隐私政策靠这个立着）。
+    // 图是**即点即存**的：选完立刻落盘 + 记名字，不跟着弹窗那颗「保存」走 ——
+    // 头像本来就是这个规矩（改完立即生效），两处一致。
+    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        val g = editing
+        if (uri != null && g != null) {
+            if (!state.addArtistPhoto(it0(g.name), uri)) {
+                toastNow(context, AppCtx.s(R.string.common_save_failed))
+            }
         }
     }
 
@@ -110,7 +132,12 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 ) {
                     items(groups, key = { it.name }) { g ->
                         // 画师数变动时卡片滑动 / 淡入，不硬切
-                        ArtistCard(g, state.appMode, Modifier.animateItem()) { editing = g }
+                        ArtistCard(
+                            g = g,
+                            mode = state.appMode,
+                            pathFor = { state.artistPhotoFile(it).absolutePath },
+                            modifier = Modifier.animateItem(),
+                        ) { editing = g }
                     }
                 }
             }
@@ -120,6 +147,10 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
     editing?.let { g ->
         var text by remember(g.name) { mutableStateOf(state.notes[it0(g.name)] ?: "") }
         val hasAvatar = Avatars.base64For(it0(g.name)) != null
+        // 图片备注（2026-10-11 加）：这一份读的是 Compose 状态，加/删一张当场重画
+        val photos = state.artistPhotosOf(it0(g.name))
+        // 点缩略图看大图：记下第几张（null = 没在看）
+        var viewerAt by remember { mutableStateOf<Int?>(null) }
         AlertDialog(
             onDismissRequest = { editing = null },
             shape = RoundedCornerShape(24.dp),
@@ -171,6 +202,30 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth(),
                     )
+
+                    // 图片备注（2026-10-11 加，**仅安卓**）：跟参考图表单里那条一模一样的
+                    // 交互（缩略图右上角 ✕ 删、点开看大图、到 6 张就不显示「加图」）。
+                    // 跟文字备注的分工：联系方式、忌讳那种**一句话**写这儿；
+                    // 画风参考、聊天截图那种**一张图**挂这儿。
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        AppCtx.s(R.string.artist_photos_label),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    PhotoStrip(
+                        items = photos.map { Photo(it) },
+                        pathFor = { state.artistPhotoFile(it).absolutePath },
+                        onAdd = {
+                            pickPhoto.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        onRemove = { state.removeArtistPhoto(it0(g.name), it) },
+                        onOpen = { i -> viewerAt = i },
+                    )
+
                     Spacer(Modifier.height(4.dp))
                     // 改名字：名字是这一页的「身份证」（约稿、备注、头像全按它挂），
                     // 所以放进这个人的编辑框里，跟备注挨着
@@ -193,6 +248,17 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
             },
             dismissButton = { TextButton(onClick = { editing = null }) { Text(AppCtx.s(R.string.common_cancel)) } },
         )
+
+        // 看大图（点缩略图进来）：跟单子那边同一个 [PhotoViewer]（Sheet、能左右翻）。
+        // ⚠️ 画师图没有水印那一套，watermark 不传（默认 null = 什么都不盖）。
+        viewerAt?.let { start ->
+            PhotoViewer(
+                items = photos.map { Photo(it) },
+                startIndex = start,
+                pathFor = { state.artistPhotoFile(it).absolutePath },
+                onDismiss = { viewerAt = null },
+            )
+        }
     }
 
     // 改名字（2026-10-08 加）：跟 iOS 版同语义 ——
@@ -234,7 +300,14 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
 }
 
 @Composable
-private fun ArtistCard(g: ArtistGroup, mode: AppMode, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun ArtistCard(
+    g: ArtistGroup,
+    mode: AppMode,
+    /** 图片备注的文件名 → 绝对路径（图片备注那一排缩略图用） */
+    pathFor: (String) -> String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     SoftCard(modifier.fillMaxWidth(), onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AvatarBubble(g.name, size = 48.dp)
@@ -282,6 +355,44 @@ private fun ArtistCard(g: ArtistGroup, mode: AppMode, modifier: Modifier = Modif
                     )
                     Spacer(Modifier.width(5.dp))
                     Text(g.note, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        // 图片备注（2026-10-11 加，**仅安卓**）：挂了这个人的图，卡片上直接画出来
+        // （最多 3 张、多的折成 +N）—— 「给画师存参考图」的意义就是**一眼能看见**，
+        // 藏在详情页里还得专门点进去一趟。点卡片进详情，那儿才是加图 / 删图的地方。
+        if (g.photos.isNotEmpty()) {
+            Spacer(Modifier.height(11.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                g.photos.take(3).forEachIndexed { i, name ->
+                    Box {
+                        PhotoThumb(
+                            path = pathFor(name),
+                            size = 56.dp,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp)),
+                        )
+                        // 还有更多：最后一张压一层「+N」（N = 没画出来的张数）
+                        if (i == 2 && g.photos.size > 3) {
+                            Box(
+                                Modifier
+                                    .matchParentSize()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.Black.copy(alpha = 0.45f)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    "+${g.photos.size - 3}",
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
