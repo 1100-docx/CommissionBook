@@ -151,6 +151,10 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
         val photos = state.artistPhotosOf(it0(g.name))
         // 点缩略图看大图：记下第几张（null = 没在看）
         var viewerAt by remember { mutableStateOf<Int?>(null) }
+        // 删图先问一句（2026-10-11 深夜加）：记下要删哪张（null = 没在问）。
+        // 逸风拍板「两边统一成弹确认」—— iOS 删图就是二次确认；删图不可逆，
+        // 跟单子那边「删除先问一句」一个规矩（归档 / 放回那种可逆的才不弹）。
+        var confirmRemove by remember { mutableStateOf<String?>(null) }
         AlertDialog(
             onDismissRequest = { editing = null },
             shape = RoundedCornerShape(24.dp),
@@ -222,7 +226,8 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
                         },
-                        onRemove = { state.removeArtistPhoto(it0(g.name), it) },
+                        // ✕ 只是「想问一句」，真删在下面那个确认框里（2026-10-11 深夜改）
+                        onRemove = { confirmRemove = it },
                         onOpen = { i -> viewerAt = i },
                     )
 
@@ -257,6 +262,29 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 startIndex = start,
                 pathFor = { state.artistPhotoFile(it).absolutePath },
                 onDismiss = { viewerAt = null },
+            )
+        }
+
+        // 删图的二次确认 —— 文案跟 iOS 一字不差（「删掉这张图？」「删掉之后，这张图就不在了。」），
+        // 「删除」用红色、【取消】是退路：这是逸风 2026-10-11 深夜拍板「两边统一成弹确认」，
+        // ⚠️ 后面哪边再动删图交互，记得两边一起看。
+        confirmRemove?.let { target ->
+            AlertDialog(
+                onDismissRequest = { confirmRemove = null },
+                shape = RoundedCornerShape(24.dp),
+                title = { Text(AppCtx.s(R.string.artist_photo_delete_title)) },
+                text = { Text(AppCtx.s(R.string.artist_photo_delete_body)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        state.removeArtistPhoto(it0(g.name), target)
+                        confirmRemove = null
+                    }) {
+                        Text(AppCtx.s(R.string.common_delete_2), color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmRemove = null }) { Text(AppCtx.s(R.string.common_cancel)) }
+                },
             )
         }
     }

@@ -278,6 +278,8 @@
     <string name="avatar_remove">移除頭像</string>
     <string name="avatar_rename">改名字</string>
     <string name="artist_photos_label">圖片備註</string>
+    <string name="artist_photo_delete_title">刪掉這張圖？</string>
+    <string name="artist_photo_delete_body">刪掉之後，這張圖就不在了。</string>
     <string name="avatar_new_name">新名字</string>
     <string name="avatar_rename_note">原本的約稿、備註和頭像都會跟著過去。</string>
     <string name="common_saved">已儲存 ✓</string>

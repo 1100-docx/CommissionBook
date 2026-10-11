@@ -59,8 +59,14 @@ android {
         //        ③ 年度报告卡补一句描述（4 语种）；④ 补 debug 的 BuildConfig.LEGACY_COMPAT
         //           （原来 assembleDebug 从来编不过，代码里六处引用它）
         //        ⚠️ versionName 必须离开 3.9.10 —— 否则用户更新完在「关于」里看不出成没成。
-        versionCode = 100
-        versionName = "3.9.12"
+        // 3.9.13（2026-10-11 第三次）：**画师图片备注删图补二次确认**。
+        //        原来点缩略图右上角 ✕ 是一点就删（`onRemove = { state.removeArtistPhoto(...) }`），
+        //        现改成：点 ✕ 先弹系统确认框（Material3 AlertDialog，「删除」红 /「取消」退路），
+        //        确认后才真删。删图不可逆，跟约稿条目那边「删除先弹确认」一个规矩
+        //        （归档 / 放回那种可逆的才不弹）。⚠️ 只动画师这一侧的**调用点**，
+        //        共用的 PhotoStrip 组件一行没改 → 约稿那边「参考图」删除行为不受影响。
+        versionCode = 101
+        versionName = "3.9.13"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
