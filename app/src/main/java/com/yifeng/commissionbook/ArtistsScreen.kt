@@ -23,9 +23,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ContactPhone
+import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -66,8 +70,31 @@ private data class ArtistGroup(
     val activeCount: Int get() = list.count { !it.archived && it.status != CommissionStatus.DELIVERED }
 }
 
+/**
+ * 画师页排序（2026-10-12 加）—— 照账本页的 [SortMode] 那一套抄的。
+ *
+ * ⚠️ `labelRes` 存的是**资源 ID**，标签走计算属性现取：
+ *    绝不能在构造参数里写 `ByCount(AppCtx.s(...))` —— enum 常量在**类初始化时**
+ *    只求值一次，那会儿 AppCtx 还没 init（拿到空串），而且切了语言也不会更新。
+ */
+private enum class ArtistSort(val labelRes: Int) {
+    /** 按约稿次数（多的在前）—— **默认**，跟这一页原来写死的顺序一致 */
+    ByCount(R.string.artist_sort_by_count),
+    /** 按最近约稿（日期新的在前） */
+    ByRecent(R.string.artist_sort_by_recent),
+    /** 按名字 */
+    ByName(R.string.artist_sort_by_name);
+
+    val label: String get() = AppCtx.s(labelRes)
+}
+
 @Composable
 fun ArtistsScreen(modifier: Modifier, state: AppState) {
+
+    // 排序（2026-10-12 加，照账本页那一套）：只改**列表显示顺序**，不碰任何数据。
+    // ⚠️ 默认必须是「按约稿次数」= 这一页原来写死的顺序（多的在前），
+    //    否则老用户一打开会发现画师的先后莫名其妙变了。
+    var sort by remember { mutableStateOf(ArtistSort.ByCount) }
 
     val groups = state.modeItems
         .groupBy { it.artist }
@@ -76,12 +103,26 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 // 显示名跟着模式走（买家「画师」/ 画师「客户」）；
                 // ⚠️ 但 notes 的 key 用的还是 it0()，保持不变 —— 别把存过的联系方式读丢
                 name = name.ifBlank { Terms.otherBlank(state.appMode) },
-                list = list.sortedByDescending { it.dateMillis },
+                // 卡内那摞（卡片上取前 3 条画出来）也交给排序管：
+                // 按名字 → 单子按标题升序；按次数 / 按最近 → 仍是最近那单在前。
+                list = when (sort) {
+                    ArtistSort.ByName -> list.sortedBy { it.title }
+                    ArtistSort.ByCount, ArtistSort.ByRecent -> list.sortedByDescending { it.dateMillis }
+                },
                 note = state.notes[it0(name)] ?: "",
                 photos = state.artistPhotosOf(it0(name)),
             )
         }
-        .sortedByDescending { it.list.size }
+        // ⚠️ 这一页的先后由**两处**排序叠着决定：上面卡内那一摞（ArtistGroup.list）+
+        //    这里卡片本身的先后。**两处都得过 `sort`**，别只改一边 ——
+        //    留一边写死的话，就会出现「排序按钮点了但列表没动」的怪现象。
+        .let { gs ->
+            when (sort) {
+                ArtistSort.ByCount -> gs.sortedByDescending { it.list.size }
+                ArtistSort.ByRecent -> gs.sortedByDescending { g -> g.list.maxOfOrNull { it.dateMillis } ?: 0L }
+                ArtistSort.ByName -> gs.sortedBy { it.name }
+            }
+        }
 
     var editing by remember { mutableStateOf<ArtistGroup?>(null) }
     // 改名字（2026-10-08 加）：跟备注分开一个弹窗 —— 两个输入框塞一个框里会看不清
@@ -120,7 +161,11 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 title = Terms.other(state.appMode),
                 collapse = rememberCollapseFraction(listState),
                 caption = AppCtx.s(R.string.common_contact_hint, groups.size),
-            )
+            ) {
+                // 排序（2026-10-12 加）：跟账本页那颗一样的圆按钮 + 下拉，
+                // 放在大标题右边（这一页顶栏就它一颗钮，位置跟账本页的搜索/新增一档）。
+                ArtistSortButton(sort) { sort = it }
+            }
 
             if (groups.isEmpty()) {
                 EmptyHint(AppCtx.s(R.string.common_none_yet, Terms.other(state.appMode)))
@@ -324,6 +369,27 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
             },
             dismissButton = { TextButton(onClick = { renaming = null }) { Text(AppCtx.s(R.string.common_cancel)) } },
         )
+    }
+}
+
+/** 排序：一个圆形按钮 + 下拉，当前选中的打勾（照账本页的 SortButton 抄的） */
+@Composable
+private fun ArtistSortButton(sort: ArtistSort, onPick: (ArtistSort) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        CircleIconButton(Icons.Outlined.SwapVert, sort.label) { open = true }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            ArtistSort.entries.forEach { s ->
+                DropdownMenuItem(
+                    text = { Text(s.label, fontSize = 14.sp) },
+                    leadingIcon = {
+                        if (s == sort) Icon(Icons.Outlined.Check, null, modifier = Modifier.size(18.dp))
+                        else Spacer(Modifier.width(18.dp))
+                    },
+                    onClick = { onPick(s); open = false },
+                )
+            }
+        }
     }
 }
 

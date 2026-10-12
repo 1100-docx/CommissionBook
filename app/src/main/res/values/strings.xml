@@ -214,6 +214,9 @@
     <string name="ledger_sort_by_order_date">按下单日期</string>
     <string name="ledger_sort_by_amount">按金额</string>
     <string name="ledger_sort_by_deadline">按截止日</string>
+    <string name="artist_sort_by_count">按约稿次数</string>
+    <string name="artist_sort_by_recent">按最近约稿</string>
+    <string name="artist_sort_by_name">按名字</string>
     <string name="ledger_summary_count">共 %1$s 单 · 进行中 %2$s</string>
     <string name="common_search">搜索</string>
     <string name="common_add">新增</string>

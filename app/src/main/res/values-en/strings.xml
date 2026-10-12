@@ -223,6 +223,9 @@ System: Android %4$s (API %5$s)
     <string name="ledger_sort_by_order_date">By Order Date</string>
     <string name="ledger_sort_by_amount">By Amount</string>
     <string name="ledger_sort_by_deadline">By Deadline</string>
+    <string name="artist_sort_by_count">By Order Count</string>
+    <string name="artist_sort_by_recent">By Most Recent</string>
+    <string name="artist_sort_by_name">By Name</string>
     <string name="ledger_summary_count">%1$s orders total · %2$s in progress</string>
     <string name="common_search">Search</string>
     <string name="common_add">Add</string>
