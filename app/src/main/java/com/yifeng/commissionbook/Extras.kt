@@ -1115,6 +1115,31 @@ fun shareText(context: Context, text: String): Intent? = runCatching {
     }
 }.getOrNull()
 
+/**
+ * 分享一张**磁盘上已有的图**（2026-10-12 加，画师图片备注的大图页用）。
+ *
+ * 跟 [sharePng] 的分工：
+ *  - [sharePng] 是「把内存里一张 Bitmap 重新编成 PNG、落到 cache/share 再发」——给需要烧水印的参考图用；
+ *  - 这个是**原样把磁盘上那个文件发出去**（不重编码）。画师图片本来就是压好的 JPEG，
+ *    再转一道 PNG 只会变大变慢，没必要。
+ *
+ * ⚠️ Android 7+ 直接给 `file://` 会抛 FileUriExposedException → 必须用 FileProvider
+ *    （authority = `<包名>.fileprovider`，能给的目录在 `res/xml/file_paths.xml` 里放出来，
+ *     这里对应 `<files-path name="artistphotos" path="artistphotos/" />`）。
+ * ⚠️ 少了 FLAG_GRANT_READ_URI_PERMISSION，对面 App **读不到**这张图 —— 分享过去是个空壳。
+ * ⚠️ 文件不在（换手机恢复了一份「只带名字」的备份那种）→ 返回 null，调用方自己决定
+ *    是提示一句还是干脆别显示这颗按钮。
+ */
+fun shareImageFile(context: Context, file: File): Intent? = runCatching {
+    if (!file.exists()) return null
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    Intent(Intent.ACTION_SEND).apply {
+        type = "image/*"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+}.getOrNull()
+
 /** 一句话提示（复制完、生成失败这类） */
 fun toastNow(context: Context, msg: String) {
     android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()

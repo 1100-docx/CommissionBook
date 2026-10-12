@@ -1,0 +1,173 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+android {
+    namespace = "com.yifeng.commissionbook"
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "com.yifeng.commissionbook"
+        minSdk = 26
+        targetSdk = 36
+        // 2026-10-08：二维码传输（局域网扫码，见 QrTransfer.kt / QrScanActivity.kt）。
+        // 逸风定的「这算一次大版本」——它第一次给 App 带来**相机权限**，
+        // 隐私政策也跟着升到第六版，所以是大版本。
+        // 3.9.1：当天第二版 —— 出码 Sheet 改**弹全屏**、底下那行去掉红字。
+        // 3.9.3：当天第四版 —— 真凶抓到：安卓 targetSdk 36 **默认禁止明文 HTTP**，
+        //        而拉备份用的是 HttpURLConnection → 请求还没出手机就被系统拦掉，
+        //        还伪装成「不在同一个 Wi-Fi」（iOS 扫安卓通、反方向不通就是这个原因）。
+        //        改成裸 TCP socket 手拼 GET，不碰明文策略；失败原因也一并带到弹窗里。
+        // 3.9.2：当天第三版 —— 逸风实测「五分钟倒计时内码也在一直变，这不应该」，
+        //        把「口令每 10 秒轮换」撤掉：整场 5 分钟就一张码，不变，到点才作废。
+        // 3.9.3：当天第四版 —— 修「安卓扫 iOS 报不在同一个 Wi-Fi」的真凶：
+        //        安卓 9 起 targetSdk≥28 默认禁明文 http，HttpURLConnection 直接被系统拦。
+        //        拉数据改走**裸 TCP socket 手拼 GET**（明文策略管不到裸 socket），
+        //        顺带没给 App 开任何明文口子；失败时把原始报错小字附在弹窗里。
+        // 3.9.4：当天第五版 —— 修 3.9.3 带出来的回归：拉数据原来写在主线程，
+        //        主线程被占住 → 取景页退不回来，用户看到的是「对着码一直没反应」。
+        //        挪到独立线程 + 中间加「正在传输…」。
+        // 3.9.5：当天第五版（**这一版推通道**）。四件事一起：
+        //        ① 连接超时 4s → 8s；超时弹窗补上「网络禁止设备互连（AP 隔离）/ 建议开热点」这条出路；
+        //        ② 扫码页埋面包屑（崩溃记录里能看到「二维码 · 扫码页」）；
+        //        ③ 两句**已经不实**的旧文案改准（崩溃记录页那句「不联网、不要权限」+
+        //           网络那条补上「二维码传输只在同一个 Wi-Fi 内通信」）；
+        //        ④ 出码页去掉红字、Sheet 全屏、码不再每 10 秒轮换。
+        // 3.9.6：当天第六版 —— **纯为绕开镜像缓存而升的号**。
+        //        起因：3.9.5 推上去之后，四个源里 ghproxy.net 那份 version.json 还是旧的
+        //        （size 2441952 ≠ 本次的 2442584），但 versionCode 同样是 92 ——
+        //        App「取版本号最大」时可能挑中这份旧清单，拿旧 sha 去校新包会装不上，
+        //        就算装上也是没带 AP 隔离提示的那一版，而版本号一样、以后不再提示更新。
+        //        升到 93 之后，新鲜的那些源版本号更大，一定赢。**行为与 3.9.5 完全一致。**
+        // 3.9.7：政策正文补一条「二维码传输」（跟 iOS 那边对齐）—— **纯文案，行为一行没动**。
+        // 3.9.12（2026-10-11）：**回滚版** —— 逸风「算了，全部回滚到 v3.9.10」。
+        //        3.9.11 那版（设置页「收进」+「更多」二级页）试完不要了，代码已整份退回
+        //        3.9.10 的状态（`git checkout -- app/`，见 commit 3687e62）。
+        //        ⚠️ 版本号仍是 3.9.10（逸风要的就是「回到 3.9.10」），
+        //           但 versionCode 必须给 99：他手机上装的是 3.9.11（code 98），
+        //           安卓**不允许装版本号更低的包**（INSTALL_FAILED_VERSION_DOWNGRADE），
+        //           给 97 他会看到「应用未安装」。给 99 就能直接覆盖装、数据一条不丢。
+        //           通道那边仍是 code 97 / 3.9.10 → 本地 99 比它大，不会弹更新（这正是我们要的）。
+        //           下次真发新版从 100 起，照样是递增的。
+        // 3.9.12（2026-10-11 第二次）：**正式发版** —— Codex 接手的首轮界面打磨。
+        //        ① 大标题右「+」改实心主色（原来跟搜索两颗长得一模一样、一眼分不出主操作）
+        //        ② 进度卡推进/退回箭头视觉减重（原「实心淡底+圈」比进度条还抢眼）→ 无底轻箭头、
+        //           按下才浮一层淡底；退回压一档（推进才是主操作）；
+        //           ⚠️ **可点区域仍 34dp、两侧位置没变**（「不会点错」是逸风明确要求，不能丢）
+        //        ③ 年度报告卡补一句描述（4 语种）；④ 补 debug 的 BuildConfig.LEGACY_COMPAT
+        //           （原来 assembleDebug 从来编不过，代码里六处引用它）
+        //        ⚠️ versionName 必须离开 3.9.10 —— 否则用户更新完在「关于」里看不出成没成。
+        // 3.9.13（2026-10-11 第三次）：**画师图片备注删图补二次确认**。
+        //        原来点缩略图右上角 ✕ 是一点就删（`onRemove = { state.removeArtistPhoto(...) }`），
+        //        现改成：点 ✕ 先弹系统确认框（Material3 AlertDialog，「删除」红 /「取消」退路），
+        //        确认后才真删。删图不可逆，跟约稿条目那边「删除先弹确认」一个规矩
+        //        （归档 / 放回那种可逆的才不弹）。⚠️ 只动画师这一侧的**调用点**，
+        //        共用的 PhotoStrip 组件一行没改 → 约稿那边「参考图」删除行为不受影响。
+        // 3.9.14（2026-10-12）：**画师页加排序**。照账本页那套（圆形按钮 + 下拉、选中打勾）
+        //        抄了一份 ArtistSort：按约稿次数（默认，跟原来写死的顺序一致）/ 按最近约稿 / 按名字。
+        //        只改列表显示顺序，不碰数据；画师卡片先后 + 卡内那摞**两处**都过排序。
+        //        新增 artist_sort_by_count / _recent / _name（4 语种齐）。
+        versionCode = 103
+        versionName = "3.9.15"
+        // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
+        //    意思是「只打包中文资源，其它语言全砍掉」。
+        //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
+        //    界面上切了语言也还是中文，而且查不出原因（资源压根不在包里）。
+        resourceConfigurations += listOf("zh", "en", "zh-rHK", "zh-rTW")
+    }
+
+    buildTypes {
+        // ⚠️ 2026-10-11 补：debug 一直缺 BuildConfig.LEGACY_COMPAT 这个字段，
+        //    所以 `assembleDebug` 从来编不过（代码里六处引用它，只有 release/compat 定义了）。
+        //    平时都是直接打 release 包所以没暴露。给 debug 也补上（值同通用版 = false），
+        //    这样装到模拟器上跑调试包时行为跟正式版一致。
+        debug {
+            buildConfigField("boolean", "LEGACY_COMPAT", "false")
+        }
+        release {
+            // 2026-09-30 打开 R8：微信发文件有大小限制，11MB 的包发不出去（CDN 500）。
+            // minify = 剔掉没用到的代码（material-icons-extended 那几千个图标是重头）
+            // shrinkResources = 顺带剔掉没人用的资源
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            signingConfig = signingConfigs.getByName("debug")
+            // 通用版：所有兼容开关都关着
+            buildConfigField("boolean", "LEGACY_COMPAT", "false")
+        }
+
+        // ⚠️ 老机兼容版（2026-10-07 加）——**只给特定用户**的单独一份包。
+        //
+        //    起因：一位用户的华为 nova 3（鸿蒙 2.0 / 麒麟 970）打开「年度报告」会闪退。
+        //    逸风的决定是「通用版别动，专门给她做一版」——所以这儿不是「降级版」，
+        //    而是**同一份代码、另一套开关**，产物跟她手机上的旧版是同一个包名，
+        //    装上去是覆盖升级（数据一定在）。
+        //
+        //    这一版比通用版多的两样：
+        //      ① 更新功能整块锁死（灰掉 + 弹窗说明）—— 免得她升回通用版又崩；
+        //      ② 年度报告那张卡不再「一进页面就录图」（见 Extras.kt）。
+        //
+        //    ⚠️ 跟 release 走同一套 R8 + 同一个签名，只有 BuildConfig.LEGACY_COMPAT 是 true。
+        //    ⚠️ `assembleRelease` 不受影响 —— 通用版的打包流程一行没改。
+        create("compat") {
+            initWith(getByName("release"))
+            versionNameSuffix = "-compat"
+            buildConfigField("boolean", "LEGACY_COMPAT", "true")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+        // FlowRow（报价计算器里那排可变的加价项胶囊）还是试验 API，
+        // 统一在这里开一次，省得每个用到的 composable 都挂 @OptIn
+        freeCompilerArgs += "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
+    }
+
+    buildFeatures {
+        compose = true
+        // 2026-10-03 打开：隐私政策里那行「适用版本：安卓版 3.5.x（versionCode N）」
+        // 以前是**写死**在四份语种资源里的，一升版本就悄悄过期
+        // （刚就踩了：包里是 3.5.9、政策上还写着 3.5.8）。
+        // 改成从 BuildConfig 现取，以后升版本不必再手动改四份语言包。
+        buildConfig = true
+    }
+
+    packaging {
+        resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
+    implementation("androidx.biometric:biometric:1.1.0")
+
+    implementation(platform("androidx.compose:compose-bom:2024.10.01"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // 二维码传输（2026-10-08 加，见 QrTransfer.kt / QrScanActivity.kt）
+    //   core     = 造二维码（出码那端）+ 从一张图片里解二维码（扫码页的「相册」那颗）
+    //   embedded = 相机预览、对焦、连续解码、相机权限申请全包了；
+    //              我们的取景页只是**换掉它的布局**（见 QrScanActivity），
+    //              比自己拉 CameraX 重写一遍快得多，也少一堆型号坑。
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
+    debugImplementation("androidx.compose.ui:ui-tooling")
+}

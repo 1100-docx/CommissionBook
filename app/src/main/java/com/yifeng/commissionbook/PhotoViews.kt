@@ -34,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ImageNotSupported
 import androidx.compose.material.icons.outlined.Share
@@ -67,6 +68,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.platform.LocalConfiguration
+import java.io.File
 
 /**
  * 参考图那几块界面（2026-10-03 加）。
@@ -203,6 +205,15 @@ fun PhotoStrip(
  * ⚠️ 以前是个**全屏 Dialog**，顶上那颗 ✕、底下页码、还有那颗分享都得自己搭，
  *    结果按钮一次次顶到系统导航栏上（逸风连报两次）。换成 ModalBottomSheet 之后
  *    底部让位、圆角、动画全归系统管，自己不再碰 inset。
+ *
+ * ⚠️ 2026-10-12：这个组件**两边共用**（约稿「参考图」+ 画师「图片备注」）。新加的
+ *    [onDelete] / [shareOriginal] 两个参数**都有默认值**，默认 = 老行为，
+ *    所以约稿那边的调用点一行没动、画面一模一样。差别只在画师那侧：
+ *      · [onDelete] 传了就顶栏**左上角**多一颗垃圾桶 —— 点了只回调、不自己删，
+ *        真删交给调用方（画师页那边走的是原有的二次确认框）。
+ *      · [shareOriginal] = true 时顶栏那颗分享改成**直接发磁盘上的原图文件**
+ *        （FileProvider，不重编码、不烧水印）；文件不在就**不显示这颗按钮**，
+ *        免得分享一个空壳出去。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -216,6 +227,17 @@ fun PhotoViewer(
      * null = 不加印。**看图时盖一层、分享时烧进去，两处用同一套画法**（见 [Watermark]）。
      */
     watermark: WatermarkStyle? = null,
+    /**
+     * 画师图片（2026-10-12 加）：非 null 时顶栏**左上角**出现垃圾桶「删除」，
+     * 点了把当前这张回调出去（**不在这里真删** —— 二次确认由调用方接手）。
+     * 默认 null = 不显示，约稿「参考图」那边不受影响。
+     */
+    onDelete: ((Photo) -> Unit)? = null,
+    /**
+     * 画师图片（2026-10-12 加）：true = 顶栏那颗分享发**磁盘上的原图文件**（FileProvider）；
+     * 文件不存在时**这颗按钮根本不画**。默认 false = 老行为（把大图重编成 PNG 再发，烧水印用）。
+     */
+    shareOriginal: Boolean = false,
 ) {
     if (items.isEmpty()) return
     val pager = rememberPagerState(
@@ -248,6 +270,10 @@ fun PhotoViewer(
             //    右边这颗分享**必须留**：「水印一开，发出去的就是带水印那张」，
             //    这是水印唯一的出口，删了水印就白做了。
             val ctx = LocalContext.current
+            // 当前这一张：删除 / 分享都按它来。
+            // ⚠️ 用 coerceIn 兜一道：画师页删掉一张之后 items 会变短，
+            //    currentPage 可能一时还停在旧值上（差一帧），不兜会越界崩。
+            val current = items[pager.currentPage.coerceIn(0, items.lastIndex)]
             Box(Modifier.fillMaxWidth()) {
                 if (items.size > 1) {
                     Text(
@@ -258,35 +284,82 @@ fun PhotoViewer(
                         modifier = Modifier.align(Alignment.Center).padding(vertical = 12.dp),
                     )
                 }
-                IconButton(
-                    onClick = {
-                        val photo = items[pager.currentPage]
-                        // ⚠️ 分享要用**大图**：屏幕上那张是 2200 的缩略图，
-                        //    发出去得重新取一张（上限 4096），再往上烧水印。
-                        val full = Photos.thumbnail(pathFor(photo.name), 4096)
-                        if (full == null) {
-                            toastNow(ctx, AppCtx.s(R.string.photos_missing))
-                        } else {
-                            val out = watermark?.let { Watermark.stamp(full, it) } ?: full
-                            val name = photo.name.substringBeforeLast('.') + ".png"
-                            val intent = sharePng(ctx, out, name)
-                            if (intent == null) {
-                                toastNow(ctx, AppCtx.s(R.string.common_share_failed_2))
-                            } else {
-                                ctx.startActivity(
-                                    Intent.createChooser(intent, AppCtx.s(R.string.wm_share_photo))
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                )
-                            }
+
+                // 左上角：删除（2026-10-12 加，**只有画师图片那页传了 onDelete 才有**）。
+                // ⚠️ 这一页**没有 ✕**：逸风 2026-10-07 定过「有系统小托柄了，把叉号去掉」——
+                //    所以这里不抢关闭的活：关的方式仍是**往下拖托柄 / 点旁边黑边 / 系统返回**，
+                //    删除独占左上角，两者井水不犯河水，谁都在。
+                if (onDelete != null) {
+                    IconButton(
+                        onClick = { onDelete(current) },
+                        modifier = Modifier.align(Alignment.CenterStart),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Delete,
+                            contentDescription = AppCtx.s(R.string.common_delete_2),
+                            tint = Color.White,
+                        )
+                    }
+                }
+
+                // 右上角：分享。两种走法（见参数说明）：
+                //  · shareOriginal = true（画师图片）→ 发**磁盘上的原图文件**，文件不在就**不画这颗按钮**；
+                //  · 否则（约稿参考图）→ 老行为：取大图重编 PNG + 烧水印。
+                if (shareOriginal) {
+                    val file = remember(current.name, pathFor(current.name)) { File(pathFor(current.name)) }
+                    if (file.exists()) {
+                        IconButton(
+                            onClick = {
+                                val intent = shareImageFile(ctx, file)
+                                if (intent == null) {
+                                    toastNow(ctx, AppCtx.s(R.string.common_share_failed_2))
+                                } else {
+                                    ctx.startActivity(
+                                        Intent.createChooser(intent, AppCtx.s(R.string.common_share))
+                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 2.dp),
+                        ) {
+                            Icon(
+                                Icons.Outlined.Share,
+                                contentDescription = AppCtx.s(R.string.common_share),
+                                tint = Color.White,
+                            )
                         }
-                    },
-                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = 2.dp),
-                ) {
-                    Icon(
-                        Icons.Outlined.Share,
-                        contentDescription = AppCtx.s(R.string.wm_share_photo),
-                        tint = Color.White,
-                    )
+                    }
+                } else {
+                    IconButton(
+                        onClick = {
+                            val photo = current
+                            // ⚠️ 分享要用**大图**：屏幕上那张是 2200 的缩略图，
+                            //    发出去得重新取一张（上限 4096），再往上烧水印。
+                            val full = Photos.thumbnail(pathFor(photo.name), 4096)
+                            if (full == null) {
+                                toastNow(ctx, AppCtx.s(R.string.photos_missing))
+                            } else {
+                                val out = watermark?.let { Watermark.stamp(full, it) } ?: full
+                                val name = photo.name.substringBeforeLast('.') + ".png"
+                                val intent = sharePng(ctx, out, name)
+                                if (intent == null) {
+                                    toastNow(ctx, AppCtx.s(R.string.common_share_failed_2))
+                                } else {
+                                    ctx.startActivity(
+                                        Intent.createChooser(intent, AppCtx.s(R.string.wm_share_photo))
+                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 2.dp),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Share,
+                            contentDescription = AppCtx.s(R.string.wm_share_photo),
+                            tint = Color.White,
+                        )
+                    }
                 }
             }
 

@@ -9,4 +9,10 @@
          ⚠️ 两条都留着：外部目录拿不到时（个别机器 / 存储没挂上）会退回 cache。 -->
     <external-files-path name="update" path="update/" />
     <cache-path name="update_cache" path="update/" />
+
+    <!-- 画师图片备注（2026-10-12 加）：大图页那颗「分享」要把**磁盘上的原图**给出去。
+         <files-path> 对应 Context.getFilesDir()，跟 Models.kt 里 artistPhotosDir
+         （files/artistphotos/）是同一个地方 —— 换个目录名必须两边一起改。
+         ⚠️ 用 file:// 直发在 Android 7+ 会抛 FileUriExposedException，只能走 FileProvider 拿到 content://。 -->
+    <files-path name="artistphotos" path="artistphotos/" />
 </paths>

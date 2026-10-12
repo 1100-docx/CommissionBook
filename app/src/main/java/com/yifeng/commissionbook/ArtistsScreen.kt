@@ -301,12 +301,17 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
 
         // 看大图（点缩略图进来）：跟单子那边同一个 [PhotoViewer]（Sheet、能左右翻）。
         // ⚠️ 画师图没有水印那一套，watermark 不传（默认 null = 什么都不盖）。
+        // 2026-10-12 加两处（逸风拍板，**只动画师这一侧**；约稿「参考图」那个调用点一行没动）：
+        //   ① 左上角垃圾桶「删除」→ 只回调，真删走上面那个二次确认（跟缩略图 ✕ 同一条路）；
+        //   ② 右上角分享改成**直接发磁盘上的原图**（FileProvider，不烧水印、不重编码）。
         viewerAt?.let { start ->
             PhotoViewer(
                 items = photos.map { Photo(it) },
                 startIndex = start,
                 pathFor = { state.artistPhotoFile(it).absolutePath },
                 onDismiss = { viewerAt = null },
+                onDelete = { photo -> confirmRemove = photo.name },
+                shareOriginal = true,
             )
         }
 
@@ -323,6 +328,9 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                     TextButton(onClick = {
                         state.removeArtistPhoto(it0(g.name), target)
                         confirmRemove = null
+                        // 2026-10-12：删掉之后把大图页也收掉 —— 这张已经不在了，
+                        // 让它停在旧的位置上没意义（列表变短，页码也可能对不上）。
+                        viewerAt = null
                     }) {
                         Text(AppCtx.s(R.string.common_delete_2), color = MaterialTheme.colorScheme.error)
                     }
