@@ -70,7 +70,7 @@ android {
         //        只改列表显示顺序，不碰数据；画师卡片先后 + 卡内那摞**两处**都过排序。
         //        新增 artist_sort_by_count / _recent / _name（4 语种齐）。
         versionCode = 103
-        versionName = "3.9.14"
+        versionName = "3.9.15"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
