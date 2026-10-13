@@ -3,8 +3,11 @@ package com.yifeng.commissionbook
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -96,6 +100,18 @@ private enum class ArtistSort(val labelRes: Int) {
 
     val label: String get() = AppCtx.s(labelRes)
 }
+
+/**
+ * 画师页的**一段**（2026-10-13 加）。
+ *
+ * `id` / `title` 都是 null = 「不分段」那种画（画师模式下整条平列表）。
+ * ⚠️ `id` 是给「收起来」记状态用的 —— 存 **id** 不存名字，因为名字他自己能改。
+ */
+private data class ArtistSection(
+    val id: String?,
+    val title: String?,
+    val items: List<ArtistGroup>,
+)
 
 // 画师分类的模型（`CategoryDef` / 预置两档 / 增删改）在 `Models.kt` + `AppState.kt` ——
 // 2026-10-13 那次「能新增 / 改名 / 删除」之后，它已经不是写死的枚举了。
@@ -149,22 +165,29 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
             }
         }
 
-    // 分段（2026-10-13 加）：买家模式**一档一段**（`first` = 段标题，null = 不画标题），
+    // 分段（2026-10-13 加）：买家模式**一档一段**（`id`/`title` = 分类；都是 null = 不分段那个模式），
     // 顺序 = 分类清单的顺序（常稿在最前，他自己加的在后面）。
     // ⚠️ **空档不画** —— 一个光标题下面啥也没有，比不显示更乱。
     // ⚠️ 只在买家模式分段：画师模式下列的是「客户」，常稿 / 模版对他没意义。
     // ⚠️ 每个人**必然**落进某一段：`categoryIdOf` 兜底成 REGULAR，而 REGULAR 一定在清单里
     //    （见 AppState.categoryDefs 里那道保险）。最后一行的 `ifEmpty` 是防「万一」——
     //    宁可不分段，也绝不能摆出一张空列表给他。
-    val bySection: List<Pair<String?, List<ArtistGroup>>> =
+    val bySection: List<ArtistSection> =
         if (state.appMode != AppMode.BUYER) {
-            listOf(null to groups)
+            listOf(ArtistSection(null, null, groups))
         } else {
             state.categoryDefs.mapNotNull { def ->
                 val list = groups.filter { state.categoryIdOf(it0(it.name)) == def.id }
-                if (list.isEmpty()) null else def.name to list
-            }.ifEmpty { listOf(null to groups) }
+                if (list.isEmpty()) null else ArtistSection(def.id, def.name, list)
+            }.ifEmpty { listOf(ArtistSection(null, null, groups)) }
         }
+
+    // **收起来的那几档**（2026-10-13 加）：点一下分类标题就把这一档收掉，
+    // 抄的是 TestFlight「以前测试过」那种感觉。
+    // ⚠️ 存的是**分类 id**（名字他自己能改，id 才稳）。
+    // ⚠️ 跟排序一个规矩：`remember` **不落盘** —— 重新打开 App 一律**全展开**，
+    //    老用户升级上来看到的东西跟以前一模一样，不会「我的人呢」。
+    var collapsed by remember { mutableStateOf(setOf<String>()) }
 
     var editing by remember { mutableStateOf<ArtistGroup?>(null) }
     // 改名字（2026-10-08 加）：跟备注分开一个弹窗 —— 两个输入框塞一个框里会看不清
@@ -217,39 +240,40 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
                     verticalArrangement = Arrangement.spacedBy(11.dp),
                 ) {
-                    // 段标题插在每段前面（买家模式才有；画师模式那段 `header` 是 null）。
-                    // ⚠️ key 用**序号**不带分类名：分类名是他自己打的，**可能重名** ——
+                    // 段标题插在每段前面（买家模式才有；画师模式那段 `title` 是 null）。
+                    // 2026-10-13 加：**点段标题能收起来**（抄 TestFlight「以前测试过」那种）。
+                    // ⚠️ key 用**序号**不带分类名：分类名是他自己打的、**可能重名** ——
                     //    重名 → 两个 item 抢同一个 key → LazyColumn 会直接崩。
-                    bySection.forEachIndexed { i, (header, list) ->
-                        if (header != null) {
+                    bySection.forEachIndexed { i, sec ->
+                        if (sec.id != null && sec.title != null) {
                             item(key = "sec-$i") {
-                                // 段标题。
-                                // 2026-10-13 第一版直接用设置页那个 `SectionLabel`（12sp 灰）——
-                                // 逸风回：「Android版的分段小标题是不是太小了」。
-                                // 对：设置页那种小灰字是**分组说明**的尺寸；这里是**一整段的主标题**，
-                                // 上面压着一张张卡片，得立得住 → **14sp / 半粗 / 主文字色**，
-                                // 再加一点上间距把两段分开（第一段不用）。
-                                // ⚠️ 卡片里的名字是 16sp 半粗 —— 段标题压不过它，层次才对。
-                                Text(
-                                    header,
-                                    modifier = Modifier.padding(
-                                        start = 4.dp,
-                                        top = if (i == 0) 0.dp else 8.dp,
-                                    ),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
+                                SectionHeaderRow(
+                                    title = sec.title,
+                                    count = sec.items.size,
+                                    open = !collapsed.contains(sec.id),
+                                    spaced = i != 0,     // 两段之间留点上间距（第一段不用）
+                                ) {
+                                    // 收 / 展
+                                    collapsed = if (collapsed.contains(sec.id)) {
+                                        collapsed - sec.id
+                                    } else {
+                                        collapsed + sec.id
+                                    }
+                                }
                             }
                         }
-                        items(list, key = { it.name }) { g ->
-                            // 画师数变动时卡片滑动 / 淡入，不硬切
-                            ArtistCard(
-                                g = g,
-                                mode = state.appMode,
-                                pathFor = { state.artistPhotoFile(it).absolutePath },
-                                modifier = Modifier.animateItem(),
-                            ) { editing = g }
+                        // 收着的那段：**一个人都不画**，就剩标题那一行
+                        if (sec.id == null || !collapsed.contains(sec.id)) {
+                            items(sec.items, key = { it.name }) { g ->
+                                // 画师数变动时卡片滑动 / 淡入，不硬切 ——
+                                // 收起 / 展开也是靠它，不然会「刷的一下」
+                                ArtistCard(
+                                    g = g,
+                                    mode = state.appMode,
+                                    pathFor = { state.artistPhotoFile(it).absolutePath },
+                                    modifier = Modifier.animateItem(),
+                                ) { editing = g }
+                            }
                         }
                     }
                 }
@@ -643,6 +667,69 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 ) { Text(AppCtx.s(R.string.avatar_rename), fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = { TextButton(onClick = { renaming = null }) { Text(AppCtx.s(R.string.common_cancel)) } },
+        )
+    }
+}
+
+/**
+ * 分类那一行标题：**点一下收起 / 展开**（2026-10-13 加）。
+ *
+ * 抄的是 TestFlight「以前测试过」那种：标题右边挂**人数**和一个小箭头，
+ * 收起来的时候就只剩这一行。
+ *
+ * 字号/颜色是 2026-10-13 逸风拍过的：第一版直接用设置页那个 `SectionLabel`（12sp 灰）——
+ * 他回「Android版的分段小标题是不是太小了」。对：设置页那种小灰字是**分组说明**的尺寸；
+ * 这里是**一整段的主标题**，上面压着一张张卡片，得立得住 → **14sp / 半粗 / 主文字色**。
+ * ⚠️ 卡片里的名字是 16sp 半粗 —— 段标题压不过它，层次才对。
+ *
+ * ⚠️ 箭头**转着走**（90°=展开 / 0°=收起），不硬切 —— 他的老规矩：
+ *    界面出现/消失别「刷的一下」。
+ */
+@Composable
+private fun SectionHeaderRow(
+    title: String,
+    count: Int,
+    open: Boolean,
+    spaced: Boolean,
+    onToggle: () -> Unit,
+) {
+    val cs = MaterialTheme.colorScheme
+    val angle by animateFloatAsState(if (open) 90f else 0f, tween(200), label = "secArrow")
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onToggle)          // 整行都能点，不是只有那几个字
+            .padding(
+                start = 4.dp,
+                end = 4.dp,
+                top = if (spaced) 8.dp else 0.dp,
+                bottom = 8.dp,
+            ),
+    ) {
+        Text(
+            title,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = cs.onSurface,
+        )
+        Spacer(Modifier.weight(1f))
+        // 这一档有几个人（收着的时候也看得见，跟 TestFlight 那个「4」一样）
+        Text(
+            count.toString(),
+            fontSize = 12.sp,
+            color = cs.onSurfaceVariant,
+        )
+        Spacer(Modifier.width(4.dp))
+        Icon(
+            imageVector = Icons.Outlined.ChevronRight,
+            contentDescription = null,
+            tint = cs.onSurfaceVariant,
+            modifier = Modifier
+                .size(18.dp)
+                .rotate(angle),
         )
     }
 }
