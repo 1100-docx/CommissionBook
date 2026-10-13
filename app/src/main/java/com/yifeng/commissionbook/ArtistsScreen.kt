@@ -716,17 +716,24 @@ private fun SectionHeaderRow(
             color = cs.onSurface,
         )
         Spacer(Modifier.weight(1f))
-        // 这一档有几个人（收着的时候也看得见，跟 TestFlight 那个「4」一样）
-        Text(
-            count.toString(),
-            fontSize = 12.sp,
-            color = cs.onSurfaceVariant,
-        )
+        // ⚠️ 「这一档有几个人」**只在收着的时候出现**（2026-10-13 晚改）。
+        //    逸风对着 TestFlight 截图点的最后一条原话：
+        //    「展开的时候没有数字，只有收起的时候会显示一个蓝色箭头跟数字」。
+        //    颜色 = 主题色（本工程主题色就是冰蓝 `IceBlue`，跟 iOS 那个系统蓝一个路数）。
+        if (!open) {
+            Text(
+                count.toString(),
+                fontSize = 12.sp,
+                color = cs.primary,
+            )
+        }
         Spacer(Modifier.width(4.dp))
+        // 箭头用**主题色**（不是灰的）—— 他 10/13 要求「尽量使用原生的组件，
+        // 原生组件是蓝色箭头的」；安卓这边的「原生」= Material 的主题色 + 系统图标。
         Icon(
             imageVector = Icons.Outlined.ChevronRight,
             contentDescription = null,
-            tint = cs.onSurfaceVariant,
+            tint = cs.primary,
             modifier = Modifier
                 .size(18.dp)
                 .rotate(angle),
