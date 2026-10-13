@@ -116,8 +116,17 @@ android {
         //        逸风原话：「iOS 版箭头跟数字可以跟小标题字号一样大」→ 安卓一起跟（不然两端不一样）。
         //        数字 12sp → **14sp**（=段标题的字号）；箭头图标仍是 18dp（Material 里 18dp 的
         //        chevron 跟 14sp 的字放一起，视觉高度本来就相当，不用动）。
-        versionCode = 112
-        versionName = "3.9.24"
+        // 3.9.25（2026-10-13 晚）：**扫码识别提速**。逸风报「现在 Android 版扫码识别很慢」。
+        //        ① 解码格式限定成 **QR_CODE** —— 库的默认是「所有格式」：
+        //           `CaptureManager.initializeFromIntent` 在 Intent 没带 `SCAN_FORMATS` 时
+        //           把 `decodeFormats` 设成 null → `MultiFormatReader` 每帧连一维码
+        //           那一堆 reader 也全试一遍。这是慢的头号原因。
+        //           ⚠️ 必须写在 `super.onCreate` **之后**，否则会被 `initializeFromIntent` 冲掉。
+        //        ② 相机对焦改成**连续对焦**（`continuousFocusEnabled = true` + `FocusMode.CONTINUOUS`）——
+        //           出厂值是 false/AUTO，对不上焦要等 2 秒才重对一次，手感就是「举着半天不认」。
+        //        ③ 相册那条解码路（`decodeFromImage`）同样补上「只认二维码」的 hints。
+        versionCode = 113
+        versionName = "3.9.25"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，

@@ -9,12 +9,16 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import com.google.zxing.BarcodeFormat
 import com.google.zxing.BinaryBitmap
+import com.google.zxing.DecodeHintType
 import com.google.zxing.MultiFormatReader
 import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import com.journeyapps.barcodescanner.CaptureActivity
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
+import com.journeyapps.barcodescanner.DefaultDecoderFactory
+import com.journeyapps.barcodescanner.camera.CameraSettings
 
 /*
  * 扫码取景页（2026-10-08 加）。
@@ -80,6 +84,44 @@ class QrScanActivity : CaptureActivity() {
         runCatching { scanner?.setStatusText("") }
         runCatching { scanner?.viewFinder?.visibility = View.GONE }
         runCatching { scanner?.statusView?.visibility = View.GONE }
+
+        // ── 「扫得慢」的两处加固（2026-10-13 逸风报：「现在 Android 版扫码识别很慢」）──
+        //
+        // ⚠️ 两处都**必须在 `super.onCreate` 之后**设 —— 底下这个顺序是踩过才明白的：
+        //    `super.onCreate` 里跑的是 `CaptureActivity.initializeContent()`（我们的布局）
+        //    → `CaptureManager.initializeFromIntent(intent, …)` → `capture.decode()`。
+        //    而 `initializeFromIntent` 会**把解码器和相机设置整个盖掉**：
+        //    Intent 里没带 `SCAN_FORMATS` 时它 `decodeFormats = null` →
+        //    `new DefaultDecoderFactory(null)` → ZXing 的 `MultiFormatReader` 拿不到
+        //    `POSSIBLE_FORMATS`，于是**一维码那一堆 reader 每帧也全试一遍** —— 这就是慢的头号原因。
+        //    写在 super 之前的话，会被它原样冲掉（而且不报错）。
+
+        // ① 只解二维码：省掉一维码那些 reader 的每帧空转。
+        // ⚠️ `setDecoderFactory` 是**热的** —— 正在跑的解码线程会就地换掉解码器
+        //    （`BarcodeView.setDecoderFactory` 里对 `decoderThread` 做了 `setDecoder`），
+        //    所以不用为了让它生效去重开相机 / 手动 pause+resume。
+        runCatching {
+            scanner?.barcodeView?.decoderFactory =
+                DefaultDecoderFactory(listOf(BarcodeFormat.QR_CODE))
+        }
+
+        // ② 连续对焦：`CameraSettings` 的出厂值是 `continuousFocusEnabled = false` +
+        //    `focusMode = AUTO` —— 对不上焦时只能**等下一轮（库里的间隔是 2 秒）**重对一次，
+        //    手感就是「举着半天不认」。
+        //    改成 CONTINUOUS = 相机自己一直微调（库里会优先要 `continuous-picture`，
+        //    机器不支持才退到 `continuous-video`），扫码时不用等它。
+        runCatching {
+            scanner?.cameraSettings?.apply {
+                // ⚠️ Kotlin 这边**不能写 `continuousFocusEnabled = true`** ——
+                //    库里那个字段是 private，只有 `isContinuousFocusEnabled()` / `
+                //    setContinuousFocusEnabled()` 这一对方法（Kotlin 合成属性名是
+                //    `isContinuousFocusEnabled`）。写错了会在编译期报
+                //    「Cannot access 'field continuousFocusEnabled': it is private」——
+                //    2026-10-13 就是这么撞了一次。
+                isContinuousFocusEnabled = true
+                setFocusMode(CameraSettings.FocusMode.CONTINUOUS)
+            }
+        }
 
         findViewById<View>(R.id.qr_back).setOnClickListener { finish() }
 
@@ -172,7 +214,13 @@ class QrScanActivity : CaptureActivity() {
         bmp.getPixels(pixels, 0, w, 0, 0, w, h)
 
         val source = RGBLuminanceSource(w, h, pixels)
-        MultiFormatReader().decode(BinaryBitmap(HybridBinarizer(source))).text
+        // ⚠️ 同一条「慢」的道理也在这条路上：不给 `POSSIBLE_FORMATS`，
+        //    `MultiFormatReader` 会把一维码那些 reader 也一个个试过去。
+        //    这里也只认二维码（2026-10-13 跟取景页一起改的）。
+        val hints: Map<DecodeHintType, Any> =
+            mapOf(DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE))
+        MultiFormatReader().apply { setHints(hints) }
+            .decode(BinaryBitmap(HybridBinarizer(source))).text
     }.getOrNull()
 
     /**
