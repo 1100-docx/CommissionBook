@@ -57,6 +57,59 @@ enum class AppMode(val key: String, @StringRes val labelRes: Int) {
     }
 }
 
+// MARK: - 画师分类（2026-10-13 加）
+//
+// 筱晞的话：「给客户模式下的画师详情页加个分类吧，这样分得清谁是常稿画师，谁是模版画师」
+// → 做完他补了一句「最好还可以新增分类」→ 再补「能新增分类，能改名，能删除」。
+//
+// 所以**不是写死的两档**，是一份**他自己管的清单**：
+//   ① 分类清单：`[CategoryDef(id, name), …]`（顺序就是他看到的一排）
+//   ② 谁属于哪一档：`{"画师名": "分类 id"}`
+//
+// 为什么「归属」存 **id** 而不是分类名：
+//   改一次名只要动清单里那一条，不用把每条归属都重写一遍；
+//   而且名字是他随便打的，id 才是稳的。
+//
+// ⚠️ 这份数据**双端形状必须一样**（iOS 那边也叫 `artistCategoryDefs` / `artistCategories`）。
+
+/**
+ * 一条画师分类定义。
+ *
+ * - [id]   稳定标识。预置两档固定是 `regular` / `template`，自定义的是 `c` + 一段随机码。
+ * - [name] 他看到的那个名字。预置两档起手是本地化文案，之后随他改。
+ */
+data class CategoryDef(val id: String, val name: String) {
+
+    /**
+     * 预置的两档 —— **能改名，不能删**。
+     *
+     * 为什么留着它们不给删：它们是「回落默认」的锚点（删掉一个分类时，
+     * 名下画师得回到某一档；总得有个兜底的），而且第一档就是「没标过算哪档」。
+     */
+    val isBuiltIn: Boolean get() = id == REGULAR || id == TEMPLATE
+
+    companion object {
+        /** 预置第一档：常稿画师。**也是「没标过」和「分类被删了」的落点。** */
+        const val REGULAR = "regular"
+        /** 预置第二档：模版画师 */
+        const val TEMPLATE = "template"
+
+        /** 给新分类发一个 id。前缀 `c` 一眼看出是自定义的（预置那两条没有前缀）。 */
+        fun newId(): String = "c" + UUID.randomUUID().toString().replace("-", "").take(10)
+    }
+}
+
+/**
+ * 预置的两档。清单**没存过**时用它 ——
+ * 名字取**当前语言**的文案，所以那种情况下换语言它会跟着变。
+ *
+ * ⚠️ 必须是个函数（不能是常量）：得等 AppCtx 初始化好之后才取得到字符串。
+ */
+fun defaultCategoryDefs(): List<CategoryDef> = listOf(
+    CategoryDef(CategoryDef.REGULAR,  AppCtx.s(R.string.artist_category_regular)),
+    CategoryDef(CategoryDef.TEMPLATE, AppCtx.s(R.string.artist_category_template)),
+)
+
 /**
  * 两套叫法。界面上跟「对方」「钱」有关的字**全从这里取** ——
  * 以后想改词只改这一个地方，不用满工程找字符串。
@@ -466,6 +519,65 @@ object Json {
         }
         return m
     }
+
+    // MARK: - 画师分类（2026-10-13 加）
+    //
+    // 形状：`{"画师名": "regular"}` —— 跟 artistNotes 一样，按名字挂一本小册子。
+    // ⚠️ 值存的是**英文词**（`regular` / `template`），**不是中文** ——
+    //    这份数据要跟着备份跨端走（iOS 那边存的是同两个词），
+    //    写中文的话换个语言就认不出来了。
+    // ⚠️ 这个键**双端都有**（跟 artistPhotos 那个「仅安卓」的键不一样）：
+    //    iOS 从这一版起也读也写，两端形状必须一直保持一致。
+
+    fun encodeCategories(m: Map<String, String>): JSONObject {
+        val o = JSONObject()
+        for ((k, v) in m) {
+            if (v.isBlank()) continue          // 空值不占位，别往 JSON 里塞空壳
+            o.put(k, v)
+        }
+        return o
+    }
+
+    /**
+     * 读归属。空值直接丢掉 —— 读的时候会回到预置第一档
+     * （见 `AppState.categoryIdOf` 里那条兜底：id 找不到对应分类就落回常稿）。
+     */
+    fun decodeCategories(o: JSONObject?): MutableMap<String, String> {
+        val m = LinkedHashMap<String, String>()
+        if (o == null) return m
+        for (k in o.keys()) {
+            val v = o.optString(k)
+            if (v.isNotBlank()) m[k] = v
+        }
+        return m
+    }
+
+    // MARK: - 分类清单（2026-10-13 加，跟上面那本配套）
+    //
+    // 形状：`[{"id":"regular","name":"常稿画师"}, …]` —— 顺序就是他看到的一排。
+    // ⚠️ 双端形状必须一样（iOS 那个键也叫 `artistCategoryDefs`）。
+
+    fun encodeCategoryDefs(defs: List<CategoryDef>): JSONArray {
+        val arr = JSONArray()
+        for (d in defs) {
+            if (d.id.isBlank()) continue
+            arr.put(JSONObject().put("id", d.id).put("name", d.name))
+        }
+        return arr
+    }
+
+    /** 读清单。id 空的那条直接丢掉；name 空就拿 id 顶 —— 读坏了也绝不崩。 */
+    fun decodeCategoryDefs(a: JSONArray?): MutableList<CategoryDef> {
+        val out = mutableListOf<CategoryDef>()
+        if (a == null) return out
+        for (i in 0 until a.length()) {
+            val o = a.optJSONObject(i) ?: continue
+            val id = o.optString("id")
+            if (id.isBlank()) continue
+            out.add(CategoryDef(id, o.optString("name").ifBlank { id }))
+        }
+        return out
+    }
 }
 
 // MARK: - 存盘：一个 JSON 文件，放在 App 自己的目录里
@@ -517,6 +629,50 @@ class Store(private val context: Context) {
 
     fun saveNotes(notes: Map<String, String>) {
         runCatching { notesFile.writeText(Json.encodeNotes(notes).toString()) }
+    }
+
+    // MARK: - 画师分类（2026-10-13 加）
+    //
+    // 名字挂在 `artistCategories.json`（跟 artistNotes.json 一个路数），
+    // 值只有两个词：`regular`（常稿）/ `template`（模版）。
+
+    private val categoriesFile: File get() = File(context.filesDir, "artistCategories.json")
+
+    fun loadCategories(): MutableMap<String, String> {
+        if (!categoriesFile.exists()) return LinkedHashMap()
+        return runCatching {
+            Json.decodeCategories(JSONObject(categoriesFile.readText()))
+        }.getOrElse { LinkedHashMap() }      // 读坏了当没标过，绝不能崩
+    }
+
+    fun saveCategories(m: Map<String, String>) {
+        runCatching { categoriesFile.writeText(Json.encodeCategories(m).toString()) }
+    }
+
+    // MARK: - 分类清单（2026-10-13 加，跟上面那本配套）
+    //
+    // 清单挂在 `artistCategoryDefs.json`，形状 `[{"id":…,"name":…}, …]`。
+
+    private val categoryDefsFile: File get() = File(context.filesDir, "artistCategoryDefs.json")
+
+    /**
+     * 读分类清单。
+     *
+     * ⚠️ **文件不存在就返回 null** —— 这个 null 是有含义的：
+     *    「他没改过清单，用预置的常稿 / 模版」。所以存盘和备份那边都靠它决定
+     *    「要不要写这个键」（跟 artistAvatars / artistPhotos 一个规矩：
+     *    一本都没有就**连键都不写**）。
+     *    读坏了 / 空清单 → 也返回 null（宁愿回到预置，也不能给一份没法选的清单）。
+     */
+    fun loadCategoryDefs(): MutableList<CategoryDef>? {
+        if (!categoryDefsFile.exists()) return null
+        return runCatching {
+            Json.decodeCategoryDefs(JSONArray(categoryDefsFile.readText()))
+        }.getOrNull()?.takeIf { it.isNotEmpty() }
+    }
+
+    fun saveCategoryDefs(defs: List<CategoryDef>) {
+        runCatching { categoryDefsFile.writeText(Json.encodeCategoryDefs(defs).toString()) }
     }
 
     // MARK: - 画师图片备注（2026-10-11 加，**仅安卓**）

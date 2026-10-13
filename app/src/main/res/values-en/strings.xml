@@ -226,6 +226,20 @@ System: Android %4$s (API %5$s)
     <string name="artist_sort_by_count">By Order Count</string>
     <string name="artist_sort_by_recent">By Most Recent</string>
     <string name="artist_sort_by_name">By Name</string>
+    <!-- 2026-10-13 加：画师页顶上的分类筛选 + 「按分类」排序 -->
+    <string name="artist_sort_by_category">By Category</string>
+    <string name="artist_category_empty">No artists in this category yet — try another one</string>
+
+    <!-- 2026-10-13 加：画师分类（常稿 / 模版，双端一致）-->
+    <string name="artist_category_label">Category</string>
+    <string name="artist_category_regular">Regular artist</string>
+    <string name="artist_category_template">Template artist</string>
+    <string name="artist_category_hint">Regular = artists you commission piece by piece. Template = artists who only sell templates or sets. Anything untagged counts as regular.</string>
+    <string name="artist_category_manage">Manage categories</string>
+    <string name="artist_category_add">Add category</string>
+    <string name="artist_category_name_hint">Category name</string>
+    <string name="artist_category_delete_title">Delete this category?</string>
+    <string name="artist_category_delete_body">Artists tagged with it go back to "Regular artist".</string>
     <string name="ledger_summary_count">%1$s orders total · %2$s in progress</string>
     <string name="common_search">Search</string>
     <string name="common_add">Add</string>

@@ -217,6 +217,20 @@
     <string name="artist_sort_by_count">按约稿次数</string>
     <string name="artist_sort_by_recent">按最近约稿</string>
     <string name="artist_sort_by_name">按名字</string>
+    <!-- 2026-10-13 加：画师页顶上的分类筛选 + 「按分类」排序 -->
+    <string name="artist_sort_by_category">按分类</string>
+    <string name="artist_category_empty">这一档还没有画师，换个分类看看</string>
+
+    <!-- 2026-10-13 加：画师分类（常稿 / 模版，双端一致）-->
+    <string name="artist_category_label">分类</string>
+    <string name="artist_category_regular">常稿画师</string>
+    <string name="artist_category_template">模版画师</string>
+    <string name="artist_category_hint">常稿 = 平时按张约的画师；模版 = 只出模版 / 成套稿的画师。没标过的一律算常稿。</string>
+    <string name="artist_category_manage">管理分类</string>
+    <string name="artist_category_add">新增分类</string>
+    <string name="artist_category_name_hint">分类名字</string>
+    <string name="artist_category_delete_title">删掉这个分类？</string>
+    <string name="artist_category_delete_body">标着它的画师会回到「常稿画师」。</string>
     <string name="ledger_summary_count">共 %1$s 单 · 进行中 %2$s</string>
     <string name="common_search">搜索</string>
     <string name="common_add">新增</string>

@@ -223,8 +223,12 @@ class MainActivity : FragmentActivity() {
             toast(AppCtx.s(R.string.common_backup_unreadable))
         } else {
             // 常用语（2026-10-09 加）：备份里有才灌（老备份没这个键 → null → 不动本机那份）
-            // 画师图片备注同规矩（2026-10-11）。
-            state.replaceAll(payload.items, payload.notes, payload.avatars, payload.phrases, payload.artistPhotos)
+            // 画师图片备注同规矩（2026-10-11）。画师分类也同规矩（2026-10-13）。
+            state.replaceAll(
+                payload.items, payload.notes, payload.avatars,
+                payload.phrases, payload.artistPhotos,
+                payload.categories, payload.categoryDefs,
+            )
             toast(AppCtx.s(R.string.common_restored_count, payload.items.size))
         }
     }

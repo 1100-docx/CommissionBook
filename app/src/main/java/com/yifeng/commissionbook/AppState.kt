@@ -31,6 +31,97 @@ class AppState(private val context: Context) {
         private set
 
     /**
+     * 画师分类归属（2026-10-13 加）：名字 → 分类 id。
+     * Compose 状态 —— 详情页里一选，卡片上那个标签立刻跟着变。
+     */
+    var artistCategories by mutableStateOf<Map<String, String>>(emptyMap())
+        private set
+
+    /**
+     * 分类清单**存盘那一份**。
+     *
+     * ⚠️ `null` 是有含义的：**「他没改过清单，用预置的常稿 / 模版」**。
+     *    所以对外一律走 [categoryDefs]（算好的那份），这个只在存盘 / 备份时用 ——
+     *    没改过就**不落盘、不进备份**（跟 artistAvatars / artistPhotos 一个规矩）。
+     */
+    private var storedCategoryDefs by mutableStateOf<List<CategoryDef>?>(store.loadCategoryDefs())
+
+    /**
+     * 现在该显示的分类清单。
+     * 他改过就用他的（顺序就是他排的），没改过就用预置两档（名字跟语言走）。
+     */
+    val categoryDefs: List<CategoryDef> get() = storedCategoryDefs ?: defaultCategoryDefs()
+
+    /**
+     * 某个画师属于哪一档的 id。
+     *
+     * ⚠️ 兜底很要紧：**没标过 / 标了个已经不存在的 id（分类被删了）→ 落回预置第一档**。
+     *    不然删掉一个分类之后，原来标着它的画师会变成「查不到分类」那种半死不活的状态。
+     */
+    fun categoryIdOf(artist: String): String {
+        val stored = artistCategories[artist].orEmpty()
+        return if (categoryDefs.any { it.id == stored }) stored else CategoryDef.REGULAR
+    }
+
+    /** 某个画师那条分类的名字（卡片上显示用）。 */
+    fun categoryNameOf(artist: String): String =
+        categoryDefs.firstOrNull { it.id == categoryIdOf(artist) }?.name.orEmpty()
+
+    /**
+     * 这个画师该不该在列表上挂标签。
+     *
+     * ⚠️ **只挂「不是预置第一档」的** —— 常稿是绝大多数、也是默认那一档，
+     *    每张卡都贴一个「常稿」只是噪音；把少数那几个分类标出来才真叫「一眼分得清」。
+     */
+    fun showsCategoryBadge(artist: String): Boolean = categoryIdOf(artist) != CategoryDef.REGULAR
+
+    fun setCategory(artist: String, defId: String) {
+        artistCategories = artistCategories.toMutableMap().also { it[artist] = defId }
+        persist()
+    }
+
+    /**
+     * 新增一个分类（2026-10-13 加，筱晞：「最好还可以新增分类」）。
+     *
+     * @param assignTo 给谁顺手也设成这个新分类（一般是当前正在看的那个人 ——
+     *                 他多半就是为了这位才加的）。null = 不设。
+     * @return 新分类的 id；名字空着返回 null（调用方据此提示 / 不关弹窗）
+     */
+    fun addCategory(name: String, assignTo: String? = null): String? {
+        val n = name.trim()
+        if (n.isEmpty()) return null
+        val id = CategoryDef.newId()
+        storedCategoryDefs = categoryDefs + CategoryDef(id, n)
+        // ⚠️ 先把清单落盘，再设归属 —— 反过来的话中间那一刻归属指向的分类还不存在
+        persist()
+        if (assignTo != null) setCategory(assignTo, id)
+        return id
+    }
+
+    /** 改分类的名字。只动清单里那一条，**谁属于这一档完全不受影响**。 */
+    fun renameCategory(id: String, name: String) {
+        val n = name.trim()
+        if (n.isEmpty()) return
+        storedCategoryDefs = categoryDefs.map { if (it.id == id) it.copy(name = n) else it }
+        persist()
+    }
+
+    /**
+     * 删掉一个分类。
+     *
+     * ⚠️ 预置的两档**不给删**（它们是「回落默认」的锚点，删了就没人兜底了）。
+     * ⚠️ 标着它的画师**回到「常稿画师」**：这里把那些归属直接抹掉，
+     *    读的时候 `categoryIdOf` 会兜底成常稿。
+     *    抹掉而不是留着 —— 留着就成了「指向一个不存在的分类」的脏数据。
+     */
+    fun deleteCategory(id: String) {
+        if (id == CategoryDef.REGULAR || id == CategoryDef.TEMPLATE) return
+        storedCategoryDefs = categoryDefs.filterNot { it.id == id }
+        artistCategories = artistCategories.filterValues { it != id }
+        persist()
+    }
+
+    /**
      * 当前使用模式（买家 / 画师）。
      * ⚠️ 是 Compose 状态，不是直接读 prefs —— 这样在设置页一改，所有页面立刻重画。
      */
@@ -141,12 +232,19 @@ class AppState(private val context: Context) {
         items = store.loadCommissions()
         notes = store.loadNotes()
         artistPhotos = store.loadArtistPhotos()
+        artistCategories = store.loadCategories()
+        storedCategoryDefs = store.loadCategoryDefs()
     }
 
     private fun persist() {
         store.saveCommissions(items)
         store.saveNotes(notes)
         store.saveArtistPhotos(artistPhotos)
+        store.saveCategories(artistCategories)
+        // 清单：**只有他改过才落盘**（storedCategoryDefs != null）。
+        // 没改过就不写文件 —— 备份那边也就连键都不写
+        // （跟 artistAvatars / artistPhotos 一个规矩：一本都没有就不留键）。
+        storedCategoryDefs?.let { store.saveCategoryDefs(it) }
         // 数据一变就把提醒闹钟重排一遍 —— 最简单的做法，也最不容易漏
         Reminders.reschedule(context, items, prefs.reminderEnabled, prefs.reminderHour, prefs.reminderMinute)
         // 顺手清掉没人引用的参考图（删单、改单、恢复备份之后都走这儿）。
@@ -309,6 +407,17 @@ class AppState(private val context: Context) {
             artistPhotos = nextP
         }
 
+        // 分类跟着搬（2026-10-13 加）。规矩跟备注一样：新名字上**已经有**就不覆盖。
+        val movedCat = artistCategories[a]
+        if (!movedCat.isNullOrBlank() && artistCategories[b].isNullOrBlank()) {
+            artistCategories = artistCategories.toMutableMap().also {
+                it[b] = movedCat
+                it.remove(a)
+            }
+        } else if (artistCategories.containsKey(a)) {
+            artistCategories = artistCategories.toMutableMap().also { it.remove(a) }
+        }
+
         Avatars.rename(a, b)
         persist()
         return n
@@ -355,6 +464,16 @@ class AppState(private val context: Context) {
         newAvatars: Map<String, String>? = null,
         newPhrases: List<String>? = null,
         newArtistPhotos: Map<String, List<String>>? = null,
+        /**
+         * 画师分类（2026-10-13 加）。**可空**，语义跟 [newAvatars] 一致：
+         * 老备份 / 没有这个键的备份 → null → **不动**本机已标好的分类。
+         */
+        newCategories: Map<String, String>? = null,
+        /**
+         * 分类清单（2026-10-13 加）。**可空**，语义跟 [newAvatars] 一致：
+         * 老备份 / 没有这个键的备份 → null → **不动**本机自己的清单。
+         */
+        newCategoryDefs: List<CategoryDef>? = null,
     ) {
         items = newItems
         notes = newNotes
@@ -371,10 +490,18 @@ class AppState(private val context: Context) {
             artistPhotos = newArtistPhotos
             store.pruneArtistPhotos(newArtistPhotos.values.flatten().toSet())
         }
+        // 分类清单（2026-10-13 加）：备份里有才认（理由同上）。
+        // ⚠️ 放在归属**前面**：先把清单铺好，再认归属 —— 不然中间那一刻
+        //    归属指向的分类还不存在，界面会「全部回落成常稿」闪一下。
+        if (newCategoryDefs != null && newCategoryDefs.isNotEmpty()) {
+            storedCategoryDefs = newCategoryDefs
+        }
+        // 画师分类归属（2026-10-13 加）：备份里有才换（理由同上）。
+        if (newCategories != null) artistCategories = newCategories
         persist()
     }
 
-    /** 全部数据打成一个 JSON 字符串（备份用，跟 iOS 版同一个格式）。⚠️ 带图、带头像、带常用语，见 [Backup.encode] */
+    /** 全部数据打成一个 JSON 字符串（备份用，跟 iOS 版同一个格式）。⚠️ 带图、带头像、带常用语、带分类，见 [Backup.encode] */
     fun toJsonString(): String = Backup.encode(
         items, notes,
         photoBytes = { store.readPhoto(it) },
@@ -382,6 +509,9 @@ class AppState(private val context: Context) {
         phrases = phrases,
         artistPhotos = artistPhotos,
         artistPhotoBytes = { store.readArtistPhoto(it) },
+        categories = artistCategories,
+        // ⚠️ 传的是 storedCategoryDefs（可空）：他没改过清单就别往备份里塞这个键
+        categoryDefs = storedCategoryDefs,
     )
 
     // MARK: - 屏幕上要用的几个数

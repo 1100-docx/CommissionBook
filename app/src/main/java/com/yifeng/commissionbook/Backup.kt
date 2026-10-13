@@ -33,6 +33,22 @@ data class BackupData(
      * 老备份、iOS 导出的备份都没有这个键 → null → 恢复时不动本机现有的图。
      */
     val artistPhotos: Map<String, List<String>>? = null,
+    /**
+     * 画师分类（2026-10-13 加）：名字 → `regular` / `template`。
+     *
+     * ⚠️ 跟 [artistPhotos] 不一样 —— **这个键 iOS 那边也有**（双端一致的键），
+     *    两端形状必须一直保持一样：`{"画师名":"regular"}`。
+     * ⚠️ 同样**可空**：老备份里没有这个键 → null → 恢复时不动本机已标的分类。
+     */
+    val categories: Map<String, String>? = null,
+    /**
+     * 分类清单（2026-10-13 加，跟 [categories] 配套）：`[CategoryDef(id, name), …]`。
+     *
+     * ⚠️ 跟 [categories] 一样是**双端都有的键**，形状必须一直保持一致。
+     * ⚠️ 同样**可空**：老备份里没有 → null → 不动本机自己的清单
+     *    （别把人家改过的分类名抹回预置的常稿 / 模版）。
+     */
+    val categoryDefs: List<CategoryDef>? = null,
 )
 
 /**
@@ -77,6 +93,14 @@ object Backup {
         phrases: List<String> = emptyList(),
         artistPhotos: Map<String, List<String>> = emptyMap(),
         artistPhotoBytes: ((String) -> ByteArray?)? = null,
+        /** 画师分类（2026-10-13 加）：名字 → 分类 id。一个都没标就**连键都不写**。 */
+        categories: Map<String, String> = emptyMap(),
+        /**
+         * 分类清单（2026-10-13 加）。**可空** —— null 的含义是
+         * 「他没改过清单，本机用的是预置两档」，那就**连键都不写**
+         * （跟 artistAvatars / phrases 一个规矩：老备份长什么样、新备份还长什么样）。
+         */
+        categoryDefs: List<CategoryDef>? = null,
     ): String {
         val root = JSONObject()
         root.put("commissions", Json.encodeCommissions(items, photoBytes))
@@ -117,6 +141,17 @@ object Backup {
                 any = true
             }
             if (any) root.put("artistPhotos", o)
+        }
+        // 画师分类（2026-10-13 加）：一个都没标就**连键都不写** ——
+        // 老备份长什么样、新备份还长什么样（跟 artistAvatars / phrases 一个规矩）。
+        // ⚠️ 这个键**双端都有**（iOS 从这一版起也读也写），形状必须一直一样。
+        if (categories.isNotEmpty()) root.put("artistCategories", Json.encodeCategories(categories))
+        // 分类清单（2026-10-13 加）：**他没改过清单就不写这个键**（categoryDefs == null）——
+        // 那种时候本机用的是预置的常稿 / 模版，写进去等于凭空多一个键。
+        // ⚠️ 清单和归属要**成对**出现才完整：只恢复了归属、没有清单，
+        //    那些 id 会找不到对应分类 → 全部回落成常稿（不至于丢数据，但看着像白标了）。
+        if (categoryDefs != null && categoryDefs.isNotEmpty()) {
+            root.put("artistCategoryDefs", Json.encodeCategoryDefs(categoryDefs))
         }
         return root.toString(2)
     }
@@ -173,7 +208,17 @@ object Backup {
             }
             m
         }
-        BackupData(items, notes, avatars, phrases, artistPhotos)
+        // 画师分类（2026-10-13 加，**双端都有这个键**）：同样「有键才认」。
+        val categories = root.optJSONObject("artistCategories")?.let { o ->
+            Json.decodeCategories(o)
+        }
+        // 分类清单（2026-10-13 加）：同样「有键才认」。
+        // ⚠️ 空数组也算「没有」→ null（归到「别动本机的清单」那一档，
+        //    免得把人家改过的一把清空）。
+        val categoryDefs = root.optJSONArray("artistCategoryDefs")
+            ?.let { Json.decodeCategoryDefs(it) }
+            ?.takeIf { it.isNotEmpty() }
+        BackupData(items, notes, avatars, phrases, artistPhotos, categories, categoryDefs)
     }.getOrNull()
 
     /** 备份文件名：约稿账本-2026-09-29-0250-手动.json */

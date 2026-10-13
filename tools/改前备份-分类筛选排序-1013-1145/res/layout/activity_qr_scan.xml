@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  扫码取景页（2026-10-08）。照逸风发的那张 兽频道「扫一扫」截图做的，竖屏。
+
+  ⚠️ 里面那个 DecoratedBarcodeView 的 id 必须是 zxing_barcode_scanner ——
+     zxing-android-embedded 的 CaptureActivity 就是按这个名字去找相机预览的，
+     改名 = 一进去就黑屏/崩。我们只往上加一层自己的 UI。
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- 相机取景（zxing 自带，全屏铺满，不画框） -->
+    <com.journeyapps.barcodescanner.DecoratedBarcodeView
+        android:id="@+id/zxing_barcode_scanner"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- CaptureActivity 会找它来显示提示语。藏起来，我们用自己的文案。 -->
+    <TextView
+        android:id="@+id/zxing_status_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <!-- 左上：返回 -->
+    <ImageView
+        android:id="@+id/qr_back"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/qr_circle_white"
+        android:contentDescription="@string/qr_scan_back"
+        android:padding="9dp"
+        android:src="@drawable/ic_qr_back" />
+
+    <!-- 右上：翻转镜头 -->
+    <ImageView
+        android:id="@+id/qr_flip"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/qr_circle_white"
+        android:contentDescription="@string/qr_scan_flip"
+        android:padding="9dp"
+        android:src="@drawable/ic_qr_flip" />
+
+    <!-- 中下：手电筒 + 「轻触照亮」 -->
+    <LinearLayout
+        android:id="@+id/qr_torch_wrap"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="158dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:contentDescription="@string/qr_scan_torch"
+            android:src="@drawable/ic_qr_flash" />
+
+        <TextView
+            android:id="@+id/qr_torch_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/qr_scan_torch"
+            android:textColor="#FFFFFFFF"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <!-- 底部那条深色胶囊栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="34dp"
+        android:background="@drawable/qr_pill_dark"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="7dp">
+
+        <!-- 左：现在就是「扫码」这一个模式，做成一个静态标记（跟参考图一致） -->
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/qr_circle_dark"
+            android:contentDescription="@string/qr_scan_hint_main"
+            android:padding="11dp"
+            android:src="@drawable/ic_qr_scan" />
+
+        <!-- 中：两行说明 —— 讲这个功能真正的坑（要同一个 Wi-Fi） -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/qr_scan_hint_main"
+                android:textColor="#FFFFFFFF"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:alpha="0.6"
+                android:text="@string/qr_scan_hint_sub"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- 右：从相册选一张二维码图来解 -->
+        <ImageView
+            android:id="@+id/qr_gallery"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/qr_circle_dark"
+            android:contentDescription="@string/qr_scan_gallery"
+            android:padding="11dp"
+            android:src="@drawable/ic_qr_gallery" />
+    </LinearLayout>
+</FrameLayout>

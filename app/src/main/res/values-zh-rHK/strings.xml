@@ -217,6 +217,20 @@
     <string name="artist_sort_by_count">按約稿次數</string>
     <string name="artist_sort_by_recent">按最近約稿</string>
     <string name="artist_sort_by_name">按名字</string>
+    <!-- 2026-10-13 加：畫師頁頂上的分類篩選 + 「按分類」排序 -->
+    <string name="artist_sort_by_category">按分類</string>
+    <string name="artist_category_empty">這一檔還沒有畫師，換個分類看看</string>
+
+    <!-- 2026-10-13 加：画师分类（常稿 / 模版，双端一致）-->
+    <string name="artist_category_label">分類</string>
+    <string name="artist_category_regular">常稿畫師</string>
+    <string name="artist_category_template">模版畫師</string>
+    <string name="artist_category_hint">常稿 = 平時按張約的畫師；模版 = 只出模版 / 成套稿的畫師。沒標過的一律算常稿。</string>
+    <string name="artist_category_manage">管理分類</string>
+    <string name="artist_category_add">新增分類</string>
+    <string name="artist_category_name_hint">分類名字</string>
+    <string name="artist_category_delete_title">刪掉這個分類？</string>
+    <string name="artist_category_delete_body">標著它的畫師會回到「常稿畫師」。</string>
     <string name="ledger_summary_count">共 %1$s 單 · 進行中 %2$s</string>
     <string name="common_search">搜索</string>
     <string name="common_add">新增</string>

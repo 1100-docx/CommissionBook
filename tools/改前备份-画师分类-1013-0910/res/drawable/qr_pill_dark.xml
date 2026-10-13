@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 取景页底部那条胶囊栏的底 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#E62B2B2B" />
+    <corners android:radius="30dp" />
+</shape>
