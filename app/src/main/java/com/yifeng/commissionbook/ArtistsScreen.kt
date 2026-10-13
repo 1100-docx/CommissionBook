@@ -222,7 +222,25 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                     //    重名 → 两个 item 抢同一个 key → LazyColumn 会直接崩。
                     bySection.forEachIndexed { i, (header, list) ->
                         if (header != null) {
-                            item(key = "sec-$i") { SectionLabel(header) }
+                            item(key = "sec-$i") {
+                                // 段标题。
+                                // 2026-10-13 第一版直接用设置页那个 `SectionLabel`（12sp 灰）——
+                                // 逸风回：「Android版的分段小标题是不是太小了」。
+                                // 对：设置页那种小灰字是**分组说明**的尺寸；这里是**一整段的主标题**，
+                                // 上面压着一张张卡片，得立得住 → **14sp / 半粗 / 主文字色**，
+                                // 再加一点上间距把两段分开（第一段不用）。
+                                // ⚠️ 卡片里的名字是 16sp 半粗 —— 段标题压不过它，层次才对。
+                                Text(
+                                    header,
+                                    modifier = Modifier.padding(
+                                        start = 4.dp,
+                                        top = if (i == 0) 0.dp else 8.dp,
+                                    ),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
                         }
                         items(list, key = { it.name }) { g ->
                             // 画师数变动时卡片滑动 / 淡入，不硬切
