@@ -723,7 +723,11 @@ private fun SectionHeaderRow(
         if (!open) {
             Text(
                 count.toString(),
-                fontSize = 12.sp,
+                // ⚠️ 12sp → **14sp**（2026-10-13 逸风：「iOS 版箭头跟数字可以跟小标题字号一样大」）——
+                //    段标题是 14sp，数字是 12sp 就矮一截、看着像掉了个档次。
+                //    ⚠️ 别写 `MaterialTheme.typography` 里那套 —— 这里的段标题是**手写的 14sp**，
+                //       数字必须照着手写的这个数走，才能跟它一般大。
+                fontSize = 14.sp,
                 color = cs.primary,
             )
         }
