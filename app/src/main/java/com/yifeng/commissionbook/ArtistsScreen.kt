@@ -92,12 +92,7 @@ private enum class ArtistSort(val labelRes: Int) {
     /** 按最近约稿（日期新的在前） */
     ByRecent(R.string.artist_sort_by_recent),
     /** 按名字 */
-    ByName(R.string.artist_sort_by_name),
-    /**
-     * 按分类（2026-10-13 加）—— 顺序就是**分类清单本身从左到右的次序**
-     * （常稿在最前，他自己加的在后面），跟顶上那排胶囊看着对得上。
-     */
-    ByCategory(R.string.artist_sort_by_category);
+    ByName(R.string.artist_sort_by_name);
 
     val label: String get() = AppCtx.s(labelRes)
 }
@@ -113,24 +108,14 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
     //    否则老用户一打开会发现画师的先后莫名其妙变了。
     var sort by remember { mutableStateOf(ArtistSort.ByCount) }
 
-    // 顶上的**分类筛选**（2026-10-13 加）—— 逸风：「在画师页面也加上分类，不只是详情页」。
-    // null = 全部；点一下选中该档，再点一下收回「全部」。
-    // ⚠️ 只改**显示**，不碰分类归属（那是编辑弹窗里的事）。
-    var catFilter by remember { mutableStateOf<String?>(null) }
+    // 分段（2026-10-13 加）—— 逸风：「在画师页面也加上分类，不只是详情页」→
+    // 第一版做成了顶上那排筛选胶囊，他看了说「不是这样」，改成
+    // **「把筛选胶囊取消，按分类分段显示」**。
+    //
+    // 所以现在是：列表**一档一段**（段标题 = 分类名），顺序 = 分类清单的顺序。
+    // ⚠️ 分段**不动数据**，只是把同一份 `groups` 按分类切开摆。
 
-    // ⚠️ 兜底：他可能把**正在筛的那一档删掉**了（管理分类就在这一页的弹窗里）——
-    //    那时一律**当没筛**，否则整页会空成一片，看着像数据丢了。
-    val activeCat = catFilter?.takeIf { id -> state.categoryDefs.any { it.id == id } }
-
-    // 先筛、再归堆：筛放在**条目**这一层最省事 ——
-    // 分类是按名字挂的，一个画师名下所有条目必然同一档，所以整摞不会裂成两半。
-    val sourceItems = if (activeCat == null) {
-        state.modeItems
-    } else {
-        state.modeItems.filter { state.categoryIdOf(it0(it.artist)) == activeCat }
-    }
-
-    val groups = sourceItems
+    val groups = state.modeItems
         .groupBy { it.artist }
         .map { (name, list) ->
             ArtistGroup(
@@ -141,14 +126,16 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 // 按名字 → 单子按标题升序；按次数 / 按最近 → 仍是最近那单在前。
                 list = when (sort) {
                     ArtistSort.ByName -> list.sortedBy { it.title }
-                    ArtistSort.ByCount, ArtistSort.ByRecent, ArtistSort.ByCategory ->
-                        list.sortedByDescending { it.dateMillis }
+                    ArtistSort.ByCount, ArtistSort.ByRecent -> list.sortedByDescending { it.dateMillis }
                 },
                 note = state.notes[it0(name)] ?: "",
                 photos = state.artistPhotosOf(it0(name)),
-                // 分类（2026-10-13 加）：跟 notes 同一个 key（都是 it0(name)）
+                // 分类（2026-10-13 加）：跟 notes 同一个 key（都是 it0(name)）。
+                // ⚠️ 卡片上的分类**小标签同日就撤了** —— 改成**分段显示**之后
+                //    段标题已经把分类说清了，卡片再挂一个就是同一句话说两遍。
+                //    （要恢复：`state.showsCategoryBadge` 还在，把它接回来就行。）
                 categoryName = state.categoryNameOf(it0(name)),
-                showCategoryBadge = state.showsCategoryBadge(it0(name)),
+                showCategoryBadge = false,
             )
         }
         // ⚠️ 这一页的先后由**两处**排序叠着决定：上面卡内那一摞（ArtistGroup.list）+
@@ -159,20 +146,24 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 ArtistSort.ByCount -> gs.sortedByDescending { it.list.size }
                 ArtistSort.ByRecent -> gs.sortedByDescending { g -> g.list.maxOfOrNull { it.dateMillis } ?: 0L }
                 ArtistSort.ByName -> gs.sortedBy { it.name }
-                ArtistSort.ByCategory -> {
-                    // 顺序 = 分类清单本身的次序（常稿在最前、他自己加的在后面）——
-                    // 也就是顶上那排胶囊从左到右的次序，看着对得上。
-                    // ⚠️ 同一档里再按「约稿多的在前」：Kotlin 的 sortedWith 本来稳定，
-                    //    但明写一把第二尺子，结果永远确定、两端表现也一致。
-                    val order = state.categoryDefs.withIndex().associate { (i, d) -> d.id to i }
-                    gs.sortedWith(
-                        compareBy(
-                            { order[state.categoryIdOf(it0(it.name))] ?: Int.MAX_VALUE },
-                            { -it.list.size },
-                        )
-                    )
-                }
             }
+        }
+
+    // 分段（2026-10-13 加）：买家模式**一档一段**（`first` = 段标题，null = 不画标题），
+    // 顺序 = 分类清单的顺序（常稿在最前，他自己加的在后面）。
+    // ⚠️ **空档不画** —— 一个光标题下面啥也没有，比不显示更乱。
+    // ⚠️ 只在买家模式分段：画师模式下列的是「客户」，常稿 / 模版对他没意义。
+    // ⚠️ 每个人**必然**落进某一段：`categoryIdOf` 兜底成 REGULAR，而 REGULAR 一定在清单里
+    //    （见 AppState.categoryDefs 里那道保险）。最后一行的 `ifEmpty` 是防「万一」——
+    //    宁可不分段，也绝不能摆出一张空列表给他。
+    val bySection: List<Pair<String?, List<ArtistGroup>>> =
+        if (state.appMode != AppMode.BUYER) {
+            listOf(null to groups)
+        } else {
+            state.categoryDefs.mapNotNull { def ->
+                val list = groups.filter { state.categoryIdOf(it0(it.name)) == def.id }
+                if (list.isEmpty()) null else def.name to list
+            }.ifEmpty { listOf(null to groups) }
         }
 
     var editing by remember { mutableStateOf<ArtistGroup?>(null) }
@@ -218,48 +209,30 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 ArtistSortButton(sort) { sort = it }
             }
 
-            // 分类筛选那排胶囊（2026-10-13 加）：`全部` + 清单里的每一档。
-            // ⚠️ 只在买家模式显示 —— 跟弹窗里那条同规矩：画师模式下这一页列的是「客户」，
-            //    常稿 / 模版对他没意义。
-            // ⚠️ 会**横滑**（分类个数不定，他自己能加）→ 保住「一排」那个观感。
-            if (state.appMode == AppMode.BUYER) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                ) {
-                    SlimChip(AppCtx.s(R.string.common_all), activeCat == null) { catFilter = null }
-                    state.categoryDefs.forEach { def ->
-                        SlimChip(def.name, activeCat == def.id) {
-                            // 再点一下收回「全部」
-                            catFilter = if (activeCat == def.id) null else def.id
-                        }
-                    }
-                }
-            }
-
-            if (state.modeItems.isEmpty()) {
+            if (groups.isEmpty()) {
                 EmptyHint(AppCtx.s(R.string.common_none_yet, Terms.other(state.appMode)))
-            } else if (groups.isEmpty()) {
-                // 筛出来一个都没有（但**确实有画师**）——
-                // 别拿「还没有画师」去吓他，那看着像数据没了。
-                EmptyHint(AppCtx.s(R.string.artist_category_empty))
             } else {
                 LazyColumn(
                     state = listState,
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
                     verticalArrangement = Arrangement.spacedBy(11.dp),
                 ) {
-                    items(groups, key = { it.name }) { g ->
-                        // 画师数变动时卡片滑动 / 淡入，不硬切
-                        ArtistCard(
-                            g = g,
-                            mode = state.appMode,
-                            pathFor = { state.artistPhotoFile(it).absolutePath },
-                            modifier = Modifier.animateItem(),
-                        ) { editing = g }
+                    // 段标题插在每段前面（买家模式才有；画师模式那段 `header` 是 null）。
+                    // ⚠️ key 用**序号**不带分类名：分类名是他自己打的，**可能重名** ——
+                    //    重名 → 两个 item 抢同一个 key → LazyColumn 会直接崩。
+                    bySection.forEachIndexed { i, (header, list) ->
+                        if (header != null) {
+                            item(key = "sec-$i") { SectionLabel(header) }
+                        }
+                        items(list, key = { it.name }) { g ->
+                            // 画师数变动时卡片滑动 / 淡入，不硬切
+                            ArtistCard(
+                                g = g,
+                                mode = state.appMode,
+                                pathFor = { state.artistPhotoFile(it).absolutePath },
+                                modifier = Modifier.animateItem(),
+                            ) { editing = g }
+                        }
                     }
                 }
             }

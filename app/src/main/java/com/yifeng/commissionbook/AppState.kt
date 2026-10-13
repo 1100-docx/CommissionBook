@@ -49,8 +49,19 @@ class AppState(private val context: Context) {
     /**
      * 现在该显示的分类清单。
      * 他改过就用他的（顺序就是他排的），没改过就用预置两档（名字跟语言走）。
+     *
+     * ⚠️ 2026-10-13（改成「按分类分段显示」那轮加的保险）：**第一档必须在**。
+     *    因为 [categoryIdOf] 的兜底是「不认识就落回 REGULAR」——
+     *    可要是清单里压根没有 REGULAR（比如从别处导进来一份被手改过的备份），
+     *    那就**谁都不认**：分段时这些人一段都进不去，直接在列表上**凭空消失**。
+     *    数据其实还在，但看着就是「人没了」—— 这种静默丢人最吓人，所以在这儿堵住。
      */
-    val categoryDefs: List<CategoryDef> get() = storedCategoryDefs ?: defaultCategoryDefs()
+    val categoryDefs: List<CategoryDef>
+        get() {
+            val d = storedCategoryDefs ?: return defaultCategoryDefs()
+            if (d.any { it.id == CategoryDef.REGULAR }) return d
+            return listOf(CategoryDef(CategoryDef.REGULAR, AppCtx.s(R.string.artist_category_regular))) + d
+        }
 
     /**
      * 某个画师属于哪一档的 id。
