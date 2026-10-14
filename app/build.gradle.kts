@@ -125,8 +125,15 @@ android {
         //        ② 相机对焦改成**连续对焦**（`continuousFocusEnabled = true` + `FocusMode.CONTINUOUS`）——
         //           出厂值是 false/AUTO，对不上焦要等 2 秒才重对一次，手感就是「举着半天不认」。
         //        ③ 相册那条解码路（`decodeFromImage`）同样补上「只认二维码」的 hints。
-        versionCode = 113
-        versionName = "3.9.25"
+        // 3.9.26（2026-10-14）：**缩略图加了内存缓存**（纯优化，不改任何行为/数据）。
+        //        原来 `Photos.thumbnail` 每次都从磁盘重解（当初的理由是「一条单最多 6 张、
+        //        几毫秒，缓存还得自己管内存」）—— 但画师详情页的图片格子也走它，
+        //        看大图（2200）左右翻的时候更是每翻回一页就重解一张。
+        //        现在用 `LruCache`（64MB，按位图字节数算），超限自己丢；删图/清孤儿图时 `clearCache()`。
+        //        ⚠️ 跟 iOS 3.9.27 同一轮（iOS 那边用 `NSCache`）—— 两端对齐。
+        //        ⚠️ 动画那条**安卓不用改**：`.animateItem()` 早就在账本卡片和画师卡片上了。
+        versionCode = 114
+        versionName = "3.9.26"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，

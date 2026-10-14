@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
+import android.util.LruCache
 import java.io.ByteArrayOutputStream
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -87,20 +88,50 @@ object Photos {
     }
 
     /**
-     * 缩略图：给表单/查看器里那排小方块用。
-     * 每次都小尺寸解一遍（不缓存位图 —— 一条单最多 6 张，重解一次几毫秒，
-     * 缓存反而要自己管内存）。
+     * 缩略图：给表单/查看器里那排小方块、还有画师详情页的图片格子用。
+     *
+     * ⚠️ 2026-10-14 改：**加了一层内存缓存**。原来这里是「每次都小尺寸重解一遍」，
+     *    注释里写的理由是「一条单最多 6 张、重解几毫秒，缓存还得自己管内存」——
+     *    那个判断对**表单里那排小方块**成立，但对这两处不成立：
+     *    ① 画师详情页的图片格子（那边也走 `PhotoThumb`）；
+     *    ② 看大图那一页（maxSide 2200）—— 左右翻的时候，每翻回一页就重解一张
+     *       两三千像素的图，那一下的顿是看得见的。
+     *    iOS 版这轮也给参考图加了缓存（画师图片那边本来就有），两端对齐。
+     *
+     * ⚠️ 缓存用 `LruCache`：超上限自己丢最久没用的那个 —— 当初「不缓存」的理由
+     *    （自己管内存太麻烦）现在由它解决了，不用我们手动清理。
+     * ⚠️ 键**必须带上 maxSide**：同一张图有三档 —— 格子 320 / 大图 2200 / 分享 4096，
+     *    混用一个键的话，看大图会拿到格子那张小图（糊成一片）。
+     * ⚠️ 删图 / 清孤儿图之后请叫一声 [clearCache]，不然「删了还在」。
      */
-    fun thumbnail(path: String, maxSide: Int): Bitmap? = runCatching {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(path, bounds)
-        val side = max(bounds.outWidth, bounds.outHeight)
-        if (side <= 0) return null
-        var sample = 1
-        while (side / sample > maxSide * 2) sample *= 2
-        val opts = BitmapFactory.Options().apply { inSampleSize = sample }
-        BitmapFactory.decodeFile(path, opts)
-    }.getOrNull()
+    fun thumbnail(path: String, maxSide: Int): Bitmap? {
+        val key = cacheKey(path, maxSide)
+        thumbCache.get(key)?.let { return it }
+        val bmp = runCatching {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(path, bounds)
+            val side = max(bounds.outWidth, bounds.outHeight)
+            if (side <= 0) return null
+            var sample = 1
+            while (side / sample > maxSide * 2) sample *= 2
+            val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+            BitmapFactory.decodeFile(path, opts)
+        }.getOrNull()
+        if (bmp != null) thumbCache.put(key, bmp)
+        return bmp
+    }
+
+    // MARK: - 缩略图缓存（2026-10-14 加，理由见 thumbnail 的注释）
+
+    /** 上限 64MB，按位图真实字节数算账；超了自己丢最久没用的 */
+    private val thumbCache = object : LruCache<String, Bitmap>(64 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
+    }
+
+    private fun cacheKey(path: String, maxSide: Int) = "$path@$maxSide"
+
+    /** 删图 / 清孤儿图之后叫一下（不然缓存里那张「删了还在」） */
+    fun clearCache() = thumbCache.evictAll()
 
     /**
      * 文件名消毒。

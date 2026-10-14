@@ -263,6 +263,8 @@ class AppState(private val context: Context) {
         //    [Store.loadCommissions] 会把文件改名留档、返回空表 ——
         //    那种时候要是也清一遍孤儿图，等于把用户的图全删了，数据事故雪上加霜。
         store.prunePhotos(referencedPhotos())
+        // ⚠️ 2026-10-14 加：缩略图缓存跟着失效 —— 不然刚删掉的图还在内存里被交出去（见 Photos.clearCache）
+        Photos.clearCache()
     }
 
     /** 现在还挂在某条约稿上的图（**含另一模式**，别只算当前模式那份） */
@@ -500,6 +502,7 @@ class AppState(private val context: Context) {
         if (newArtistPhotos != null) {
             artistPhotos = newArtistPhotos
             store.pruneArtistPhotos(newArtistPhotos.values.flatten().toSet())
+            Photos.clearCache()   // 同上：换了图就让缩略图缓存失效（2026-10-14 加）
         }
         // 分类清单（2026-10-13 加）：备份里有才认（理由同上）。
         // ⚠️ 放在归属**前面**：先把清单铺好，再认归属 —— 不然中间那一刻
