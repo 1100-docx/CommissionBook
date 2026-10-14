@@ -1,8 +1,8 @@
 {
-  "versionCode": 113,
-  "versionName": "3.9.25",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.25.apk",
+  "versionCode": 114,
+  "versionName": "3.9.26",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.26.apk",
   "size": 2488564,
-  "sha256": "2203ba3ac269860b2a05515198d3f74b6a81e715822297cbfe4ab229e5b8d693",
-  "notes": "· 【新】画师页的分类能收起来了\n  点一下「常稿画师 / 模版画师」那一整行，这一档就收起来，只剩一行标题；再点一下展开\n  收着的时候，标题右边会告诉你这一档有几个人\n  收起来的状态不记住：重开 App 一律全展开，不会一开 App 以为人少了\n\n· 【快】扫码识别快了\n  之前扫码要举半天才有反应 —— 这一版把解码收窄成只认二维码、对焦也改成连续对焦\n  两台手机互传备份的时候，应该明显好认了\n\n· 数据格式一个字节没动：老备份照常能恢复，覆盖安装就行，数据一条不动"
+  "sha256": "57d9fe22564bdf487b1fb52a62cad20707d9d347a6cd578b03c9cb9b697e9942",
+  "notes": "· 【顺】图片翻起来更跟手了\n  看大图的时候左右翻，以前每翻一页都要把图重新读一遍，现在读过的会留在内存里\n  图多、来回翻的时候最明显（纯优化，界面一个字没动）\n\n· 数据格式一个字节没动：老备份照常能恢复，覆盖安装就行，数据一条不动"
 }
