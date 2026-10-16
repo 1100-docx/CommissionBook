@@ -142,8 +142,11 @@ android {
         //        - ⚠️ **同一版还修了金额框**：`KeyboardType.Number` → `Decimal`
         //          （数字键盘没有小数点键 ⇒ ¥8.75 敲不进去；iOS 3.9.28 是同一个 bug）
         //          ＋ 输入走新的 `cleanMoneyInput()` 清洗（「1.2.3」不再静默存成 0）。
-        versionCode = 115
-        versionName = "3.9.27"
+        // 3.9.28（2026-10-16）：**交付时段补「下午」**（逸风要的）——
+        //        枚举加 `AFTERNOON("afternoon")`，取值仍是 none/morning/noon/afternoon/evening，
+        //        **跟 iOS 3.9.30 一模一样**；4 语种各 +1 条 `slot_afternoon`。
+        versionCode = 116
+        versionName = "3.9.28"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，

@@ -688,6 +688,7 @@
     <string name="slot_label">交付時段</string>
     <string name="slot_none">未指定</string>
     <string name="slot_morning">早上</string>
+    <string name="slot_afternoon">下午</string>
     <string name="slot_noon">中午</string>
     <string name="slot_evening">晚上</string>
 </resources>

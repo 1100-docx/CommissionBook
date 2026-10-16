@@ -696,6 +696,7 @@ System: Android %4$s (API %5$s)
     <string name="slot_label">Delivery time</string>
     <string name="slot_none">Not set</string>
     <string name="slot_morning">Morning</string>
+    <string name="slot_afternoon">Afternoon</string>
     <string name="slot_noon">Midday</string>
     <string name="slot_evening">Evening</string>
 </resources>

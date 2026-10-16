@@ -216,6 +216,8 @@ enum class DeliverySlot(val key: String, @StringRes val labelRes: Int) {
     NONE("none", R.string.slot_none),
     MORNING("morning", R.string.slot_morning),
     NOON("noon", R.string.slot_noon),
+    /** 下午（2026-10-16 追加，逸风要的）：中午和晚上之间那一段。 */
+    AFTERNOON("afternoon", R.string.slot_afternoon),
     EVENING("evening", R.string.slot_evening);
 
     /** 显示用（跟着语言走）。`key` 是存盘值，一个字节都别改 */
