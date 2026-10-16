@@ -165,22 +165,30 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
             }
         }
 
-    // 分段（2026-10-13 加）：买家模式**一档一段**（`id`/`title` = 分类；都是 null = 不分段那个模式），
-    // 顺序 = 分类清单的顺序（常稿在最前，他自己加的在后面）。
-    // ⚠️ **空档不画** —— 一个光标题下面啥也没有，比不显示更乱。
-    // ⚠️ 只在买家模式分段：画师模式下列的是「客户」，常稿 / 模版对他没意义。
-    // ⚠️ 每个人**必然**落进某一段：`categoryIdOf` 兜底成 REGULAR，而 REGULAR 一定在清单里
-    //    （见 AppState.categoryDefs 里那道保险）。最后一行的 `ifEmpty` 是防「万一」——
-    //    宁可不分段，也绝不能摆出一张空列表给他。
+    // 分段（2026-10-13 加，2026-10-16 扩到客户页）：**一档一段**（段标题 = 分类名），
+    // 顺序 = 分类清单的顺序。`id`/`title` 都是 null = 不分段那种画。
+    //
+    // ⚠️ 2026-10-16：分类**跟着模式走** ——
+    //    买家模式这一页列的是画师 → 用「画师分类」（regular / template）；
+    //    画师模式这一页列的是客户 → 用「客户分类」（frequent / infrequent）。
+    //    **两套必须一起换**：段标题用 A 套、判断归属用 B 套的话，段里会一个都不匹配、
+    //    整段空掉 → 列表看着像「人都没了」。
+    // ⚠️ 空档不画 —— 一个光标题下面啥也没有，比不显示更乱。
+    // ⚠️ 每个人**必然**落进某一段：`categoryIdOf` / `clientCategoryIdOf` 都兜底成第一档，
+    //    而第一档一定在清单里（见 AppState 里那两道保险）。
+    //    最后的 `ifEmpty` 是防「万一」—— 宁可不分段，也绝不能摆出一张空列表给他。
+    val sectionDefs: List<Pair<String, String>> =
+        if (state.appMode == AppMode.BUYER) state.categoryDefs.map { it.id to it.name }
+        else state.clientCategoryDefs.map { it.id to it.name }
+    val categoryIdOfName: (String) -> String =
+        if (state.appMode == AppMode.BUYER) { { state.categoryIdOf(it) } }
+        else { { state.clientCategoryIdOf(it) } }
+
     val bySection: List<ArtistSection> =
-        if (state.appMode != AppMode.BUYER) {
-            listOf(ArtistSection(null, null, groups))
-        } else {
-            state.categoryDefs.mapNotNull { def ->
-                val list = groups.filter { state.categoryIdOf(it0(it.name)) == def.id }
-                if (list.isEmpty()) null else ArtistSection(def.id, def.name, list)
-            }.ifEmpty { listOf(ArtistSection(null, null, groups)) }
-        }
+        sectionDefs.mapNotNull { (id, title) ->
+            val list = groups.filter { categoryIdOfName(it0(it.name)) == id }
+            if (list.isEmpty()) null else ArtistSection(id, title, list)
+        }.ifEmpty { listOf(ArtistSection(null, null, groups)) }
 
     // **收起来的那几档**（2026-10-13 加）：点一下分类标题就把这一档收掉，
     // 抄的是 TestFlight「以前测试过」那种感觉。
@@ -292,16 +300,43 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
         // 逸风拍板「两边统一成弹确认」—— iOS 删图就是二次确认；删图不可逆，
         // 跟单子那边「删除先问一句」一个规矩（归档 / 放回那种可逆的才不弹）。
         var confirmRemove by remember { mutableStateOf<String?>(null) }
-        // 分类（2026-10-13 加）：**这个画师归属哪一档**（存的是分类 id）。
+        // 分类（2026-10-13 加，2026-10-16 扩到客户页）：**这一位归属哪一档**（存的是分类 id）。
         // 跟上面那个备注框一个规矩 —— **跟着「保存」走**（没点保存就取消 = 不生效）。
         // iOS 那边是「一选就存」；两端这点不一样，但各自都跟**同一页里旁边那个控件**保持一致。
-        var categoryId by remember(g.name) { mutableStateOf(state.categoryIdOf(it0(g.name))) }
+        //
+        // ⚠️ 2026-10-16：买家模式这一页列的是画师 → 用画师分类；画师模式列的是客户 → 用客户分类。
+        //    下面这几个小工具按模式挑**同一套**，别再写死画师那一套。
+        val isBuyerMode = state.appMode == AppMode.BUYER
+        // 当前模式下的分类清单（id + 名字）—— 读的是 Compose 状态，改了当场重画
+        val catDefs: List<Pair<String, String>> =
+            if (isBuyerMode) state.categoryDefs.map { it.id to it.name }
+            else state.clientCategoryDefs.map { it.id to it.name }
+        fun isBuiltInCat(id: String): Boolean =
+            if (isBuyerMode) id == CategoryDef.REGULAR || id == CategoryDef.TEMPLATE
+            else id == ClientCategoryDef.FREQUENT || id == ClientCategoryDef.INFREQUENT
+        val firstCatId: String = if (isBuyerMode) CategoryDef.REGULAR else ClientCategoryDef.FREQUENT
+        fun addCat(name: String): String? =
+            if (isBuyerMode) state.addCategory(name) else state.addClientCategory(name)
+        fun renameCat(id: String, name: String) {
+            if (isBuyerMode) state.renameCategory(id, name) else state.renameClientCategory(id, name)
+        }
+        fun deleteCat(id: String) {
+            if (isBuyerMode) state.deleteCategory(id) else state.deleteClientCategory(id)
+        }
+        var categoryId by remember(g.name, state.appMode) {
+            mutableStateOf(
+                if (state.appMode == AppMode.BUYER) state.categoryIdOf(it0(g.name))
+                else state.clientCategoryIdOf(it0(g.name))
+            )
+        }
         // 分类的「新增 / 改名 / 删除 / 管理」（2026-10-13 加）：
-        // ⚠️ 这几个是**全局配置**（改的是那份清单），跟当前这个画师无关 ——
+        // ⚠️ 这几个是**全局配置**（改的是那份清单），跟当前这一位无关 ——
         //    所以**当场生效**，不跟着底下那颗「保存」走。
+        // ⚠️ 记的是 (id, 名字) 这一对，不是某一个具体类型：两套清单类型不同，
+        //    但对界面来说就是「id + 名字」两样东西。
         var catAdding by remember { mutableStateOf(false) }
-        var catRenaming by remember { mutableStateOf<CategoryDef?>(null) }
-        var catDeleting by remember { mutableStateOf<CategoryDef?>(null) }
+        var catRenaming by remember { mutableStateOf<Pair<String, String>?>(null) }
+        var catDeleting by remember { mutableStateOf<Pair<String, String>?>(null) }
         var catManaging by remember { mutableStateOf(false) }
         var catText by remember { mutableStateOf("") }
         AlertDialog(
@@ -342,60 +377,62 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
             },
             text = {
                 Column {
-                    // 分类（2026-10-13 加）：常稿画师 / 模版画师。
-                    // ⚠️ **只在买家模式显示** —— 他原话说的是「客户模式下的画师详情页」；
-                    //    画师模式下这一页列的是**客户**，「常稿 / 模版」对他没意义。
-                    //    （跟 iOS 端同一条规矩，两端必须一样。）
+                    // 分类（2026-10-13 加，2026-10-16 扩到客户页）。
+                    // ⚠️ 2026-10-16 起**两种模式都显示** —— 买家模式给画师分（常稿 / 模版），
+                    //    画师模式给客户分（常约 / 不常约），用的是各自那本清单
+                    //    （见上面 `catDefs` / `isBuyerMode`）。跟 iOS 端同一条规矩。
                     // 用房子里的 [SlimChip]（胶囊），别用原生 FilterChip ——
                     // 2026-09-29 视觉重做时就是特意从 FilterChip 换过来的。
-                    if (state.appMode == AppMode.BUYER) {
-                        // 标题行：左边标签、右边「管理」——改名 / 删除都从那儿进。
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                AppCtx.s(R.string.artist_category_label),
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(Modifier.weight(1f))
-                            TextButton(
-                                onClick = { catManaging = true },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                modifier = Modifier.height(30.dp),
-                            ) { Text(AppCtx.s(R.string.artist_category_manage), fontSize = 12.sp) }
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        // 一档一个胶囊，末尾再跟一个「＋ 新增」。
-                        // ⚠️ 分类是**他自己加的、个数不定** → 横着排不下就横滑，
-                        //    别挤成一团（保住「一排胶囊」那个观感）。
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        ) {
-                            state.categoryDefs.forEach { def ->
-                                SlimChip(
-                                    text = def.name,
-                                    selected = def.id == categoryId,
-                                    fontSize = 13.sp,
-                                ) { categoryId = def.id }
-                            }
-                            // 「＋ 新增」也做成同样的胶囊（房子里的观感统一）
-                            SlimChip(
-                                text = "＋ " + AppCtx.s(R.string.artist_category_add),
-                                selected = false,
-                                fontSize = 13.sp,
-                            ) {
-                                catText = ""
-                                catAdding = true
-                            }
-                        }
-                        Spacer(Modifier.height(8.dp))
+                    // 标题行：左边标签、右边「管理」——改名 / 删除都从那儿进。
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            AppCtx.s(R.string.artist_category_hint),
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                            AppCtx.s(R.string.artist_category_label),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.weight(1f))
+                        TextButton(
+                            onClick = { catManaging = true },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                            modifier = Modifier.height(30.dp),
+                        ) { Text(AppCtx.s(R.string.artist_category_manage), fontSize = 12.sp) }
                     }
+                    Spacer(Modifier.height(6.dp))
+                    // 一档一个胶囊，末尾再跟一个「＋ 新增」。
+                    // ⚠️ 分类是**他自己加的、个数不定** → 横着排不下就横滑，
+                    //    别挤成一团（保住「一排胶囊」那个观感）。
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    ) {
+                        catDefs.forEach { (defId, defName) ->
+                            SlimChip(
+                                text = defName,
+                                selected = defId == categoryId,
+                                fontSize = 13.sp,
+                            ) { categoryId = defId }
+                        }
+                        // 「＋ 新增」也做成同样的胶囊（房子里的观感统一）
+                        SlimChip(
+                            text = "＋ " + AppCtx.s(R.string.artist_category_add),
+                            selected = false,
+                            fontSize = 13.sp,
+                        ) {
+                            catText = ""
+                            catAdding = true
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        // 说明文案跟着模式走：画师那套说的是「常稿 / 模版」，客户那套是「常约 / 不常约」
+                        AppCtx.s(
+                            if (isBuyerMode) R.string.artist_category_hint
+                            else R.string.client_category_hint
+                        ),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                    )
+                    Spacer(Modifier.height(16.dp))
 
                     Text(
                         AppCtx.s(R.string.common_note_contact),
@@ -453,7 +490,9 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 TextButton(onClick = {
                     state.setNote(it0(g.name), text)
                     // 分类归属（2026-10-13 加）：跟备注一起在「保存」这一下写回
-                    state.setCategory(it0(g.name), categoryId)
+                    // ⚠️ 写回的是**当前模式那一本**：买家 = 画师分类；画师 = 客户分类。
+                    if (isBuyerMode) state.setCategory(it0(g.name), categoryId)
+                    else state.setClientCategory(it0(g.name), categoryId)
                     editing = null
                 }) { Text(AppCtx.s(R.string.common_save), fontWeight = FontWeight.SemiBold) }
             },
@@ -469,21 +508,21 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 title = { Text(AppCtx.s(R.string.artist_category_manage), fontWeight = FontWeight.Bold) },
                 text = {
                     Column {
-                        state.categoryDefs.forEach { def ->
+                        catDefs.forEach { (defId, defName) ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(def.name, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                                Text(defName, fontSize = 14.sp, modifier = Modifier.weight(1f))
                                 TextButton(
                                     onClick = {
-                                        catText = def.name
-                                        catRenaming = def
+                                        catText = defName
+                                        catRenaming = defId to defName
                                     },
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                                     modifier = Modifier.height(32.dp),
                                 ) { Text(AppCtx.s(R.string.avatar_rename), fontSize = 12.sp) }
 
-                                if (!def.isBuiltIn) {
+                                if (!isBuiltInCat(defId)) {
                                     TextButton(
-                                        onClick = { catDeleting = def },
+                                        onClick = { catDeleting = defId to defName },
                                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                                         modifier = Modifier.height(32.dp),
                                     ) {
@@ -526,7 +565,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                     TextButton(
                         enabled = catText.isNotBlank(),
                         onClick = {
-                            val newId = state.addCategory(catText)
+                            val newId = addCat(catText)
                             if (newId != null) {
                                 // 顺手选中它 —— 他多半就是为了当前这位才加的。
                                 // ⚠️ 归属走的是「保存」那一下（跟备注一个规矩），所以只动本地值。
@@ -541,7 +580,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
         }
 
         // 改分类的名字（2026-10-13 加）：只动清单里那一条，谁属于这一档完全不受影响。
-        catRenaming?.let { def ->
+        catRenaming?.let { (defId, _) ->
             AlertDialog(
                 onDismissRequest = { catRenaming = null },
                 shape = RoundedCornerShape(24.dp),
@@ -559,7 +598,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                     TextButton(
                         enabled = catText.isNotBlank(),
                         onClick = {
-                            state.renameCategory(def.id, catText)
+                            renameCat(defId, catText)
                             catRenaming = null
                         },
                     ) { Text(AppCtx.s(R.string.common_save), fontWeight = FontWeight.SemiBold) }
@@ -570,17 +609,25 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
 
         // 删分类：先弹确认（跟删图 / 删单一个规矩：删除不可逆，先问一句）。
         // 「删除」用红色、【取消】是退路。
-        catDeleting?.let { def ->
+        catDeleting?.let { (defId, _) ->
             AlertDialog(
                 onDismissRequest = { catDeleting = null },
                 shape = RoundedCornerShape(24.dp),
                 title = { Text(AppCtx.s(R.string.artist_category_delete_title)) },
-                text = { Text(AppCtx.s(R.string.artist_category_delete_body)) },
+                // ⚠️ 说明文案跟着模式走：画师那套说「回到常稿画师」，客户那套说「回到常约客户」
+                text = {
+                    Text(
+                        AppCtx.s(
+                            if (isBuyerMode) R.string.artist_category_delete_body
+                            else R.string.client_category_delete_body
+                        )
+                    )
+                },
                 confirmButton = {
                     TextButton(onClick = {
-                        state.deleteCategory(def.id)
-                        // 删掉的正好是这个人当前选的 → 本地值也回到常稿
-                        if (categoryId == def.id) categoryId = CategoryDef.REGULAR
+                        deleteCat(defId)
+                        // 删掉的正好是这一位当前选的 → 本地值也回到第一档
+                        if (categoryId == defId) categoryId = firstCatId
                         catDeleting = null
                     }) {
                         Text(AppCtx.s(R.string.common_delete_2), color = MaterialTheme.colorScheme.error)

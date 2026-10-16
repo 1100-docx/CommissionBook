@@ -110,6 +110,54 @@ fun defaultCategoryDefs(): List<CategoryDef> = listOf(
     CategoryDef(CategoryDef.TEMPLATE, AppCtx.s(R.string.artist_category_template)),
 )
 
+// MARK: - 客户分类（2026-10-16 加）
+//
+// 把上面那套「画师分类」**原样镜像**到画师模式下的**客户页** ——
+// （买家模式那一页列的是画师，画师模式那一页列的是客户，是同一个 ArtistsScreen）。
+//
+// ⚠️ 键名跟 iOS 端**必须一字不差**（双端备份要互认，键不一样就坏）：
+//   文件 `clientCategories.json`     → `{"客户名":"frequent"}`
+//   文件 `clientCategoryDefs.json`  → `[{"id":"frequent","name":"常约客户"}, …]`
+//   备份 JSON 里也叫 `clientCategories` / `clientCategoryDefs`（形状跟 artist 那两个一模一样）。
+//   ⚠️ 名字里的 `client` 指的是**画师模式下的客户**，别按「客户模式（=买家模式）」去理解。
+
+/**
+ * 一条客户分类定义。
+ *
+ * - [id]   稳定标识。预置两档固定是 `frequent` / `infrequent`，自定义的是 `c` + 一段随机码。
+ * - [name] 他看到的那个名字。预置两档起手是本地化文案，之后随他改。
+ */
+data class ClientCategoryDef(val id: String, val name: String) {
+
+    /**
+     * 预置的两档 —— **能改名，不能删**（理由跟画师分类那对锚点一样：
+     * 删一个分类时名下客户得有地方回落，而第一档就是「没标过算哪档」）。
+     */
+    val isBuiltIn: Boolean get() = id == FREQUENT || id == INFREQUENT
+
+    companion object {
+        /** 预置第一档：常约客户。**也是「没标过」和「分类被删了」的落点。** */
+        const val FREQUENT = "frequent"
+        /** 预置第二档：不常约客户 */
+        const val INFREQUENT = "infrequent"
+
+        /** 给新分类发一个 id。前缀 `c` 一眼看出是自定义的（预置那两条没有前缀）。 */
+        fun newId(): String = "c" + UUID.randomUUID().toString().replace("-", "").take(10)
+    }
+}
+
+/**
+ * 预置的两档客户分类。清单**没存过**时用它 ——
+ * 名字取**当前语言**的文案，所以那种情况下换语言它会跟着变。
+ *
+ * ⚠️ 跟 [defaultCategoryDefs] 一样必须是个函数（不能是常量）：
+ *    得等 AppCtx 初始化好之后才取得到字符串。
+ */
+fun defaultClientCategoryDefs(): List<ClientCategoryDef> = listOf(
+    ClientCategoryDef(ClientCategoryDef.FREQUENT,   AppCtx.s(R.string.client_category_frequent)),
+    ClientCategoryDef(ClientCategoryDef.INFREQUENT, AppCtx.s(R.string.client_category_infrequent)),
+)
+
 /**
  * 两套叫法。界面上跟「对方」「钱」有关的字**全从这里取** ——
  * 以后想改词只改这一个地方，不用满工程找字符串。
@@ -621,6 +669,35 @@ object Json {
         }
         return out
     }
+
+    // MARK: - 客户分类清单（2026-10-16 加，跟上面那本镜像）
+    //
+    // ⚠️ 形状跟 `artistCategoryDefs` **一模一样**（双端备份要互认）：
+    //    `[{"id":"frequent","name":"常约客户"}, …]` —— 顺序就是他看到的一排。
+    //    归属那本（`clientCategories`）是纯 `String→String`，
+    //    形状跟 `artistCategories` 一样，所以**直接复用**上面那两个函数，不另写。
+
+    fun encodeClientCategoryDefs(defs: List<ClientCategoryDef>): JSONArray {
+        val arr = JSONArray()
+        for (d in defs) {
+            if (d.id.isBlank()) continue
+            arr.put(JSONObject().put("id", d.id).put("name", d.name))
+        }
+        return arr
+    }
+
+    /** 读客户分类清单。id 空的那条直接丢掉；name 空就拿 id 顶 —— 读坏了也绝不崩。 */
+    fun decodeClientCategoryDefs(a: JSONArray?): MutableList<ClientCategoryDef> {
+        val out = mutableListOf<ClientCategoryDef>()
+        if (a == null) return out
+        for (i in 0 until a.length()) {
+            val o = a.optJSONObject(i) ?: continue
+            val id = o.optString("id")
+            if (id.isBlank()) continue
+            out.add(ClientCategoryDef(id, o.optString("name").ifBlank { id }))
+        }
+        return out
+    }
 }
 
 // MARK: - 存盘：一个 JSON 文件，放在 App 自己的目录里
@@ -716,6 +793,48 @@ class Store(private val context: Context) {
 
     fun saveCategoryDefs(defs: List<CategoryDef>) {
         runCatching { categoryDefsFile.writeText(Json.encodeCategoryDefs(defs).toString()) }
+    }
+
+    // MARK: - 客户分类（2026-10-16 加，跟画师那套镜像）
+    //
+    // 归属挂在 `clientCategories.json`    → `{"客户名":"frequent"}`
+    // 清单挂在 `clientCategoryDefs.json` → `[{"id":…,"name":…}, …]`
+    // ⚠️ 文件名 / 键名跟 iOS 端一字不差，别改叫 clientMode* 之类。
+    //
+    // ⚠️ 老数据一个字节不动：这两个文件现在是**新加**的，
+    //    没存过就 load 出空 map / null，**不落盘**（见 AppState.persist）。
+
+    private val clientCategoriesFile: File get() = File(context.filesDir, "clientCategories.json")
+
+    fun loadClientCategories(): MutableMap<String, String> {
+        if (!clientCategoriesFile.exists()) return LinkedHashMap()
+        return runCatching {
+            Json.decodeCategories(JSONObject(clientCategoriesFile.readText()))
+        }.getOrElse { LinkedHashMap() }      // 读坏了当没标过，绝不能崩
+    }
+
+    fun saveClientCategories(m: Map<String, String>) {
+        runCatching { clientCategoriesFile.writeText(Json.encodeCategories(m).toString()) }
+    }
+
+    private val clientCategoryDefsFile: File get() = File(context.filesDir, "clientCategoryDefs.json")
+
+    /**
+     * 读客户分类清单。
+     *
+     * ⚠️ **文件不存在就返回 null** —— 跟画师那本一个含义：
+     *    「他没改过清单，用预置的常约 / 不常约」。存盘和备份都靠它决定要不要写这个键。
+     *    读坏了 / 空清单 → 也返回 null（宁愿回到预置，也不能给一份没法选的清单）。
+     */
+    fun loadClientCategoryDefs(): MutableList<ClientCategoryDef>? {
+        if (!clientCategoryDefsFile.exists()) return null
+        return runCatching {
+            Json.decodeClientCategoryDefs(JSONArray(clientCategoryDefsFile.readText()))
+        }.getOrNull()?.takeIf { it.isNotEmpty() }
+    }
+
+    fun saveClientCategoryDefs(defs: List<ClientCategoryDef>) {
+        runCatching { clientCategoryDefsFile.writeText(Json.encodeClientCategoryDefs(defs).toString()) }
     }
 
     // MARK: - 画师图片备注（2026-10-11 加，**仅安卓**）

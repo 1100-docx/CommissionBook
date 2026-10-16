@@ -231,6 +231,10 @@
     <string name="artist_category_name_hint">分類名字</string>
     <string name="artist_category_delete_title">刪掉這個分類？</string>
     <string name="artist_category_delete_body">標著它的畫師會回到「常稿畫師」。</string>
+    <string name="client_category_frequent">常約客戶</string>
+    <string name="client_category_infrequent">不常約客戶</string>
+    <string name="client_category_hint">常約 = 常來找你約稿的客戶；不常約 = 偶爾約一次的客戶。沒標過的一律算常約。</string>
+    <string name="client_category_delete_body">標著它的客戶會回到「常約客戶」。</string>
     <string name="ledger_summary_count">共 %1$s 單 · 進行中 %2$s</string>
     <string name="common_search">搜尋</string>
     <string name="common_add">新增</string>

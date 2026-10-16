@@ -132,6 +132,93 @@ class AppState(private val context: Context) {
         persist()
     }
 
+    // MARK: - 客户分类（2026-10-16 加）
+    //
+    // 把上面那套画师分类**原样镜像**到画师模式下的客户页。
+    // 规矩一条不差：清单可空（没改过 = 不落盘 / 不进备份）、
+    // 第一档是兜底落点、预置两档不给删、删除时名下客户抹回第一档。
+    // ⚠️ 落盘 / 备份的键名固定是 `clientCategories` / `clientCategoryDefs`（跟 iOS 一致）。
+
+    /** 客户分类归属（2026-10-16 加）：客户名 → 分类 id。 */
+    var clientCategories by mutableStateOf<Map<String, String>>(emptyMap())
+        private set
+
+    /**
+     * 客户分类清单**存盘那一份**。
+     * ⚠️ `null` 的含义跟 [storedCategoryDefs] 一模一样：
+     *    **「他没改过客户分类清单，用预置的常约 / 不常约」** → 不落盘、不进备份。
+     */
+    private var storedClientCategoryDefs by mutableStateOf<List<ClientCategoryDef>?>(store.loadClientCategoryDefs())
+
+    /**
+     * 现在该显示的客户分类清单。
+     * ⚠️ 跟 [categoryDefs] 同一道保险：**第一档必须在** ——
+     *    [clientCategoryIdOf] 的兜底是「不认识就落回 frequent」，
+     *    清单里要是没有 frequent，分段时这些人一段都进不去，直接在列表上**凭空消失**。
+     */
+    val clientCategoryDefs: List<ClientCategoryDef>
+        get() {
+            val d = storedClientCategoryDefs ?: return defaultClientCategoryDefs()
+            if (d.any { it.id == ClientCategoryDef.FREQUENT }) return d
+            return listOf(ClientCategoryDef(ClientCategoryDef.FREQUENT, AppCtx.s(R.string.client_category_frequent))) + d
+        }
+
+    /**
+     * 某个客户属于哪一档的 id。
+     * ⚠️ 兜底：**没标过 / 标了个已经不存在的 id（分类被删了）→ 落回 frequent**。
+     */
+    fun clientCategoryIdOf(client: String): String {
+        val stored = clientCategories[client].orEmpty()
+        return if (clientCategoryDefs.any { it.id == stored }) stored else ClientCategoryDef.FREQUENT
+    }
+
+    /** 某个客户那条分类的名字（分段标题用）。 */
+    fun clientCategoryNameOf(client: String): String =
+        clientCategoryDefs.firstOrNull { it.id == clientCategoryIdOf(client) }?.name.orEmpty()
+
+    fun setClientCategory(client: String, defId: String) {
+        clientCategories = clientCategories.toMutableMap().also { it[client] = defId }
+        persist()
+    }
+
+    /**
+     * 新增一个客户分类（2026-10-16 加）。
+     *
+     * @param assignTo 给谁顺手也设成这个新分类；null = 不设。
+     * @return 新分类的 id；名字空着返回 null（调用方据此提示 / 不关弹窗）
+     */
+    fun addClientCategory(name: String, assignTo: String? = null): String? {
+        val n = name.trim()
+        if (n.isEmpty()) return null
+        val id = ClientCategoryDef.newId()
+        storedClientCategoryDefs = clientCategoryDefs + ClientCategoryDef(id, n)
+        // ⚠️ 先把清单落盘，再设归属（同画师那套：反过来的话归属会指向还不存在的分类）
+        persist()
+        if (assignTo != null) setClientCategory(assignTo, id)
+        return id
+    }
+
+    /** 改客户分类的名字。只动清单里那一条，**谁属于这一档完全不受影响**。 */
+    fun renameClientCategory(id: String, name: String) {
+        val n = name.trim()
+        if (n.isEmpty()) return
+        storedClientCategoryDefs = clientCategoryDefs.map { if (it.id == id) it.copy(name = n) else it }
+        persist()
+    }
+
+    /**
+     * 删掉一个客户分类。
+     * ⚠️ 预置的两档**不给删**（回落默认的锚点）。
+     * ⚠️ 标着它的客户**回到「常约客户」**：这里把那些归属直接抹掉，
+     *    读的时候 [clientCategoryIdOf] 会兜底成 frequent。
+     */
+    fun deleteClientCategory(id: String) {
+        if (id == ClientCategoryDef.FREQUENT || id == ClientCategoryDef.INFREQUENT) return
+        storedClientCategoryDefs = clientCategoryDefs.filterNot { it.id == id }
+        clientCategories = clientCategories.filterValues { it != id }
+        persist()
+    }
+
     /**
      * 当前使用模式（买家 / 画师）。
      * ⚠️ 是 Compose 状态，不是直接读 prefs —— 这样在设置页一改，所有页面立刻重画。
@@ -245,6 +332,9 @@ class AppState(private val context: Context) {
         artistPhotos = store.loadArtistPhotos()
         artistCategories = store.loadCategories()
         storedCategoryDefs = store.loadCategoryDefs()
+        // 客户分类（2026-10-16 加）：跟画师那套一起读
+        clientCategories = store.loadClientCategories()
+        storedClientCategoryDefs = store.loadClientCategoryDefs()
     }
 
     private fun persist() {
@@ -256,6 +346,10 @@ class AppState(private val context: Context) {
         // 没改过就不写文件 —— 备份那边也就连键都不写
         // （跟 artistAvatars / artistPhotos 一个规矩：一本都没有就不留键）。
         storedCategoryDefs?.let { store.saveCategoryDefs(it) }
+        // 客户分类（2026-10-16 加）：同样「没改过清单就一个字都不写」
+        // ⚠️ 老数据一个字节不动 —— 没标过 / 没改过清单时这两个文件压根不会生成。
+        store.saveClientCategories(clientCategories)
+        storedClientCategoryDefs?.let { store.saveClientCategoryDefs(it) }
         // 数据一变就把提醒闹钟重排一遍 —— 最简单的做法，也最不容易漏
         Reminders.reschedule(context, items, prefs.reminderEnabled, prefs.reminderHour, prefs.reminderMinute)
         // 顺手清掉没人引用的参考图（删单、改单、恢复备份之后都走这儿）。
@@ -431,6 +525,20 @@ class AppState(private val context: Context) {
             artistCategories = artistCategories.toMutableMap().also { it.remove(a) }
         }
 
+        // 客户分类也跟着搬（2026-10-16 加）。规矩跟画师分类一字不差：
+        // 新名字上**已经有**就不覆盖，否则搬过去。
+        // ⚠️ 改名字这一页同时管两种模式（买家列画师 / 画师列客户），
+        //    两本都得跟着走 —— 只搬一本的话，切到另一边就是「分类不见了」。
+        val movedClientCat = clientCategories[a]
+        if (!movedClientCat.isNullOrBlank() && clientCategories[b].isNullOrBlank()) {
+            clientCategories = clientCategories.toMutableMap().also {
+                it[b] = movedClientCat
+                it.remove(a)
+            }
+        } else if (clientCategories.containsKey(a)) {
+            clientCategories = clientCategories.toMutableMap().also { it.remove(a) }
+        }
+
         Avatars.rename(a, b)
         persist()
         return n
@@ -487,6 +595,16 @@ class AppState(private val context: Context) {
          * 老备份 / 没有这个键的备份 → null → **不动**本机自己的清单。
          */
         newCategoryDefs: List<CategoryDef>? = null,
+        /**
+         * 客户分类归属（2026-10-16 加）。**可空**，语义跟 [newCategories] 一致：
+         * 老备份 / 没有这个键的备份 → null → **不动**本机已标好的客户分类。
+         */
+        newClientCategories: Map<String, String>? = null,
+        /**
+         * 客户分类清单（2026-10-16 加）。**可空**，语义同上：
+         * 没有这个键 → null → **不动**本机自己的客户分类清单。
+         */
+        newClientCategoryDefs: List<ClientCategoryDef>? = null,
     ) {
         items = newItems
         notes = newNotes
@@ -512,6 +630,11 @@ class AppState(private val context: Context) {
         }
         // 画师分类归属（2026-10-13 加）：备份里有才换（理由同上）。
         if (newCategories != null) artistCategories = newCategories
+        // 客户分类（2026-10-16 加）：跟画师那套一字不差的两步 —— 清单先铺、归属后认。
+        if (newClientCategoryDefs != null && newClientCategoryDefs.isNotEmpty()) {
+            storedClientCategoryDefs = newClientCategoryDefs
+        }
+        if (newClientCategories != null) clientCategories = newClientCategories
         persist()
     }
 
@@ -526,6 +649,9 @@ class AppState(private val context: Context) {
         categories = artistCategories,
         // ⚠️ 传的是 storedCategoryDefs（可空）：他没改过清单就别往备份里塞这个键
         categoryDefs = storedCategoryDefs,
+        // 客户分类（2026-10-16 加）：同样「没改过清单就传 null → 连键都不写」
+        clientCategories = clientCategories,
+        clientCategoryDefs = storedClientCategoryDefs,
     )
 
     // MARK: - 屏幕上要用的几个数

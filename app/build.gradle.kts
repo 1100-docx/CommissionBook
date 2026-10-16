@@ -145,8 +145,12 @@ android {
         // 3.9.28（2026-10-16）：**交付时段补「下午」**（逸风要的）——
         //        枚举加 `AFTERNOON("afternoon")`，取值仍是 none/morning/noon/afternoon/evening，
         //        **跟 iOS 3.9.30 一模一样**；4 语种各 +1 条 `slot_afternoon`。
-        versionCode = 116
-        versionName = "3.9.28"
+        // 3.9.29（2026-10-16）：**画师模式下的客户页也加分类** ——
+        //        把买家模式那套「画师分类」对称镜像过去（新增 / 改名 / 删除 + 按分类分段 + 段可折叠）。
+        //        新键名 `clientCategoryDefs` / `clientCategories`、预置 id `frequent` / `infrequent`，
+        //        **跟 iOS 一字不差**（双端备份要互认）；4 语种各 +4 条客户分类文案。
+        versionCode = 117
+        versionName = "3.9.29"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，

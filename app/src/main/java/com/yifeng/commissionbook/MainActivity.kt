@@ -224,10 +224,12 @@ class MainActivity : FragmentActivity() {
         } else {
             // 常用语（2026-10-09 加）：备份里有才灌（老备份没这个键 → null → 不动本机那份）
             // 画师图片备注同规矩（2026-10-11）。画师分类也同规矩（2026-10-13）。
+            // 客户分类同理（2026-10-16）：备份里没这两个键 → null → 本机那份不动。
             state.replaceAll(
                 payload.items, payload.notes, payload.avatars,
                 payload.phrases, payload.artistPhotos,
                 payload.categories, payload.categoryDefs,
+                payload.clientCategories, payload.clientCategoryDefs,
             )
             toast(AppCtx.s(R.string.common_restored_count, payload.items.size))
         }

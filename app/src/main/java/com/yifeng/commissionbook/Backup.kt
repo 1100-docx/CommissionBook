@@ -49,6 +49,22 @@ data class BackupData(
      *    （别把人家改过的分类名抹回预置的常稿 / 模版）。
      */
     val categoryDefs: List<CategoryDef>? = null,
+    /**
+     * 客户分类（2026-10-16 加）：客户名 → `frequent` / `infrequent` / 自定义 id。
+     *
+     * ⚠️ 跟 [categories] 一样 —— **这个键 iOS 那边也有**（双端一致的键），
+     *    形状必须一直保持一样：`{"客户名":"frequent"}`。
+     * ⚠️ 同样**可空**：老备份里没有这个键 → null → 恢复时不动本机已标的客户分类。
+     */
+    val clientCategories: Map<String, String>? = null,
+    /**
+     * 客户分类清单（2026-10-16 加，跟 [clientCategories] 配套）：`[ClientCategoryDef(id, name), …]`。
+     *
+     * ⚠️ 跟 [clientCategories] 一样是**双端都有的键**（iOS 那边也叫 `clientCategoryDefs`），
+     *    形状跟 `artistCategoryDefs` 一模一样。
+     * ⚠️ 同样**可空**：没有 → null → 不动本机自己的清单。
+     */
+    val clientCategoryDefs: List<ClientCategoryDef>? = null,
 )
 
 /**
@@ -101,6 +117,14 @@ object Backup {
          * （跟 artistAvatars / phrases 一个规矩：老备份长什么样、新备份还长什么样）。
          */
         categoryDefs: List<CategoryDef>? = null,
+        /** 客户分类（2026-10-16 加）：客户名 → 分类 id。一个都没标就**连键都不写**。 */
+        clientCategories: Map<String, String> = emptyMap(),
+        /**
+         * 客户分类清单（2026-10-16 加）。**可空** —— null 的含义是
+         * 「他没改过清单，本机用的是预置两档」→ **连键都不写**
+         * （跟 artistCategoryDefs 一个规矩：老备份长什么样、新备份还长什么样）。
+         */
+        clientCategoryDefs: List<ClientCategoryDef>? = null,
     ): String {
         val root = JSONObject()
         root.put("commissions", Json.encodeCommissions(items, photoBytes))
@@ -152,6 +176,15 @@ object Backup {
         //    那些 id 会找不到对应分类 → 全部回落成常稿（不至于丢数据，但看着像白标了）。
         if (categoryDefs != null && categoryDefs.isNotEmpty()) {
             root.put("artistCategoryDefs", Json.encodeCategoryDefs(categoryDefs))
+        }
+        // 客户分类（2026-10-16 加，**双端都有这个键**）：跟 artistCategories 一个规矩 ——
+        // 一个都没标就**连键都不写**（老备份长什么样、新备份还长什么样）。
+        // ⚠️ 键名 `clientCategories` 是跟 iOS 那边对好的，别改。
+        if (clientCategories.isNotEmpty()) root.put("clientCategories", Json.encodeCategories(clientCategories))
+        // 客户分类清单（2026-10-16 加）：同样「他没改过清单就不写这个键」。
+        // ⚠️ 键名 `clientCategoryDefs`，形状跟 artistCategoryDefs 一样。
+        if (clientCategoryDefs != null && clientCategoryDefs.isNotEmpty()) {
+            root.put("clientCategoryDefs", Json.encodeClientCategoryDefs(clientCategoryDefs))
         }
         return root.toString(2)
     }
@@ -218,7 +251,18 @@ object Backup {
         val categoryDefs = root.optJSONArray("artistCategoryDefs")
             ?.let { Json.decodeCategoryDefs(it) }
             ?.takeIf { it.isNotEmpty() }
-        BackupData(items, notes, avatars, phrases, artistPhotos, categories, categoryDefs)
+        // 客户分类（2026-10-16 加，**双端都有这个键**）：同样「有键才认」。
+        val clientCategories = root.optJSONObject("clientCategories")?.let { o ->
+            Json.decodeCategories(o)
+        }
+        // 客户分类清单（2026-10-16 加）：空数组也算「没有」→ null（同 artistCategoryDefs）。
+        val clientCategoryDefs = root.optJSONArray("clientCategoryDefs")
+            ?.let { Json.decodeClientCategoryDefs(it) }
+            ?.takeIf { it.isNotEmpty() }
+        BackupData(
+            items, notes, avatars, phrases, artistPhotos, categories, categoryDefs,
+            clientCategories, clientCategoryDefs,
+        )
     }.getOrNull()
 
     /** 备份文件名：约稿账本-2026-09-29-0250-手动.json */

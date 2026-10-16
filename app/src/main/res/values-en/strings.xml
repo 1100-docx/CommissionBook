@@ -240,6 +240,10 @@ System: Android %4$s (API %5$s)
     <string name="artist_category_name_hint">Category name</string>
     <string name="artist_category_delete_title">Delete this category?</string>
     <string name="artist_category_delete_body">Artists tagged with it go back to "Regular artist".</string>
+    <string name="client_category_frequent">Frequent client</string>
+    <string name="client_category_infrequent">Occasional client</string>
+    <string name="client_category_hint">Frequent = clients who commission you regularly. Occasional = clients who only order now and then. Anything untagged counts as frequent.</string>
+    <string name="client_category_delete_body">Clients tagged with it go back to "Frequent client".</string>
     <string name="ledger_summary_count">%1$s orders total · %2$s in progress</string>
     <string name="common_search">Search</string>
     <string name="common_add">Add</string>
