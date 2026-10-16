@@ -1002,17 +1002,17 @@ fun Modifier.captureTo(gl: androidx.compose.ui.graphics.layer.GraphicsLayer): Mo
         drawLayer(gl)
     }
 
-/** 那张报告图：固定宽度，深色渐变底，白字 —— 一眼能看完一年 */
+/**
+ * 那张报告图：固定宽度，深色渐变底，白字 —— 一眼能看完一年。
+ * 2026-10-16：底色换成跟单条分享卡同一套（`shareCardSurface`：渐变 + 两团柔光），
+ * 大金额也走 `ShareMoney`（¥ 小一号）—— 两张发出去的图从此是一个家族。
+ */
 @Composable
 fun ReportCard(r: YearReport, mode: AppMode) {
-    val shape = RoundedCornerShape(26.dp)
     Column(
         Modifier
             .width(320.dp)
-            .clip(shape)
-            .background(
-                Brush.verticalGradient(listOf(IceBlueLight, IceBlue, Color(0xFF14406F)))
-            )
+            .shareCardSurface(26.dp)
             .padding(22.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1028,7 +1028,7 @@ fun ReportCard(r: YearReport, mode: AppMode) {
             color = Color.White.copy(alpha = 0.85f),
         )
         Spacer(Modifier.height(6.dp))
-        Text(money(r.total), fontSize = 38.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        ShareMoney(r.total, 38)
         Spacer(Modifier.height(6.dp))
         Text(
             AppCtx.s(R.string.stats_summary_line, r.count, r.delivered, money(r.avg)),

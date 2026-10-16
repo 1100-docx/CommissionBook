@@ -1106,24 +1106,35 @@ fun SingleShareDialog(
     }
 }
 
-/** 那一张要发出去的卡：跟 iOS 版长得一模一样（冰蓝渐变 + 白字） */
+/**
+ * 那一张要发出去的卡：冰蓝渐变 + 白字（2026-10-16 二次打磨；初版 2026-10-01）。
+ *
+ * 凭什么改它：分享图是唯一会被用户主动发出去的东西，每发一张 = 一次曝光（知识库第十节的结论）。
+ * 这一版**只动「怎么排」，不增删任何信息**，四处：
+ *  ① 纵向节奏：标题和金额之间原来空一大截（18dp 间隔 + 34sp 行高的上下留白），头重脚轻；
+ *     现在收成 18 / 3 / 14 / 2 / 14 一套，标题贴紧名字、金额贴紧「已付/未付」。
+ *  ② 金额：¥ 收小一号、数字放大一号（走 ShareMoney，两张分享卡共用）。
+ *  ③ 备注：从「一行浮着的小字」变成半透明圆角块 —— 它是卡上最有人味的一行，值得有个容器。
+ *  ④ 落款：上面压一条极淡的横线，正文与署名分开，收口干净。
+ * ⚠️ 底色仍是 iOS 版同一组冰蓝（只是多了两团柔光，见 `shareCardSurface`）；
+ *    iOS 要跟就跟，不跟也不冲突 —— 两端备份、数据格式一个字节没动。
+ */
 @Composable
 fun CommissionShareCard(item: Commission, mode: AppMode) {
     val w = Color.White
     Column(
         Modifier
             .width(300.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(Brush.verticalGradient(listOf(IceBlueLight, IceBlue, Color(0xFF14406F))))
+            .shareCardSurface(22.dp)
             .padding(20.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(AppCtx.s(R.string.ledger_title), fontSize = 13.sp, color = w.copy(alpha = 0.85f))
             Spacer(Modifier.weight(1f))
-            Text(dayText(item.dateMillis), fontSize = 12.sp, color = w.copy(alpha = 0.85f))
+            Text(dayText(item.dateMillis), fontSize = 12.sp, color = w.copy(alpha = 0.85f), style = tnum)
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(18.dp))
         Text(
             item.artist.ifBlank { Terms.otherBlank(mode) },
             fontSize = 26.sp,
@@ -1132,33 +1143,35 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(3.dp))
         Text(
             item.title.ifBlank { AppCtx.s(R.string.common_no_content) },
             fontSize = 13.sp,
-            color = w.copy(alpha = 0.88f),
+            color = w.copy(alpha = 0.9f),
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(money(item.total), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = w, style = tnum)
+            ShareMoney(item.total, 37)
             Spacer(Modifier.width(6.dp))
             Text(
                 AppCtx.s(R.string.ledger_total_price),
                 fontSize = 11.sp,
                 color = w.copy(alpha = 0.7f),
-                modifier = Modifier.padding(bottom = 6.dp),
+                modifier = Modifier.padding(bottom = 7.dp),
             )
         }
+        Spacer(Modifier.height(2.dp))
         Text(
             "${Terms.paid(mode)} ${money(item.deposit)}  ·  ${Terms.unpaid(mode)} ${money(item.unpaid)}",
             fontSize = 12.sp,
-            color = w.copy(alpha = 0.88f),
+            color = w.copy(alpha = 0.9f),
+            style = tnum,
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
         // 进度条：四小格，走到哪亮到哪（跟页面上那条一模一样）
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             repeat(CommissionStatus.STAGE_COUNT) { i ->
@@ -1167,7 +1180,7 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
                         .weight(1f)
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp))
-                        .background(if (i <= item.status.stageIndex) w else w.copy(alpha = 0.25f))
+                        .background(if (i <= item.status.stageIndex) w else w.copy(alpha = 0.3f))
                 )
             }
         }
@@ -1186,25 +1199,34 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
                 if (item.slotKind == DeliverySlot.NONE) AppCtx.s(R.string.ledger_deadline, dayText(it))
                 else AppCtx.s(R.string.ledger_deadline_slot, dayText(it), item.slotKind.label),
                 fontSize = 11.5.sp,
-                color = w.copy(alpha = 0.75f),
+                color = w.copy(alpha = 0.78f),
+                style = tnum,
             )
         }
         if (item.note.isNotBlank()) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             Text(
                 item.note,
-                fontSize = 11.5.sp,
-                color = w.copy(alpha = 0.78f),
+                fontSize = 12.sp,
+                color = w.copy(alpha = 0.92f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(w.copy(alpha = 0.14f))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
             )
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
+        // 正文 / 落款之间一条极淡的横线（1dp）
+        Box(Modifier.fillMaxWidth().height(1.dp).background(w.copy(alpha = 0.2f)))
+        Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(AppCtx.s(R.string.ledger_slogan), fontSize = 11.sp, color = w.copy(alpha = 0.68f))
+            Text(AppCtx.s(R.string.ledger_slogan), fontSize = 11.sp, color = w.copy(alpha = 0.72f))
             Spacer(Modifier.weight(1f))
-            Text(AppCtx.s(R.string.common_author), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = w.copy(alpha = 0.68f))
+            Text(AppCtx.s(R.string.common_author), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = w.copy(alpha = 0.72f))
         }
     }
 }

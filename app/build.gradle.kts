@@ -149,8 +149,13 @@ android {
         //        把买家模式那套「画师分类」对称镜像过去（新增 / 改名 / 删除 + 按分类分段 + 段可折叠）。
         //        新键名 `clientCategoryDefs` / `clientCategories`、预置 id `frequent` / `infrequent`，
         //        **跟 iOS 一字不差**（双端备份要互认）；4 语种各 +4 条客户分类文案。
-        versionCode = 117
-        versionName = "3.9.29"
+        // 3.9.30（2026-10-16 晚）：**分享图焕新 + 署名改「筱樾」** ——
+        //        单条分享卡重排（节奏收紧 / ¥ 收小一号 / 备注加半透明块 / 落款加极淡分隔线），
+        //        两张分享卡的底色加两团柔光（`shareCardSurface`）+ 年度卡金额同样处理；
+        //        `common_author` 4 语种跟随 iOS 3.9.32 改成「筱樾」。
+        //        ⚠️ 信息结构、备份格式一个字节没动。
+        versionCode = 118
+        versionName = "3.9.30"
         // ⚠️ 2026-10-03 多语言：这行原来是 `listOf("zh")` ——
         //    意思是「只打包中文资源，其它语言全砍掉」。
         //    留着它的话，values-en / values-zh-rTW 会被 aapt 直接剔出包，
