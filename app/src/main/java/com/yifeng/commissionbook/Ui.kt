@@ -53,37 +53,6 @@ fun money(v: Double): String =
     if (v % 1.0 == 0.0) "¥${v.toInt()}" else "¥" + String.format(Locale.CHINA, "%.2f", v)
 
 /**
- * 分享图上的「大金额」：¥ 收小一号、数字放大一号（2026-10-16 加，两张分享卡共用）。
- *
- * 为什么：金额是分享卡的主角，但「¥」和数字同号时，符号会白白分掉一截注意力；
- * 拆开之后数字更大、符号退回「标记」的位置，整块就像专门排过一样。
- * 数字一律走等宽（tnum）—— ¥300 和 ¥88 的数字宽度不跳，看着才稳。
- */
-@Composable
-fun ShareMoney(v: Double, digitSize: Int) {
-    val w = Color.White
-    val m = money(v)
-    val digits = m.removePrefix("¥")
-    Row(verticalAlignment = Alignment.Bottom) {
-        if (digits != m) {
-            Text(
-                "¥",
-                fontSize = (digitSize * 0.58f).sp,
-                fontWeight = FontWeight.Bold,
-                color = w,
-                style = tnum,
-                // 往下沉一点点：¥ 的字符框比数字矮，不沉会跟数字顶在同一水平线上，显得飘
-                modifier = Modifier.padding(bottom = (digitSize * 0.12f).dp),
-            )
-            Text(digits, fontSize = digitSize.sp, fontWeight = FontWeight.Bold, color = w, style = tnum)
-        } else {
-            // money() 现在一定带 ¥；万一以后改了格式，这里也只是「整串照排」，不吞首字符
-            Text(m, fontSize = digitSize.sp, fontWeight = FontWeight.Bold, color = w, style = tnum)
-        }
-    }
-}
-
-/**
  * 金额输入的清洗（2026-10-16 加，**跟 iOS 的 `cbSanitizeMoney` 口径一致**）。
  *
  * 为什么非要有它：键盘上能敲出 `1.2.3`，而 `"1.2.3".toDoubleOrNull()` = null

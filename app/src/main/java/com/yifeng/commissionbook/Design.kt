@@ -260,30 +260,6 @@ fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
     )
 }
 
-/**
- * 分享图（单条卡 / 年度卡）共用的底：冰蓝竖渐变 + 左下角一团很淡的亮蓝 —— 2026-10-16 加。
- *
- * 为什么只留左下这一团：卡的下半段是深 navy，有一团很淡的光就不发死。
- * ⚠️ 右上那团白光**试过又撤了**——在浅蓝的卡面上它不会变成「光」，
- *    而是一团看得见的雾（出图里像没擦干净）。浅色面上的柔光，宁可不要。
- *    （HeroCard 那两团能成立，是因为它的底色整体更深。）
- * ⚠️ 渐变颜色一个字没动：iOS 版用的是同一组冰蓝，两端出图仍是一个家族。
- */
-fun Modifier.shareCardSurface(radius: Dp): Modifier = this
-    .clip(RoundedCornerShape(radius))
-    .background(Brush.verticalGradient(listOf(IceBlueLight, IceBlue, Color(0xFF14406F))))
-    .drawBehind {
-        val c = Offset(size.width * 0.04f, size.height * 1.02f)
-        val r = size.width * 0.6f
-        drawCircle(
-            brush = Brush.radialGradient(
-                listOf(Color(0xFFBFE6FF).copy(alpha = 0.22f), Color.Transparent),
-                center = c, radius = r,
-            ),
-            radius = r, center = c,
-        )
-    }
-
 // MARK: - 标题
 
 /** 渐变卡里三列之间的极淡竖分隔线 —— 加了它，三列数字才有「秩序感」 */

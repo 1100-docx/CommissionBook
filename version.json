@@ -1,8 +1,8 @@
 {
-  "versionCode": 118,
-  "versionName": "3.9.30",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.30.apk",
+  "versionCode": 119,
+  "versionName": "3.9.31",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.31.apk",
   "size": 2490792,
-  "sha256": "83ad6a90b34608fc59148e32a331d783ce1bea0c4ec3cd2c3caf326f0ac25dc1",
-  "notes": "· 分享出去的图，重新排了一遍\n  金额更像主角（¥ 收小一号、数字更大），备注不再是悬空的一行、有了自己的小方框，\n  落款上面加了一条极淡的线 —— 整体比原来紧凑、干净。\n  「分享这一单」和「年度报告」两张图都换了，颜色还是原来那套冰蓝。\n\n· 署名统一改成「筱樾」（跟 iOS 版一致）\n\n· 别的什么都没动：数据格式一个字节没变，老备份照常恢复，覆盖安装就行"
+  "sha256": "5e92bd71fdad3319ac9e9cd59b484f5023d39aa90742a77a3bf304e6d1bf7629",
+  "notes": "· 作者署名更新为「筱樾」（分享图、年度报告上都改了）\n\n· 别的什么都没动：数据格式一个字节没变，老备份照常恢复，覆盖安装就行"
 }
