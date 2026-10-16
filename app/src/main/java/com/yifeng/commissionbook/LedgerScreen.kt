@@ -1347,14 +1347,17 @@ fun EditSheet(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
-                    total, { total = it }, label = { Text(AppCtx.s(R.string.ledger_total_price)) }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    total, { total = cleanMoneyInput(it) }, label = { Text(AppCtx.s(R.string.ledger_total_price)) }, singleLine = true,
+                    // 2026-10-16：原来是 KeyboardType.Number —— **数字键盘上没有小数点键**，
+                    // 所以「¥8.75」根本敲不进去（逸风报的同一批 bug，iOS 3.9.28 已修，
+                    // 这边同一套字段同一个毛病）。改 Decimal，输入再走 cleanMoneyInput 清洗。
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = fieldShape,
                     modifier = Modifier.weight(1f),
                 )
                 OutlinedTextField(
-                    deposit, { deposit = it }, label = { Text(Terms.paid(mode)) }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    deposit, { deposit = cleanMoneyInput(it) }, label = { Text(Terms.paid(mode)) }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = fieldShape,
                     modifier = Modifier.weight(1f),
                 )

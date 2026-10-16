@@ -52,6 +52,32 @@ import java.util.TimeZone
 fun money(v: Double): String =
     if (v % 1.0 == 0.0) "¥${v.toInt()}" else "¥" + String.format(Locale.CHINA, "%.2f", v)
 
+/**
+ * 金额输入的清洗（2026-10-16 加，**跟 iOS 的 `cbSanitizeMoney` 口径一致**）。
+ *
+ * 为什么非要有它：键盘上能敲出 `1.2.3`，而 `"1.2.3".toDoubleOrNull()` = null
+ * ⇒ 保存时 `?: 0.0` 会**静默存成 0**（比报错还糟：数字看着填了，存下来是零）。
+ * 顺手把中文键盘可能给的「。」「，」当小数点（iOS 那边同样的处理）。
+ *
+ * 只留：数字 ＋ **一个**小数点 ＋ 最多两位小数。
+ */
+fun cleanMoneyInput(raw: String): String {
+    val s = raw.trim().replace('。', '.').replace('，', '.')
+    val sb = StringBuilder()
+    var dot = false
+    for (ch in s) {
+        if (ch.isDigit()) {
+            sb.append(ch)
+        } else if (ch == '.' && !dot) {
+            dot = true
+            sb.append(ch)
+        }
+    }
+    val t = sb.toString()
+    val i = t.indexOf('.')
+    return if (i >= 0) t.substring(0, minOf(t.length, i + 3)) else t
+}
+
 val dayFmt = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA)
 
 fun dayText(millis: Long): String = dayFmt.format(Date(millis))
