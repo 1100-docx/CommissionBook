@@ -683,4 +683,10 @@
     <string name="unpaid_copy_late_mark">（已逾期）</string>
     <string name="unpaid_none">一筆沒欠，全收齊了</string>
     <string name="unpaid_stats_line">共 %1$d 單 · 待結 %2$s</string>
+    <string name="ledger_deadline_slot">截止 %1$s · %2$s</string>
+    <string name="slot_label">交付時段</string>
+    <string name="slot_none">未指定</string>
+    <string name="slot_morning">早上</string>
+    <string name="slot_noon">中午</string>
+    <string name="slot_evening">晚上</string>
 </resources>

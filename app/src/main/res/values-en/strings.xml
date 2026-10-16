@@ -692,4 +692,10 @@ System: Android %4$s (API %5$s)
     <string name="unpaid_copy_late_mark"> (overdue)</string>
     <string name="unpaid_none">Nothing owed — all settled</string>
     <string name="unpaid_stats_line">%1$d commission(s) · %2$s outstanding</string>
+    <string name="ledger_deadline_slot">Due %1$s · %2$s</string>
+    <string name="slot_label">Delivery time</string>
+    <string name="slot_none">Not set</string>
+    <string name="slot_morning">Morning</string>
+    <string name="slot_noon">Midday</string>
+    <string name="slot_evening">Evening</string>
 </resources>

@@ -1181,7 +1181,13 @@ fun CommissionShareCard(item: Commission, mode: AppMode) {
 
         item.deadlineMillis?.let {
             Spacer(Modifier.height(8.dp))
-            Text(AppCtx.s(R.string.ledger_deadline, dayText(it)), fontSize = 11.5.sp, color = w.copy(alpha = 0.75f))
+            Text(
+                // 交付时段（2026-10-16 加）：有时段就缀在日期后面（「截止 2026-10-20 · 晚上」）
+                if (item.slotKind == DeliverySlot.NONE) AppCtx.s(R.string.ledger_deadline, dayText(it))
+                else AppCtx.s(R.string.ledger_deadline_slot, dayText(it), item.slotKind.label),
+                fontSize = 11.5.sp,
+                color = w.copy(alpha = 0.75f),
+            )
         }
         if (item.note.isNotBlank()) {
             Spacer(Modifier.height(8.dp))
@@ -1250,6 +1256,8 @@ fun EditSheet(
 
     // 使用权等级（2026-10-09 加，#6）。老单子没有这个字段 → 未指定。
     var usage by remember { mutableStateOf(original?.usageRight ?: UsageRight.NONE) }
+    // 交付时段（2026-10-16 加）：早 / 中 / 晚 —— 只跟截止日一起用。
+    var slot by remember { mutableStateOf(original?.slotKind ?: DeliverySlot.NONE) }
 
     // 常用语选择弹窗（2026-10-09 加，#7）
     var showPhrasePicker by remember { mutableStateOf(false) }
@@ -1412,6 +1420,18 @@ fun EditSheet(
                     icon = Icons.Outlined.CalendarMonth,
                     onClick = { showDeadlinePicker = true },
                 )
+                // 交付时段（2026-10-16 加，逸风要的「早 / 中 / 晚交付时间段」）。
+                // 摆在「有截止日期」里面：**没截止日就不该问时段**（问了也没意义）。
+                // 样式跟上面的「使用权」一样：一排胶囊，横向够不着就滑。
+                Text(AppCtx.s(R.string.slot_label), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    DeliverySlot.entries.forEach { s ->
+                        SlimChip(s.label, slot == s) { slot = s }
+                    }
+                }
             }
 
             // 常用语（2026-10-09 加，#7）：有存过才显示这一行按钮。
@@ -1571,6 +1591,9 @@ fun EditSheet(
                             wmPercent = wmPercent,
                             // 使用权等级（2026-10-09 加，#6）：存的是 key（英文小写），跟语言无关
                             usage = usage.key,
+                            // 交付时段（2026-10-16 加）：存 key（英文小写，跟 iOS 一致）。
+                            // 没截止日 → 强制 none，不留「没日期只有时段」这种怪状态。
+                            slot = if (hasDeadline) slot.key else DeliverySlot.NONE.key,
                         )
                         onSave(c)
                     },

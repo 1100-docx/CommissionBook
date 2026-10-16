@@ -202,6 +202,30 @@ enum class UsageRight(val key: String, @StringRes val labelRes: Int) {
     }
 }
 
+/**
+ * 交付时段（2026-10-16 加，逸风要的「早 / 中 / 晚交付时间段」）。
+ *
+ * 为什么值得单独一个字段：截止日只写「哪一天」，可圈里交稿常常是
+ * 「那天晚上给你」—— 只写在备注里搜不到，光看日期又容易误会成早上就到。
+ *
+ * ⚠️ 存盘值用 `key`（英文小写），跟 iOS 的 rawValue **一模一样**，别改单边。
+ * ⚠️ 枚举构造参数里**绝对不能**调 AppCtx.s()（非界面代码取字符串会崩，
+ *    见工程里 3.5.14 那次）→ 只存 @StringRes，显示走下面的 `label`。
+ */
+enum class DeliverySlot(val key: String, @StringRes val labelRes: Int) {
+    NONE("none", R.string.slot_none),
+    MORNING("morning", R.string.slot_morning),
+    NOON("noon", R.string.slot_noon),
+    EVENING("evening", R.string.slot_evening);
+
+    /** 显示用（跟着语言走）。`key` 是存盘值，一个字节都别改 */
+    val label: String get() = AppCtx.s(labelRes)
+
+    companion object {
+        fun from(key: String?): DeliverySlot = entries.firstOrNull { it.key == key } ?: NONE
+    }
+}
+
 data class Commission(
     val id: String = UUID.randomUUID().toString(),
     var artist: String = "",
@@ -212,6 +236,14 @@ data class Commission(
     var dateMillis: Long = System.currentTimeMillis(),
     var archived: Boolean = false,
     var deadlineMillis: Long? = null,
+    /**
+     * 交付时段（2026-10-16 加）：none / morning / noon / evening。
+     *
+     * ⚠️ 老数据没有这个键 → none（不写时段），**存量数据一条都不动**。
+     * ⚠️ 键名与取值跟 iOS 一模一样（`slot`），改一边必须改另一边，
+     *    否则两份备份互导之后时段会丢。
+     */
+    var slot: String = DeliverySlot.NONE.key,
     var note: String = "",
     /**
      * 这条属于哪个模式（"buyer" / "artist"）。
@@ -261,6 +293,9 @@ data class Commission(
 
     /** 使用权（坏值一律当「未指定」，不至于因为一个键读不出来就崩） */
     val usageRight: UsageRight get() = UsageRight.from(usage)
+
+    /** 交付时段（坏值一律当「未指定」，不至于因为一个键读不出来就崩） */
+    val slotKind: DeliverySlot get() = DeliverySlot.from(slot)
 
     /**
      * 这一单要用的水印（开关没开、或者内容空着 → null = 不加印）。
@@ -341,6 +376,9 @@ object Json {
             // 使用权等级（2026-10-09 加）。跟 mode 一样**总是写**：
             // 有没有这个键读出来都是「未指定」，但总是写能少一条「什么情况下会丢」的猜测。
             o.put("usage", c.usage)
+            // 交付时段（2026-10-16 加）。跟 usage 一样**总是写**：读写都是「没有就当未指定」，
+            // 总是写能少一条「什么情况下会丢」的猜测。键名跟 iOS 一致。
+            o.put("slot", c.slot)
             if (c.photos.isNotEmpty()) {
                 val ph = JSONArray()
                 for (p in c.photos) {
@@ -424,6 +462,9 @@ object Json {
                     // 使用权等级（2026-10-09 加）。老数据 / iOS 老版本没这个键 → 未指定。
                     // 认不出来的值也一律当未指定（不抛异常、不丢整条）。
                     usage = UsageRight.from(o.optString("usage").ifBlank { UsageRight.NONE.key }).key,
+                    // 交付时段（2026-10-16 加）。老数据 / iOS 老版本没这个键 → 不指定。
+                    // 认不出来的值也一律当未指定（不抛异常、不丢整条）。
+                    slot = DeliverySlot.from(o.optString("slot").ifBlank { DeliverySlot.NONE.key }).key,
                 )
             )
         }
