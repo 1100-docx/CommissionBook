@@ -1,8 +1,8 @@
 {
-  "versionCode": 117,
-  "versionName": "3.9.29",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.29.apk",
+  "versionCode": 118,
+  "versionName": "3.9.30",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.30.apk",
   "size": 2490792,
-  "sha256": "5eee9cc5b2e00ccaffec0f78bc54403be2353ee23914bef80218d8f1f1eae832",
-  "notes": "· 【新】画师模式下，客户也能分类了\n  常来找你约的客户可以单独归个档 —— 列表按分类分段，点段标题能收起来，收着的时候右边显示还有几个人。\n  默认给了「常约客户 / 不常约客户」两档，名字随便改，不够用可以自己加；\n  点进某个客户就能改他归哪一档。\n  删除分类会先问你一遍（不会手一滑就没了）；就算真删了也不丢人\n  —— 那些客户会自动回到「常约客户」。\n\n· 买家模式那套画师分类没动，跟以前一模一样\n\n· 数据格式一个字节没动：老备份照常能恢复，覆盖安装就行，数据一条不动"
+  "sha256": "83ad6a90b34608fc59148e32a331d783ce1bea0c4ec3cd2c3caf326f0ac25dc1",
+  "notes": "· 分享出去的图，重新排了一遍\n  金额更像主角（¥ 收小一号、数字更大），备注不再是悬空的一行、有了自己的小方框，\n  落款上面加了一条极淡的线 —— 整体比原来紧凑、干净。\n  「分享这一单」和「年度报告」两张图都换了，颜色还是原来那套冰蓝。\n\n· 署名统一改成「筱樾」（跟 iOS 版一致）\n\n· 别的什么都没动：数据格式一个字节没变，老备份照常恢复，覆盖安装就行"
 }
