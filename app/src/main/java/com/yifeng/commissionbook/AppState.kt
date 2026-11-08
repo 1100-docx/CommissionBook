@@ -240,6 +240,20 @@ class AppState(private val context: Context) {
         private set
 
     /**
+     * 不显示功能描述（2026-11-05 加，逸风要的总开关）。
+     *
+     * 默认 `true` = 设置页每项功能下面那行灰色小字**藏起来**；
+     * 关掉才显示。跟 iOS 同一套语义、同一个存储键名。
+     */
+    var hideDescriptions by mutableStateOf(prefs.hideDescriptions)
+        private set
+
+    fun switchHideDescriptions(v: Boolean) {
+        hideDescriptions = v
+        prefs.hideDescriptions = v
+    }
+
+    /**
      * ⚠️ 名字不能叫 `setAppearance`：`var appearance` 自动生成的 setter
      * 在 JVM 上就叫 `setAppearance`，手写一个同名的会撞签名、直接编译不过。
      * 跟隔壁 `switchMode` 保持一致，叫 `switchAppearance`。

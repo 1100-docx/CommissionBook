@@ -163,6 +163,9 @@ fun SettingsScreen(
     }
 
     // 滚动位置 → 大标题跟着缩
+    // 不显示功能描述（2026-11-05）—— 总开关，见 R.string.settings_hide_desc
+    val hideDesc = state.hideDescriptions
+
     val scroll = rememberScrollState()
     val collapse = (scroll.value / 150f).coerceIn(0f, 1f)
 
@@ -200,6 +203,29 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
 
+                // ⓪ 不显示功能描述（2026-11-05 加）
+                // 逸风：「给功能描述加一个总开关，显示为不显示功能描述，默认开启」，
+                // 并补一句「我指的是每项功能下方的小字描述」。
+                // 摆最顶上：默认是开着（说明全藏着），他得一眼找得到怎么放回来。
+                // ⚠️ 这一行自己的说明**不跟着藏** —— 它解释的是开关本身。
+                Column {
+                    SectionLabel(AppCtx.s(R.string.settings_display))
+                    InsetGroup {
+                        GroupRow(
+                            title = AppCtx.s(R.string.settings_hide_desc),
+                            subtitle = AppCtx.s(R.string.settings_hide_desc_note),   // ⚠️ 这行不跟着藏
+                            icon = Icons.Outlined.Info,
+                            divider = false,
+                            trailing = {
+                                Switch(
+                                    checked = state.hideDescriptions,
+                                    onCheckedChange = { state.switchHideDescriptions(it) },
+                                )
+                            },
+                        )
+                    }
+                }
+
                 // ① 使用模式（2026-09-30 加）
                 // 同一套数据模型、两套叫法。切一下：界面用词、列表、底栏、统计全都跟着换。
                 // 两边账本各记各的 —— 当买家约的稿、当画师接的单，是两摞。
@@ -208,7 +234,7 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = if (state.appMode == AppMode.BUYER) AppCtx.s(R.string.common_buyer) else AppCtx.s(R.string.common_artist),
-                            subtitle = if (state.appMode == AppMode.BUYER)
+                            subtitle = if (hideDesc) null else if (state.appMode == AppMode.BUYER)
                                 AppCtx.s(R.string.settings_mode_buyer_desc)
                             else
                                 AppCtx.s(R.string.settings_mode_client_desc),
@@ -223,12 +249,14 @@ fun SettingsScreen(
                             },
                         )
                     }
-                    Text(
-                        AppCtx.s(R.string.settings_mode_separate),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
-                    )
+                    if (!hideDesc) {
+                        Text(
+                            AppCtx.s(R.string.settings_mode_separate),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                        )
+                    }
                 }
 
                 // ①.5 外观（2026-10-03 加）
@@ -240,7 +268,7 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.settings_theme),
-                            subtitle = AppCtx.s(R.string.settings_theme_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_theme_desc),
                             icon = Icons.Outlined.DarkMode,
                             // ⚠️ 2026-10-03 改了三版，别再来回折腾：
                             //   ① 「长说明塞中间那列 + 英文三颗长胶囊」→ 标题被压成「一个字母一行」；
@@ -283,7 +311,7 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.settings_haptic_title),
-                            subtitle = AppCtx.s(R.string.settings_haptic_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_haptic_desc),
                             icon = Icons.Outlined.Vibration,
                             divider = false,
                             trailing = {
@@ -312,6 +340,7 @@ fun SettingsScreen(
                         GroupRow(
                             title = AppCtx.s(R.string.settings_language),
                             // 显示**当前这门语言**，比干列一串支持的语言有用
+                            // ⚠️ 这行 subtitle 是「当前是哪门语言」的**值**，不是描述 —— 不跟着藏
                             subtitle = if (langNow.isEmpty())
                                 AppCtx.s(R.string.settings_language_system)
                             else
@@ -322,12 +351,14 @@ fun SettingsScreen(
                             onClick = { showLangSheet = true },
                         )
                     }
-                    Text(
-                        AppCtx.s(R.string.settings_language_note),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
-                    )
+                    if (!hideDesc) {
+                        Text(
+                            AppCtx.s(R.string.settings_language_note),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                        )
+                    }
                 }
 
                 if (showLangSheet) {
@@ -376,7 +407,7 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.settings_protection),
-                            subtitle = AppCtx.s(R.string.settings_lock_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_lock_desc),
                             icon = Icons.Outlined.Lock,
                             // 模糊那一行跟着出现时，这里要画分隔线
                             divider = lockOn,
@@ -432,7 +463,7 @@ fun SettingsScreen(
                         if (lockOn) {
                             GroupRow(
                                 title = AppCtx.s(R.string.settings_blur),
-                                subtitle = AppCtx.s(R.string.settings_blur_desc),
+                                subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_blur_desc),
                                 icon = Icons.Outlined.BlurOn,
                                 divider = false,
                                 trailing = {
@@ -456,7 +487,7 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.settings_remind_before_due),
-                            subtitle = AppCtx.s(R.string.settings_deadline_reminder_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_deadline_reminder_desc),
                             icon = Icons.Outlined.NotificationsActive,
                             // 开着提醒时下面还有「提醒时间」那行 → 这行要画分隔线
                             divider = reminderOn,
@@ -490,7 +521,7 @@ fun SettingsScreen(
                         if (reminderOn) {
                             GroupRow(
                                 title = AppCtx.s(R.string.settings_reminder_time),
-                                subtitle = AppCtx.s(R.string.settings_reminder_time_desc),
+                                subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_reminder_time_desc),
                                 icon = Icons.Outlined.Schedule,
                                 // 长说明另起一行通铺（规矩见 GroupRow 的 stackSubtitle 注释）
                                 stackSubtitle = true,
@@ -518,7 +549,7 @@ fun SettingsScreen(
                         if (showExactRow) {
                             GroupRow(
                                 title = AppCtx.s(R.string.settings_exact_alarm_title),
-                                subtitle = AppCtx.s(R.string.settings_exact_alarm_desc),
+                                subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_exact_alarm_desc),
                                 icon = Icons.Outlined.Schedule,
                                 divider = false,
                                 onClick = {
@@ -534,12 +565,14 @@ fun SettingsScreen(
                             )
                         }
                     }
-                    Text(
-                        AppCtx.s(R.string.settings_notification_hint),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
-                    )
+                    if (!hideDesc) {
+                        Text(
+                            AppCtx.s(R.string.settings_notification_hint),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                        )
+                    }
                 }
 
                 // ③ 备份与恢复
@@ -548,13 +581,13 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.settings_export_backup),
-                            subtitle = AppCtx.s(R.string.settings_export_backup_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_export_backup_desc),
                             icon = Icons.Outlined.FileDownload,
                             onClick = { onExport(state.toJsonString()) },
                         )
                         GroupRow(
                             title = AppCtx.s(R.string.settings_share_backup),
-                            subtitle = AppCtx.s(R.string.settings_share_backup_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_share_backup_desc),
                             icon = Icons.Outlined.Share,
                             // 2026-10-05 改：不再直接弹分享面板，先过一道隐私提醒
                             onClick = { askShare = true },
@@ -562,7 +595,7 @@ fun SettingsScreen(
                         // 导出 Excel 报表那一行 2026-10-07 撤掉了（逸风：「算了，撤掉这个功能，双端」）
                         GroupRow(
                             title = AppCtx.s(R.string.settings_restore_from_file),
-                            subtitle = AppCtx.s(R.string.settings_restore_ios_note),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_restore_ios_note),
                             icon = Icons.Outlined.Restore,
                             onClick = onImport,
                         )
@@ -571,7 +604,7 @@ fun SettingsScreen(
                         // 前面三条都是「跟文件打交道」，这条是「跟另一台手机打交道」。
                         GroupRow(
                             title = AppCtx.s(R.string.qr_entry),
-                            subtitle = AppCtx.s(R.string.qr_entry_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.qr_entry_desc),
                             icon = Icons.Outlined.QrCode,
                             divider = false,
                             onClick = { qrRole = true },
@@ -614,7 +647,7 @@ fun SettingsScreen(
                         InsetGroup {
                             GroupRow(
                                 title = AppCtx.s(R.string.artist_quote_calculator),
-                                subtitle = AppCtx.s(R.string.common_tools_desc),
+                                subtitle = if (hideDesc) null else AppCtx.s(R.string.common_tools_desc),
                                 icon = Icons.Outlined.Calculate,
                                 divider = false,
                                 onClick = onOpenCalculator,
@@ -632,7 +665,7 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.phrase_title),
-                            subtitle = AppCtx.s(R.string.phrase_subtitle),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.phrase_subtitle),
                             icon = Icons.Outlined.Checklist,
                             divider = false,
                             // 右边显示「已存几条」——跟崩溃记录那一行一个做法（0 条不显示）
@@ -652,7 +685,7 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.help_how_to_use_2),
-                            subtitle = AppCtx.s(R.string.help_how_to_use_desc_2),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.help_how_to_use_desc_2),
                             icon = Icons.Outlined.HelpOutline,
                             divider = false,
                             onClick = onOpenHelp,
@@ -685,14 +718,14 @@ fun SettingsScreen(
                         if (BuildConfig.LEGACY_COMPAT) {
                             GroupRow(
                                 title = AppCtx.s(R.string.settings_update_check),
-                                subtitle = AppCtx.s(R.string.settings_update_locked_short),
+                                subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_update_locked_short),
                                 icon = Icons.Outlined.SystemUpdate,
                                 dimmed = true,
                                 onClick = { showUpdateLocked = true },
                             )
                             GroupRow(
                                 title = AppCtx.s(R.string.settings_update_auto),
-                                subtitle = AppCtx.s(R.string.settings_update_locked_short),
+                                subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_update_locked_short),
                                 icon = Icons.Outlined.Autorenew,
                                 divider = false,
                                 dimmed = true,
@@ -702,7 +735,7 @@ fun SettingsScreen(
                         } else {
                             GroupRow(
                                 title = AppCtx.s(R.string.settings_update_check),
-                                subtitle = AppCtx.s(R.string.settings_update_check_desc, versionName),
+                                subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_update_check_desc, versionName),
                                 icon = Icons.Outlined.SystemUpdate,
                                 onClick = {
                                     updateScope.launch { doCheck(context, prefs) { updateStatus = it } }
@@ -710,7 +743,7 @@ fun SettingsScreen(
                             )
                             GroupRow(
                                 title = AppCtx.s(R.string.settings_update_auto),
-                                subtitle = AppCtx.s(R.string.settings_update_auto_desc),
+                                subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_update_auto_desc),
                                 icon = Icons.Outlined.Autorenew,
                                 divider = false,
                                 trailing = {
@@ -746,14 +779,14 @@ fun SettingsScreen(
                         // 首次启动已经强制读过一遍，这里留个入口随时能翻回来
                         GroupRow(
                             title = AppCtx.s(R.string.privacy_policy_title),
-                            subtitle = AppCtx.s(R.string.settings_offline_note),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_offline_note),
                             icon = Icons.Outlined.PrivacyTip,
                             onClick = onOpenPrivacy,
                         )
                         // 反馈渠道（2026-09-29 加）：App 不联网，所以是「帮你写好，你自己发」
                         GroupRow(
                             title = AppCtx.s(R.string.help_feedback_title),
-                            subtitle = AppCtx.s(R.string.settings_feedback_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_feedback_desc),
                             icon = Icons.Outlined.Email,
                             onClick = onOpenFeedback,
                         )
@@ -761,7 +794,7 @@ fun SettingsScreen(
                         // 右边那个数字**有记录才显示**（没记录不摆 0，不给红点压力）。
                         GroupRow(
                             title = AppCtx.s(R.string.crash_log_title),
-                            subtitle = AppCtx.s(R.string.crash_log_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.crash_log_desc),
                             icon = Icons.Outlined.BugReport,
                             trailing = { if (crashCount > 0) InfoValue("$crashCount") },
                             onClick = onOpenCrashLog,
@@ -789,7 +822,7 @@ fun SettingsScreen(
                     InsetGroup {
                         GroupRow(
                             title = AppCtx.s(R.string.settings_support_title),
-                            subtitle = AppCtx.s(R.string.settings_support_desc),
+                            subtitle = if (hideDesc) null else AppCtx.s(R.string.settings_support_desc),
                             icon = Icons.Outlined.FavoriteBorder,
                             divider = false,
                             onClick = onOpenSponsor,

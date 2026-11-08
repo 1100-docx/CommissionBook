@@ -694,4 +694,9 @@
     <string name="slot_afternoon">下午</string>
     <string name="slot_noon">中午</string>
     <string name="slot_evening">晚上</string>
+
+    <!-- 2026-11-05 · 不显示功能描述（总开关） -->
+    <string name="settings_display">顯示</string>
+    <string name="settings_hide_desc">不顯示功能描述</string>
+    <string name="settings_hide_desc_note">開著的時候，每項功能下面那行灰色說明都收起來，只留功能名和開關。想讓它回來，把這個關掉。</string>
 </resources>

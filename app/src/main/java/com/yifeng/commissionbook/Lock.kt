@@ -124,6 +124,20 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("autoBackup", false)
         set(v) = sp.edit().putBoolean("autoBackup", v).apply()
 
+    /**
+     * 不显示功能描述（2026-11-05 加，逸风要的总开关）
+     *
+     * 他原话：「给功能描述加一个总开关，显示为不显示功能描述，默认开启」，
+     * 补一句「我指的是每项功能下方的小字描述」。
+     *
+     * ⚠️ 语义是**反的**：默认 `true` = 默认把每项功能下面那行灰色小字收起来，
+     *    界面只留功能名 / 开关 / 数值；关掉它才把说明放出来。
+     * ⚠️ 跟 iOS 同一个键名（hideSettingDescriptions），两端口径一致。
+     */
+    var hideDescriptions: Boolean
+        get() = sp.getBoolean("hideSettingDescriptions", true)
+        set(v) = sp.edit().putBoolean("hideSettingDescriptions", v).apply()
+
     var reminderEnabled: Boolean
         get() = sp.getBoolean("reminderEnabled", false)   // 2026-10-05（3.5.33）：改成**默认关** ——
         // 逸风的要求：想用提醒的人自己去打开，打开时会先看到「去开自启动 / 后台运行」的说明。
