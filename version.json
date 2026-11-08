@@ -1,8 +1,8 @@
 {
-  "versionCode": 120,
-  "versionName": "3.9.32",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.32.apk",
-  "size": 2491664,
-  "sha256": "a9b88f0d10e2e697b5e4c86f7f04a00b64076ab1175967f3c0781f2585065ad6",
-  "notes": "· 设置页最上面多了一行「不显示功能描述」，默认是开着的——开着的时候，每项功能下面那行灰色说明都收起来，只剩功能名和开关，看着清爽\n\n· 想让说明回来，把它关掉就行，关之前那个样子一字不差\n\n· 这一版只动了设置页的显示，账本数据一个字节没变，覆盖安装就行"
+  "versionCode": 123,
+  "versionName": "3.9.35",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.35.apk",
+  "size": 2453713,
+  "sha256": "bb5be46b4cfad374bc1bb95335db0b578b8fd8bd1743f4f10ed779106920c1d4",
+  "notes": "· 桌面图标换成跟 iPhone 版一模一样的那张了——蓝底、中间一张白色账本卡片，两端现在看着是一家的\n\n· 卡片大小按你手机桌面的实际显示比例重新量过，不再顶到边上，四周留了一圈蓝\n\n· 顺手补上了安卓 13 之后的「主题图标」——打开这个系统功能，它会跟着壁纸一起变色，不再是唯一一个不听话的\n\n· 这一版只动了图标，账本数据一个字节没变，覆盖安装就行"
 }
