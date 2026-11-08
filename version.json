@@ -1,8 +1,8 @@
 {
-  "versionCode": 119,
-  "versionName": "3.9.31",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.31.apk",
-  "size": 2490792,
-  "sha256": "5e92bd71fdad3319ac9e9cd59b484f5023d39aa90742a77a3bf304e6d1bf7629",
-  "notes": "· 作者署名更新为「筱樾」（分享图、年度报告上都改了）\n\n· 别的什么都没动：数据格式一个字节没变，老备份照常恢复，覆盖安装就行"
+  "versionCode": 120,
+  "versionName": "3.9.32",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.32.apk",
+  "size": 2491664,
+  "sha256": "a9b88f0d10e2e697b5e4c86f7f04a00b64076ab1175967f3c0781f2585065ad6",
+  "notes": "· 设置页最上面多了一行「不显示功能描述」，默认是开着的——开着的时候，每项功能下面那行灰色说明都收起来，只剩功能名和开关，看着清爽\n\n· 想让说明回来，把它关掉就行，关之前那个样子一字不差\n\n· 这一版只动了设置页的显示，账本数据一个字节没变，覆盖安装就行"
 }
