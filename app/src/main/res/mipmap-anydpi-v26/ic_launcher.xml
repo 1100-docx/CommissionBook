@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 自适应图标：系统按自己的形状（圆形 / 方圆形 / 水滴）去裁，
      两层分开给它 —— 这就是安卓原生 App 的标准图标结构。
-     形状不是我们定的，是**桌面自己定的**，所以各家 ROM 上都自然。 -->
+     形状不是我们定的，是**桌面自己定的**，所以各家 ROM 上都自然。
+     2026-11-08：加了 monochrome 层（Android 13 起的「主题图标」，
+     会跟着壁纸/系统主题上色，不加的话别的 App 都变了自己不变，很显眼）。 -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@mipmap/ic_launcher_background" />
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />
 </adaptive-icon>
