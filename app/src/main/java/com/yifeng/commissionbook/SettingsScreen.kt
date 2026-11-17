@@ -50,6 +50,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerLayoutType
@@ -130,6 +134,13 @@ fun SettingsScreen(
     // 老机兼容版：点了灰掉的「更新」那两行 → 弹这句说明（2026-10-07 加）
     var showUpdateLocked by remember { mutableStateOf(false) }
     var askShare by remember { mutableStateOf(false) }
+
+    // 加密备份（2026-11-17 加，逸风选的 A 方案）：分享前先让他设个密码。
+    // pwdErr 非空时把那句话显示在输入框下面（太短 / 两次不一样）。
+    var askPwd by remember { mutableStateOf(false) }
+    var pwd by remember { mutableStateOf("") }
+    var pwd2 by remember { mutableStateOf("") }
+    var pwdErr by remember { mutableStateOf<String?>(null) }
 
     // 二维码传输（2026-10-08 加）：先弹「新手机还是旧手机」，
     // 选了「旧手机」才把要发的那份算出来放进 qrSheetText（见 QrShowSheet 里那段 ⚠️）。
@@ -851,11 +862,76 @@ fun SettingsScreen(
                         confirmButton = {
                             TextButton(onClick = {
                                 askShare = false
-                                onShare(state.toJsonString(), Backup.fileName(manual = true))
+                                // 2026-11-17 起：不再直接分享明文 —— 先让他设个密码，加密后才发出去
+                                pwd = ""; pwd2 = ""; pwdErr = null; askPwd = true
                             }) { Text(AppCtx.s(R.string.share_warn_continue)) }
                         },
                         dismissButton = {
                             TextButton(onClick = { askShare = false }) {
+                                Text(AppCtx.s(R.string.common_cancel))
+                            }
+                        },
+                    )
+                }
+
+                // 设密码（2026-11-17 加）：两个框防手滑 —— 密码打错一次，这份备份就再也打不开了
+                if (askPwd) {
+                    AlertDialog(
+                        onDismissRequest = { askPwd = false },
+                        title = { Text(AppCtx.s(R.string.pwd_set_title)) },
+                        text = {
+                            Column {
+                                Text(
+                                    AppCtx.s(R.string.pwd_set_note),
+                                    fontSize = 13.sp,
+                                    lineHeight = 19.sp,
+                                )
+                                Spacer(Modifier.height(10.dp))
+                                OutlinedTextField(
+                                    value = pwd,
+                                    onValueChange = { pwd = it; pwdErr = null },
+                                    label = { Text(AppCtx.s(R.string.pwd_ph)) },
+                                    singleLine = true,
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = pwd2,
+                                    onValueChange = { pwd2 = it; pwdErr = null },
+                                    label = { Text(AppCtx.s(R.string.pwd_ph2)) },
+                                    singleLine = true,
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                val err = pwdErr
+                                if (err != null) {
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(err, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                when {
+                                    pwd.length < 6 -> pwdErr = AppCtx.s(R.string.pwd_err_short)
+                                    pwd != pwd2 -> pwdErr = AppCtx.s(R.string.pwd_err_mismatch)
+                                    else -> {
+                                        val sealed = BackupCrypto.seal(state.toJsonString(), pwd)
+                                        if (sealed == null) {
+                                            pwdErr = AppCtx.s(R.string.pwd_err_seal)
+                                        } else {
+                                            askPwd = false
+                                            onShare(sealed, Backup.fileName(manual = true))
+                                        }
+                                    }
+                                }
+                            }) { Text(AppCtx.s(R.string.pwd_do)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { askPwd = false }) {
                                 Text(AppCtx.s(R.string.common_cancel))
                             }
                         },

@@ -1,8 +1,8 @@
 {
-  "versionCode": 123,
-  "versionName": "3.9.35",
-  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.35.apk",
-  "size": 2453713,
-  "sha256": "bb5be46b4cfad374bc1bb95335db0b578b8fd8bd1743f4f10ed779106920c1d4",
-  "notes": "· 桌面图标换成跟 iPhone 版一模一样的那张了——蓝底、中间一张白色账本卡片，两端现在看着是一家的\n\n· 卡片大小按你手机桌面的实际显示比例重新量过，不再顶到边上，四周留了一圈蓝\n\n· 顺手补上了安卓 13 之后的「主题图标」——打开这个系统功能，它会跟着壁纸一起变色，不再是唯一一个不听话的\n\n· 这一版只动了图标，账本数据一个字节没变，覆盖安装就行"
+  "versionCode": 124,
+  "versionName": "3.9.36",
+  "url": "https://raw.githubusercontent.com/1100-docx/CommissionBook/main/dist/CommissionBook_3.9.36.apk",
+  "size": 2457077,
+  "sha256": "052ad6ca8e32c42e2bf4ddba0beb76841b23ba3901e26499bc058ce26dfad66f",
+  "notes": "· 分享备份现在会加密了：点「分享备份」之后要你设一个密码（至少 6 位），导出的 json 用记事本打开就是一堆乱码，别人拿到也看不懂\n\n· 密码千万别忘 —— 忘了这份备份就永久打不开，我们这边没有、也找不回\n\n· 恢复的时候选到加密备份会问你要密码，输错了不会动你现在的数据，改一改还能再试\n\n· 以前那些明文备份照常能恢复，一条都没废\n\n· 跟 iPhone 版是同一套格式：iPhone 导出的加密备份安卓能解，安卓导出的 iPhone 也能解"
 }

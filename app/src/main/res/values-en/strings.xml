@@ -466,7 +466,7 @@ System: Android %4$s (API %5$s)
     <string name="settings_share_backup_desc">Send it straight to WeChat or to yourself</string>
     <!-- Privacy warning before sharing a backup (2026-10-05) -->
     <string name="share_warn_title">One thing before you share</string>
-    <string name="share_warn_body">A backup is a plain-text JSON file: it contains your commission records, amounts, notes and artist contact details, plus reference images (base64 encoded). Whoever you send it to gets all of that — please keep the file safe.</string>
+    <string name="share_warn_body">The backup is encrypted with AES-256 using a password you set. A short password can be brute-forced — the file may be cracked by brute force, so keep both the file and its password safe.</string>
     <string name="share_warn_continue">Share anyway</string>
     <string name="settings_restore_from_file">Restore from File</string>
     <string name="settings_restore_ios_note">Compatible with iOS backups — both sides can read it</string>
@@ -708,4 +708,30 @@ System: Android %4$s (API %5$s)
     <string name="settings_display">Display</string>
     <string name="settings_hide_desc">Hide feature descriptions</string>
     <string name="settings_hide_desc_note">While this is on, the grey line under each item is hidden — only the name and the switch stay. Turn it off to bring them back.</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_set_title">Set a password for this backup</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_set_note">Only you know this password — we don\'t have it and can\'t recover it. Forget it and this backup can never be opened again. Keep it somewhere only you can see.</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_ph">Password (6+ characters)</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_ph2">Enter it again</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_do">Encrypt &amp; share</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_err_short">Use at least 6 characters — short ones are easy to guess</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_err_mismatch">The two passwords don\'t match — try again</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_err_seal">Encryption failed — the backup wasn\'t written</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_title">This backup is encrypted</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_note">Enter the password you set when exporting. If it\'s wrong, nothing opens — we don\'t hold the password.</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_ph">Backup password</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_do">Unlock &amp; restore</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_wrong">Wrong password, or the file is damaged — nothing was changed</string>
 </resources>

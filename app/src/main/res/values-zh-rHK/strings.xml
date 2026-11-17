@@ -457,7 +457,7 @@
     <string name="settings_share_backup_desc">直接發給微信 / 發給自己</string>
     <!-- 分享備份前嘅私隱提醒（2026-10-05 加，逸風要嘅） -->
     <string name="share_warn_title">分享前先睇一眼</string>
-    <string name="share_warn_body">備份係一份明文 JSON 文件：入面有你嘅約稿紀錄、金額、備註、畫師聯絡方式，參考圖都喺裏頭（base64 編碼）。發俾邊個，就等於將呢啲全部交晒俾佢 —— 請好好保管呢份文件。</string>
+    <string name="share_warn_body">備份匯出時會用 AES-256 加密，密碼由你自己設。但密碼太短是有可能被暴力猜出來的 —— 該檔案可能被暴力解密，請妥善保管這份檔案和它的密碼。</string>
     <string name="share_warn_continue">繼續分享</string>
     <string name="settings_restore_from_file">從文件恢復</string>
     <string name="settings_restore_ios_note">跟 iOS 版的備份通用，兩邊都認</string>
@@ -700,4 +700,30 @@
     <string name="settings_display">顯示</string>
     <string name="settings_hide_desc">不顯示功能描述</string>
     <string name="settings_hide_desc_note">開著的時候，每項功能下面那行灰色說明都收起來，只留功能名和開關。想讓它回來，把這個關掉。</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_set_title">給這份備份設個密碼</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_set_note">密碼只有你知道，我們這邊沒有、也找不回。忘了它，這份備份就永久打不開 —— 記在只有自己能看到的地方。</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_ph">密碼（至少 6 位）</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_ph2">再輸一次</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_do">加密並分享</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_err_short">密碼至少 6 位 —— 太短容易被猜出來</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_err_mismatch">兩次輸入的密碼不一樣，再試一次</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_err_seal">加密失敗 —— 這份備份沒寫出來</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_title">這份備份是加密的</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_note">輸入當初匯出時設的那個密碼。輸錯解不開 —— 密碼我們這邊沒有。</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_ph">備份密碼</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_do">解鎖並恢復</string>
+    <!-- 2026-11-17 备份加密 -->
+    <string name="pwd_restore_wrong">密碼不對，或者檔案壞了 —— 這份備份沒動</string>
 </resources>

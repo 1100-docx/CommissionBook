@@ -205,6 +205,44 @@ class MainActivity : FragmentActivity() {
     }
 
     /**
+     * 加密备份要密码（2026-11-17 加）。
+     *
+     * 为什么用系统 AlertDialog 而不是 Compose：这条路是从「选文件」的回调里进来的，
+     * 手上没有 Compose 的那棵树；为它整一个 Compose 状态反而绕。
+     * 输错了**不关框**，让他直接改了再试（关了就得重新选一次文件，蠢）。
+     */
+    private fun askBackupPassword(text: String) {
+        val pad = (16 * resources.displayMetrics.density).toInt()
+        val input = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            hint = AppCtx.s(R.string.pwd_restore_ph)
+            setSingleLine(true)
+            setPadding(pad, pad / 2, pad, pad / 2)
+        }
+        val dlg = android.app.AlertDialog.Builder(this)
+            .setTitle(AppCtx.s(R.string.pwd_restore_title))
+            .setMessage(AppCtx.s(R.string.pwd_restore_note))
+            .setView(input)
+            .setPositiveButton(AppCtx.s(R.string.pwd_restore_do), null)
+            .setNegativeButton(AppCtx.s(R.string.common_cancel), null)
+            .create()
+        dlg.setOnShowListener {
+            dlg.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val plain = BackupCrypto.open(text, input.text.toString())
+                if (plain == null) {
+                    // 密码不对 / 文件坏了 —— 一个口径，别给猜密码的人递线索
+                    toast(AppCtx.s(R.string.pwd_restore_wrong))
+                } else {
+                    dlg.dismiss()
+                    importBackupText(plain)
+                }
+            }
+        }
+        dlg.show()
+    }
+
+    /**
      * 把一份备份文本导进 App —— **选文件恢复和扫码传输走的是同一条路**
      * （2026-10-08 从原来 openDoc 里提出来，两边共用）。
      *
@@ -213,6 +251,12 @@ class MainActivity : FragmentActivity() {
      *    会把刚恢复进来的图当成没人要的，当场删掉。
      */
     private fun importBackupText(text: String) {
+        // 加密备份（2026-11-17 加）：先问密码。解不开就什么都不动 —— 别让一份解不开的
+        // 文件把现有数据洗了。
+        if (BackupCrypto.isSealed(text)) {
+            askBackupPassword(text)
+            return
+        }
         val payload = Backup.decode(
             text,
             onPhoto = { name, bytes -> state.writePhotoBytes(name, bytes) },
