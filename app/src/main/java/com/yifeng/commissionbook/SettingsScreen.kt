@@ -21,6 +21,12 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.outlined.Calculate
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Language
@@ -38,6 +44,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.TableChart
@@ -46,6 +53,8 @@ import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
@@ -53,6 +62,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -108,6 +118,16 @@ fun SettingsScreen(
     onOpenPhrases: () -> Unit = {},
 ) {
     val context = LocalContext.current
+
+    // 搜索（2026-11-19 加，逸风要的「B」：标题 / 说明 / 别名都能搜）——
+    // 跟账本页 / 画师页同一个样子：大标题右边一颗放大镜，点开淡入撑出输入框。
+    // 关键词表在 `SettingsSearch.kt`；这里只负责「这一块露不露」。
+    var setSearching by remember { mutableStateOf(false) }
+    var setSearch by remember { mutableStateOf("") }
+    /** 这一块要不要露出来（没在搜 = 全都露） */
+    fun hit(s: SettingSec): Boolean = s.matches(setSearch)
+    /** 搜了、但一个分区都没命中 → 摆一句「没找到」，别让页面空着像坏了 */
+    val setNoHit = setSearch.isNotBlank() && SettingSec.entries.none { it.matches(setSearch) }
 
     var lockOn by remember { mutableStateOf(prefs.lockEnabled) }
     // 切到后台时模糊（2026-10-08 拆出来）：以前跟保护绑死，现在自己一个开关
@@ -207,7 +227,45 @@ fun SettingsScreen(
                 title = AppCtx.s(R.string.settings_title),
                 collapse = collapse,
                 caption = AppCtx.s(R.string.common_data_local_only),
-            )
+            ) {
+                // 搜索（2026-11-19 加）：跟账本页 / 画师页那颗一模一样的圆钮
+                CircleIconButton(Icons.Outlined.Search, AppCtx.s(R.string.common_search)) {
+                    setSearching = !setSearching
+                    if (!setSearching) setSearch = ""
+                }
+            }
+
+            // 搜索框：跟账本页同一个动效（淡入 + 向下撑开，别「刷的一下」蹦出来）。
+            // ⚠️ 放在滚动列**外面**：搜不到时下面整块换成一句提示，输入框不能跟着消失。
+            AnimatedVisibility(
+                visible = setSearching,
+                enter = fadeIn(tween(180)) + expandVertically(tween(220)),
+                exit = fadeOut(tween(120)) + shrinkVertically(tween(180)),
+            ) {
+                TextField(
+                    value = setSearch,
+                    onValueChange = { setSearch = it },
+                    placeholder = { Text(AppCtx.s(R.string.settings_search_hint), fontSize = 14.sp) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
+
+            if (setNoHit) {
+                Text(
+                    AppCtx.s(R.string.settings_search_none),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
+                )
+            }
 
             Column(
                 Modifier.padding(horizontal = 16.dp),
@@ -219,6 +277,7 @@ fun SettingsScreen(
                 // 并补一句「我指的是每项功能下方的小字描述」。
                 // 摆最顶上：默认是开着（说明全藏着），他得一眼找得到怎么放回来。
                 // ⚠️ 这一行自己的说明**不跟着藏** —— 它解释的是开关本身。
+                if (hit(SettingSec.Display)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_display))
                     InsetGroup {
@@ -236,10 +295,12 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ① 使用模式（2026-09-30 加）
                 // 同一套数据模型、两套叫法。切一下：界面用词、列表、底栏、统计全都跟着换。
                 // 两边账本各记各的 —— 当买家约的稿、当画师接的单，是两摞。
+                if (hit(SettingSec.Mode)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_usage_mode))
                     InsetGroup {
@@ -269,11 +330,13 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ①.5 外观（2026-10-03 加）
                 //
                 // 深浅色三选一。**为什么不跳系统设置**：深浅色是 App 自己能定的事，
                 // 改完当场生效；语言才必须跳出去（系统规定，见下面「语言」一节）。
+                if (hit(SettingSec.Appearance)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_appearance))
                     InsetGroup {
@@ -305,6 +368,7 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ①.7 触感（2026-10-07 加）
                 //
@@ -317,6 +381,7 @@ fun SettingsScreen(
                 //
                 // 排列跟上面「深浅色」那行完全一致：图标 + 标题说明在左，
                 // 三颗胶囊靠右、同一行、垂直居中。
+                if (hit(SettingSec.Haptic)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_haptic))
                     InsetGroup {
@@ -339,12 +404,14 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ①.6 语言（2026-10-03 加）
                 //
                 // ⚠️ 跟 iOS 版走的是**两条路**，别以为是没对齐：
                 //    iOS 规定 per-App 语言只能由系统改，所以 iOS 那一行是「跳系统设置」；
                 //    安卓 App 自己就能改（AppCompatDelegate），所以是弹 Sheet 选。
+                if (hit(SettingSec.Language)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_language))
                     InsetGroup {
@@ -370,6 +437,7 @@ fun SettingsScreen(
                             modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
                         )
                     }
+                }
                 }
 
                 if (showLangSheet) {
@@ -413,6 +481,7 @@ fun SettingsScreen(
                 // 以前这两件事是一根绳：「保护」一开就必糊、关不了。
                 // 逸风报「背景模糊不能单独关闭」+「关闭保护不需要验证」——
                 // 两条 iOS 版早就有了（关保护前先验身、模糊单独一个开关），安卓这边补齐。
+                if (hit(SettingSec.Security)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_security))
                     InsetGroup {
@@ -488,8 +557,10 @@ fun SettingsScreen(
                         }
                     }
                 }
+                }
 
                 // ② 提醒
+                if (hit(SettingSec.Reminders)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_reminders))
                     // 系统没给「精确闹钟」资格时下面会多一行（见 3.5.28 的注释）——
@@ -585,8 +656,10 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ③ 备份与恢复
+                if (hit(SettingSec.Backup)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_backup_restore_2))
                     InsetGroup {
@@ -648,11 +721,13 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ③.5 小工具（2026-09-30 第三批）
                 // ⚠️ 只在**画师模式**出现：报价计算器是画师向的（算价、报给客户）。
                 //    2026-10-01 逸风：「买家模式不应出现这个」。
                 if (state.appMode == AppMode.ARTIST) {
+                if (hit(SettingSec.Tools)) {
                     Column {
                         SectionLabel(AppCtx.s(R.string.common_tools))
                         InsetGroup {
@@ -666,11 +741,13 @@ fun SettingsScreen(
                         }
                     }
                 }
+                }
 
                 // ③.6 常用语（2026-10-09 加，#7）
                 //
                 // ⚠️ 单独一组、**两种模式都显示**：买家和画师都要写备注，
                 //    所以不能塞进上面那个「只在画师模式出现」的小工具组里。
+                if (hit(SettingSec.Phrases)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.phrase_section))
                     InsetGroup {
@@ -687,10 +764,12 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ③.7 帮助（2026-10-01 加）
                 // 逸风：「建议出帮助选项，因为后续功能越多，用户越难以自己摸索」。
                 // 放这儿（小工具之后、关于之前）—— 顺序上刚好是「用的东西 → 不会就查 → 别的」。
+                if (hit(SettingSec.Help)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.help_title))
                     InsetGroup {
@@ -703,6 +782,7 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ③.7 更新（2026-10-03 加，**只有安卓版有**）
                 //
@@ -712,6 +792,7 @@ fun SettingsScreen(
                 //
                 // ⚠️ 这一块给 App 带来了**第一个网络权限**，隐私政策里那几条
                 //    「完全不联网」的文案全跟着改了（见 PrivacyScreen.kt 顶部注释）。
+                if (hit(SettingSec.Update)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_update_section))
                     InsetGroup {
@@ -767,8 +848,10 @@ fun SettingsScreen(
                         }
                     }
                 }
+                }
 
                 // ④ 关于
+                if (hit(SettingSec.About)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_about))
                     InsetGroup {
@@ -819,6 +902,7 @@ fun SettingsScreen(
                         )
                     }
                 }
+                }
 
                 // ⑤ 支持作者（2026-10-06 加，**只有安卓版有**）
                 //
@@ -828,6 +912,7 @@ fun SettingsScreen(
                 // 任何计数都只是在提醒他「没人给」。
                 //
                 // ⚠️ iOS 版没有这一块（那边必须走 App Store 内购），别以为是漏做了。
+                if (hit(SettingSec.Support)) {
                 Column {
                     SectionLabel(AppCtx.s(R.string.settings_support_section))
                     InsetGroup {
@@ -839,6 +924,7 @@ fun SettingsScreen(
                             onClick = onOpenSponsor,
                         )
                     }
+                }
                 }
 
                 // 检查更新那个框（2026-10-03 加）——

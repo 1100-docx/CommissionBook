@@ -731,4 +731,8 @@
     <string name="pwd_restore_wrong">密码不对，或者文件坏了 —— 这份备份没动</string>
     <!-- 2026-11-18 画师页搜索 -->
     <string name="artists_search_hint">搜名字 / 备注 / 联系方式</string>
+    <!-- 2026-11-19 设置页搜索 -->
+    <string name="settings_search_hint">搜设置项：备份、隐私、提醒…</string>
+    <!-- 2026-11-19 设置页搜索 -->
+    <string name="settings_search_none">没找到匹配的设置项，换个词试试：备份、隐私、提醒、语言…</string>
 </resources>

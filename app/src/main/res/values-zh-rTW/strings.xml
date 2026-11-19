@@ -727,4 +727,8 @@
     <string name="pwd_restore_wrong">密碼不對，或者檔案壞了 —— 這份備份沒動</string>
     <!-- 2026-11-18 画师页搜索 -->
     <string name="artists_search_hint">搜名字 / 備註 / 聯絡方式</string>
+    <!-- 2026-11-19 设置页搜索 -->
+    <string name="settings_search_hint">搜設定項：備份、隱私、提醒…</string>
+    <!-- 2026-11-19 设置页搜索 -->
+    <string name="settings_search_none">沒找到符合的設定項，換個詞試試：備份、隱私、提醒、語言…</string>
 </resources>
