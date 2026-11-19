@@ -734,4 +734,6 @@ System: Android %4$s (API %5$s)
     <string name="pwd_restore_do">Unlock &amp; restore</string>
     <!-- 2026-11-17 备份加密 -->
     <string name="pwd_restore_wrong">Wrong password, or the file is damaged — nothing was changed</string>
+    <!-- 2026-11-18 画师页搜索 -->
+    <string name="artists_search_hint">Search name / note / contact</string>
 </resources>

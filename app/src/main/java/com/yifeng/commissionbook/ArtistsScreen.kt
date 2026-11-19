@@ -3,6 +3,11 @@ package com.yifeng.commissionbook
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -31,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ContactPhone
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -39,6 +45,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -124,6 +132,12 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
     //    否则老用户一打开会发现画师的先后莫名其妙变了。
     var sort by remember { mutableStateOf(ArtistSort.ByCount) }
 
+    // 搜索（2026-11-18 加，照账本页那一套）：只筛**显示**，不碰任何数据。
+    // 搜「名字 / 备注 / 联系方式」三样 —— 后两样本来就是同一格文字（小册子 `notes`），
+    // 所以搜那一格就等于两样都搜到了。不区分大小写（联系方式常是字母数字混排）。
+    var searching by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+
     // 分段（2026-10-13 加）—— 逸风：「在画师页面也加上分类，不只是详情页」→
     // 第一版做成了顶上那排筛选胶囊，他看了说「不是这样」，改成
     // **「把筛选胶囊取消，按分类分段显示」**。
@@ -165,6 +179,14 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
             }
         }
 
+    /** 搜索之后真正画出来的那一摞（没在搜 = 跟 `groups` 一模一样） */
+    val q = query.trim()
+    val shown = groups.filter { g ->
+        q.isEmpty() || g.name.contains(q, ignoreCase = true) || g.note.contains(q, ignoreCase = true)
+    }
+    /** 搜了、但一个都没找着 —— 这时候提示「没有找到」，别再显示「还没有画师呢」 */
+    val noHit = groups.isNotEmpty() && shown.isEmpty()
+
     // 分段（2026-10-13 加，2026-10-16 扩到客户页）：**一档一段**（段标题 = 分类名），
     // 顺序 = 分类清单的顺序。`id`/`title` 都是 null = 不分段那种画。
     //
@@ -186,9 +208,11 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
 
     val bySection: List<ArtistSection> =
         sectionDefs.mapNotNull { (id, title) ->
-            val list = groups.filter { categoryIdOfName(it0(it.name)) == id }
+            // ⚠️ 2026-11-18：这里筛的是 `shown`（搜过之后的），不是 `groups` ——
+            //    用错的话搜索只在「不分段」那条兜底路上生效，分段时列表纹丝不动。
+            val list = shown.filter { categoryIdOfName(it0(it.name)) == id }
             if (list.isEmpty()) null else ArtistSection(id, title, list)
-        }.ifEmpty { listOf(ArtistSection(null, null, groups)) }
+        }.ifEmpty { listOf(ArtistSection(null, null, shown)) }
 
     // **收起来的那几档**（2026-10-13 加）：点一下分类标题就把这一档收掉，
     // 抄的是 TestFlight「以前测试过」那种感觉。
@@ -235,13 +259,47 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 collapse = rememberCollapseFraction(listState),
                 caption = AppCtx.s(R.string.common_contact_hint, groups.size),
             ) {
+                // 搜索（2026-11-18 加）—— 跟账本页那颗一模一样：圆钮点开、淡入撑出输入框，
+                // 再点一下就收起来、顺便把输入清空（收着还留着字，下次点开会莫名其妙少几个人）。
+                CircleIconButton(Icons.Outlined.Search, AppCtx.s(R.string.common_search)) {
+                    searching = !searching
+                    if (!searching) query = ""
+                }
+                Spacer(Modifier.width(8.dp))
                 // 排序（2026-10-12 加）：跟账本页那颗一样的圆按钮 + 下拉，
                 // 放在大标题右边（这一页顶栏就它一颗钮，位置跟账本页的搜索/新增一档）。
                 ArtistSortButton(sort) { sort = it }
             }
 
+            // 搜索框：淡入 + 向下撑开（跟账本页同一个动效档）。
+            // ⚠️ 特意放在列表**外面**：账本页那个是塞进 LazyColumn 当 item 的，这里不能照抄 ——
+            //    搜不到时整个列表会被换成提示，输入框就跟着消失了，他就没法改关键词、只能先关掉再打开。
+            AnimatedVisibility(
+                visible = searching,
+                enter = fadeIn(tween(180)) + expandVertically(tween(220)),
+                exit = fadeOut(tween(120)) + shrinkVertically(tween(180)),
+            ) {
+                TextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text(AppCtx.s(R.string.artists_search_hint), fontSize = 14.sp) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
+
             if (groups.isEmpty()) {
                 EmptyHint(AppCtx.s(R.string.common_none_yet, Terms.other(state.appMode)))
+            } else if (noHit) {
+                // 搜过、一条也没中 —— 说「没有找到」，别让他以为人没了
+                EmptyHint(AppCtx.s(R.string.common_no_results))
             } else {
                 LazyColumn(
                     state = listState,
@@ -258,7 +316,8 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                                 SectionHeaderRow(
                                     title = sec.title,
                                     count = sec.items.size,
-                                    open = !collapsed.contains(sec.id),
+                                    // 搜索时**一律当展开**（否则他搜到人在一个收着的段里，看着像搜不到）
+                                    open = q.isNotEmpty() || !collapsed.contains(sec.id),
                                     spaced = i != 0,     // 两段之间留点上间距（第一段不用）
                                 ) {
                                     // 收 / 展
@@ -271,7 +330,8 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                             }
                         }
                         // 收着的那段：**一个人都不画**，就剩标题那一行
-                        if (sec.id == null || !collapsed.contains(sec.id)) {
+                        // ⚠️ 在搜索时不管收没收都照画 —— 搜到的人被一个收起的段挡住会像「没搜到」
+                        if (q.isNotEmpty() || sec.id == null || !collapsed.contains(sec.id)) {
                             items(sec.items, key = { it.name }) { g ->
                                 // 画师数变动时卡片滑动 / 淡入，不硬切 ——
                                 // 收起 / 展开也是靠它，不然会「刷的一下」

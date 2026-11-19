@@ -725,4 +725,6 @@
     <string name="pwd_restore_do">解鎖並還原</string>
     <!-- 2026-11-17 备份加密 -->
     <string name="pwd_restore_wrong">密碼不對，或者檔案壞了 —— 這份備份沒動</string>
+    <!-- 2026-11-18 画师页搜索 -->
+    <string name="artists_search_hint">搜名字 / 備註 / 聯絡方式</string>
 </resources>
