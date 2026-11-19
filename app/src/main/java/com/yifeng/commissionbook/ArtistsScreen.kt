@@ -70,7 +70,12 @@ import androidx.compose.ui.unit.sp
  * 这样数据格式零改动 —— 两边的备份继续通用。
  */
 private data class ArtistGroup(
+    /// 界面上显示的名字（空名字 → 「（没写画师）」这种标签，跟着语言变）
     val name: String,
+    /// **存储键** = 原始名字（空名字就是 ""）—— 备注 / 头像 / 图片 / 分类都按它挂。
+    /// ⚠️ 2026-11-19 起**不要**再用 `name` 当键：那是显示用的、会跟着语言变，
+    ///    切一次语言备注就读不出来了，跟 iOS 的备份也对不上。
+    val key: String,
     val list: List<Commission>,
     val note: String,
     /**
@@ -149,22 +154,24 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
         .groupBy { it.artist }
         .map { (name, list) ->
             ArtistGroup(
-                // 显示名跟着模式走（买家「画师」/ 画师「客户」）；
-                // ⚠️ 但 notes 的 key 用的还是 it0()，保持不变 —— 别把存过的联系方式读丢
+                // 显示名跟着模式走（买家「画师」/ 画师「客户」）；空名字才用那个标签
                 name = name.ifBlank { Terms.otherBlank(state.appMode) },
+                // ⚠️ 存储键 = **原始名字**（2026-11-19 改）：以前这里是 `it0(name)`，
+                //    也就是拿「（没写画师）」这种跟着语言变的文字当键 —— 换语言就丢、跟 iOS 也对不上。
+                key = name,
                 // 卡内那摞（卡片上取前 3 条画出来）也交给排序管：
                 // 按名字 → 单子按标题升序；按次数 / 按最近 → 仍是最近那单在前。
                 list = when (sort) {
                     ArtistSort.ByName -> list.sortedBy { it.title }
                     ArtistSort.ByCount, ArtistSort.ByRecent -> list.sortedByDescending { it.dateMillis }
                 },
-                note = state.notes[it0(name)] ?: "",
-                photos = state.artistPhotosOf(it0(name)),
-                // 分类（2026-10-13 加）：跟 notes 同一个 key（都是 it0(name)）。
+                note = state.notes[name] ?: "",
+                photos = state.artistPhotosOf(name),
+                // 分类（2026-10-13 加）：跟 notes 同一个 key（都是原始名字）。
                 // ⚠️ 卡片上的分类**小标签同日就撤了** —— 改成**分段显示**之后
                 //    段标题已经把分类说清了，卡片再挂一个就是同一句话说两遍。
                 //    （要恢复：`state.showsCategoryBadge` 还在，把它接回来就行。）
-                categoryName = state.categoryNameOf(it0(name)),
+                categoryName = state.categoryNameOf(name),
                 showCategoryBadge = false,
             )
         }
@@ -210,7 +217,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
         sectionDefs.mapNotNull { (id, title) ->
             // ⚠️ 2026-11-18：这里筛的是 `shown`（搜过之后的），不是 `groups` ——
             //    用错的话搜索只在「不分段」那条兜底路上生效，分段时列表纹丝不动。
-            val list = shown.filter { categoryIdOfName(it0(it.name)) == id }
+            val list = shown.filter { categoryIdOfName(it.key) == id }
             if (list.isEmpty()) null else ArtistSection(id, title, list)
         }.ifEmpty { listOf(ArtistSection(null, null, shown)) }
 
@@ -233,7 +240,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
     val pickAvatar = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val g = editing
         if (uri != null && g != null) {
-            Avatars.setFromUri(context, it0(g.name), uri)
+            Avatars.setFromUri(context, g.key, uri)
         }
     }
 
@@ -244,7 +251,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
     val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         val g = editing
         if (uri != null && g != null) {
-            if (!state.addArtistPhoto(it0(g.name), uri)) {
+            if (!state.addArtistPhoto(g.key, uri)) {
                 toastNow(context, AppCtx.s(R.string.common_save_failed))
             }
         }
@@ -350,10 +357,10 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
     }
 
     editing?.let { g ->
-        var text by remember(g.name) { mutableStateOf(state.notes[it0(g.name)] ?: "") }
-        val hasAvatar = Avatars.base64For(it0(g.name)) != null
+        var text by remember(g.key) { mutableStateOf(state.notes[g.key] ?: "") }
+        val hasAvatar = Avatars.base64For(g.key) != null
         // 图片备注（2026-10-11 加）：这一份读的是 Compose 状态，加/删一张当场重画
-        val photos = state.artistPhotosOf(it0(g.name))
+        val photos = state.artistPhotosOf(g.key)
         // 点缩略图看大图：记下第几张（null = 没在看）
         var viewerAt by remember { mutableStateOf<Int?>(null) }
         // 删图先问一句（2026-10-11 深夜加）：记下要删哪张（null = 没在问）。
@@ -385,8 +392,8 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
         }
         var categoryId by remember(g.name, state.appMode) {
             mutableStateOf(
-                if (state.appMode == AppMode.BUYER) state.categoryIdOf(it0(g.name))
-                else state.clientCategoryIdOf(it0(g.name))
+                if (state.appMode == AppMode.BUYER) state.categoryIdOf(g.key)
+                else state.clientCategoryIdOf(g.key)
             )
         }
         // 分类的「新增 / 改名 / 删除 / 管理」（2026-10-13 加）：
@@ -420,7 +427,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                             // 没设过就不显示「移除」—— 一个点了没反应的按钮比没有更烦
                             if (hasAvatar) {
                                 TextButton(
-                                    onClick = { Avatars.remove(it0(g.name)) },
+                                    onClick = { Avatars.remove(g.key) },
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                                     modifier = Modifier.height(32.dp),
                                 ) {
@@ -548,11 +555,11 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    state.setNote(it0(g.name), text)
+                    state.setNote(g.key, text)
                     // 分类归属（2026-10-13 加）：跟备注一起在「保存」这一下写回
                     // ⚠️ 写回的是**当前模式那一本**：买家 = 画师分类；画师 = 客户分类。
-                    if (isBuyerMode) state.setCategory(it0(g.name), categoryId)
-                    else state.setClientCategory(it0(g.name), categoryId)
+                    if (isBuyerMode) state.setCategory(g.key, categoryId)
+                    else state.setClientCategory(g.key, categoryId)
                     editing = null
                 }) { Text(AppCtx.s(R.string.common_save), fontWeight = FontWeight.SemiBold) }
             },
@@ -724,7 +731,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 text = { Text(AppCtx.s(R.string.artist_photo_delete_body)) },
                 confirmButton = {
                     TextButton(onClick = {
-                        state.removeArtistPhoto(it0(g.name), target)
+                        state.removeArtistPhoto(g.key, target)
                         confirmRemove = null
                         // 2026-10-12：删掉之后把大图页也收掉 —— 这张已经不在了，
                         // 让它停在旧的位置上没意义（列表变短，页码也可能对不上）。
@@ -768,7 +775,7 @@ fun ArtistsScreen(modifier: Modifier, state: AppState) {
                 TextButton(
                     enabled = renameText.isNotBlank(),
                     onClick = {
-                        state.renameArtist(it0(g.name), renameText)
+                        state.renameArtist(g.key, renameText)
                         renaming = null
                     },
                 ) { Text(AppCtx.s(R.string.avatar_rename), fontWeight = FontWeight.SemiBold) }
@@ -1019,4 +1026,6 @@ private fun ArtistCard(
 }
 
 /** 归堆用的 key —— 空名字统一成「（没写画师）」 */
-private fun it0(name: String): String = if (name.isBlank()) AppCtx.s(R.string.ledger_no_artist) else name
+// ⚠️ 那个把空名字换成「（没写画师）」的 `it0()` 2026-11-19 删了 ——
+//    它把**跟着语言变**的文字当成了存储键，切语言 / 跟 iOS 互导都会让备注「消失」。
+//    现在：显示名用 `name.ifBlank { Terms.otherBlank(mode) }`，存储一律用原始名字（`ArtistGroup.key`）。

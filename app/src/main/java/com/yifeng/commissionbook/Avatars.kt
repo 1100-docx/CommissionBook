@@ -61,6 +61,20 @@ object Avatars {
         sp = context.applicationContext.getSharedPreferences(PREF, Context.MODE_PRIVATE)
         map.clear()
         map.putAll(parse(sp.getString(KEY, null)))
+        // 老数据兜底（2026-11-19）：空名字的画师，以前头像挂在「（没写画师）」这种
+        // **跟着语言变**的键上；现在统一成 ""（跟 iOS 一致），这里搬一次、搬完就没了。
+        val legacy = listOf(
+            "（没写画师）", "（没写客户）",
+            "(No artist)", "(No client)",
+            "（沒寫畫師）", "（沒寫客戶）", "（沒寫客户）",
+        )
+        var moved = false
+        legacy.forEach { old ->
+            val v = map.remove(old) ?: return@forEach
+            if (!map.containsKey("")) map[""] = v
+            moved = true
+        }
+        if (moved) persist()
     }
 
     /** 界面上那个圆读它：这个名字有没有设过头像 */

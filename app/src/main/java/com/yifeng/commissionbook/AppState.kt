@@ -349,6 +349,43 @@ class AppState(private val context: Context) {
         // 客户分类（2026-10-16 加）：跟画师那套一起读
         clientCategories = store.loadClientCategories()
         storedClientCategoryDefs = store.loadClientCategoryDefs()
+        migrateLegacyBlankKeys()
+    }
+
+    /**
+     * 老数据兜底（2026-11-19 修，跟 iOS 对齐）。
+     *
+     * 空名字的画师，以前存联系方式 / 头像 / 分类用的 key 是**跟着语言变**的那串标签
+     * （「（没写画师）」「(No artist)」……），而 iOS 一直用的是空字符串。后果两个：
+     *   ① 跟 iOS 互导备份时，这类备注对不上人；
+     *   ② 安卓自己一换语言，同一本备注就「读不出来」了。
+     * 现在统一成**原始名字**（空名字就是 `""`），这里把老键搬过去。
+     * ⚠️ 新键上已经有内容就不覆盖（跟「改名不覆盖目标」同一个规矩）。
+     */
+    private fun migrateLegacyBlankKeys() {
+        val legacy = listOf(
+            "（没写画师）", "（没写客户）",
+            "(No artist)", "(No client)",
+            "（沒寫畫師）", "（沒寫客戶）", "（沒寫客户）",
+        )
+        var changed = false
+
+        fun <T> moved(map: Map<String, T>): Map<String, T>? {
+            if (map.keys.none { it in legacy }) return null
+            val out = LinkedHashMap(map)
+            legacy.forEach { old ->
+                val v = out.remove(old) ?: return@forEach
+                if (!out.containsKey("")) out[""] = v
+            }
+            changed = true
+            return out
+        }
+
+        moved(notes)?.let { notes = it }
+        moved(artistPhotos)?.let { artistPhotos = it }
+        moved(artistCategories)?.let { artistCategories = it }
+        moved(clientCategories)?.let { clientCategories = it }
+        if (changed) persist()
     }
 
     private fun persist() {
@@ -498,7 +535,10 @@ class AppState(private val context: Context) {
      * @return 改了几条（0 = 名字没变 / 空名字，调用方据此提示）
      */
     fun renameArtist(from: String, to: String): Int {
-        val a = if (from.isBlank()) Terms.otherBlank(appMode) else from
+        // ⚠️ 2026-11-19：`from` 现在是**原始名字**（空名字就是 ""），不再是界面上那个
+        //    「（没写画师）」标签。以前这里把空名字换成跟着语言变的标签再去匹配和存盘，
+        //    那正是「安卓有备注、iOS 没有」的根。
+        val a = from
         val b = to.trim()
         if (b.isEmpty() || b == a) return 0
 
